@@ -28,7 +28,7 @@
 * **FR-12 (Student Tasks)**: Students register to the system, connect their GitHub accounts, create groups, invite peers, and submit advisee requests to professors.
 * **FR-13 (Coordinator Tasks)**: Coordinators upload valid student IDs, configure deliverables, set rubric structures, determine story point targets, assign committees, and manually manage/transfer groups if necessary.
 * **FR-14 (Advisor Tasks)**: Advisors review student proposals, leave comments, grade team Scrum performance, and grade work/code reviews.
-* **FR-15 (Admin Tasks)**: Admins manually register professors into the system, assign points to specific platform issues, and generate password reset links.
+* **FR-15 (Admin Tasks)**: Admins manually register professors into the system and assign points to specific platform issues.
 * **FR-16 (Document Revision Cycle)**: The system enforces a cyclic review process: groups submit a proposal, committees review and request changes, groups submit a revised proposal, and finally, the committee grades it.
 
 ### 1.5 Is the data used in each task and the data resulting from each task specified?
