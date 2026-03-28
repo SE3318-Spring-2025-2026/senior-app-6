@@ -118,7 +118,6 @@
 | 6 | Coordinator defines which sprint(s) contribute to which deliverable and at what percentage. | Frontend – Sprint-to-Deliverable Mapping Panel | `sprintId`, `deliverableId`, `contributionPercentage` |
 | 7 | Coordinator sets the weight of each deliverable (e.g., Documents 50%: Proposal 15%, SoW 35%; Demonstration 50%). | Frontend – Deliverable Weight Panel | `deliverableId`, `weightPercentage`, `termId` |
 | 8 | Coordinator sets the Scrum schedule (sprint start/end dates). | Frontend – Schedule Panel | `sprintId`, `startDate`, `endDate`, `termId` |
-| 9 | All configuration is persisted as the active term configuration. | Database – Term Config Store | Full term config object |
 
 ---
 
