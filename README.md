@@ -19,7 +19,7 @@
 
 ### 1.3 Are all the external communication interfaces specified, including handshaking, error-checking, and communication protocols?
 
-* **FR-9 (Authentication Interface)**: The system interfaces with GitHub using OAuth protocols (e.g., NextAuth.js) to securely authenticate students and retrieve their usernames. This interface is strictly isolated for identity verification, not for reading repository data.
+* **FR-9 (Authentication Interface)**: The system interfaces with GitHub using OAuth protocols (e.g., OAuth2.js) to securely authenticate students and retrieve their usernames. This interface is strictly isolated for identity verification, not for reading repository data.
 * **FR-10 (Data Fetching Interface)**: The system communicates with JIRA and GitHub APIs via the provided PAT to match issue keys with branch names and verify if Pull Requests have been successfully merged.
 * **FR-11 (Markdown Rubric Association)**: The WYSIWYG Markdown editor must allow grading criteria descriptions in the Evaluation Rubric to be associated with specific sections of the markdown document.
 
@@ -131,8 +131,8 @@
 | 2 | System generates a one-time-use password reset link and dispatches it to the professor's email. | Backend – Notification & Auth Service | `professorId`, `email`, `resetToken` |
 | 3 | Professor logs in for the first time and is required to change their password before proceeding. | Frontend – Login Page / Backend | `email`, `newPassword` |
 | 4 | Student navigates to the login page and clicks "Sign in with GitHub". | Frontend – Login Page | *(UI action)* |
-| 5 | System redirects the student to GitHub's OAuth 2.0 authorization page via NextAuth.js. | External Service – GitHub OAuth | `client_id`, `redirect_uri`, `scope` |
-| 6 | Student grants permission; NextAuth.js handles the callback and exchanges the authorization code for an access token. | Backend – Auth Service (NextAuth.js) | `code`, `client_secret` |
+| 5 | System redirects the student to GitHub's OAuth 2.0 authorization page via OAuth2.js. | External Service – GitHub OAuth | `client_id`, `redirect_uri`, `scope` |
+| 6 | Student grants permission; OAuth2.js handles the callback and exchanges the authorization code for an access token. | Backend – Auth Service (OAuth2.js) | `code`, `client_secret` |
 | 7 | Backend fetches the authenticated student's GitHub username from the GitHub API. | External Service – GitHub REST API | `OAuth access_token` |
 | 8 | System checks the GitHub username against the pre-uploaded list of valid Student IDs. If unmatched, access is denied with a readable error code. | Backend – Auth Service / Database | `githubUsername`, `studentId` |
 | 9 | If matched, a JWT session token is issued and role-based access control (RBAC) is enforced on all subsequent requests. | Backend – Auth Service / Frontend | `JWT`, `userId`, `role` |
