@@ -1,4 +1,3 @@
-
 # Requirements Specification
 
 ## 1. Gather Functional Requirements
@@ -111,13 +110,13 @@
 | **Step** | **Action** | **System Component** | **Required Data** |
 | --- | --- | --- | --- |
 | 1 | Coordinator logs in; system enforces mandatory password change on first login. | Frontend / Backend – Auth Service | `email`, `password`, `isFirstLogin` |
-| 2 | Coordinator uploads the list of eligible Student IDs for the term. | Frontend – Admin Dashboard | CSV with `studentId` list |
-| 3 | Coordinator creates deliverable entries (Proposal, SoW, Demonstration) and sets their submission and review deadlines (bounded schedules). | Frontend – Deliverable Config Panel | `deliverableName`, `type`, `deadline`, `termId` |
+| 2 | Coordinator uploads the list of eligible Student IDs. | Frontend – Admin Dashboard | `studentIds[]` |
+| 3 | Coordinator creates deliverable entries (Proposal, SoW, Demonstration) and sets their submission and review deadlines (bounded schedules). | Frontend – Deliverable Config Panel | `deliverableName`, `type`, `deadline` |
 | 4 | Coordinator defines the evaluation rubric per deliverable: criterion name, grading type (Binary / Soft), and weight. | Frontend – Rubric Builder | `deliverableId`, `criterionName`, `gradingType`, `weight` |
-| 5 | Coordinator sets the per-sprint story point target for each student (used for Individual Evaluation). | Frontend – Sprint Config Panel | `sprintId`, `targetStoryPoints`, `termId` |
+| 5 | Coordinator sets the per-sprint story point target for each student (used for Individual Evaluation). | Frontend – Sprint Config Panel | `sprintId`, `targetStoryPoints` |
 | 6 | Coordinator defines which sprint(s) contribute to which deliverable and at what percentage. | Frontend – Sprint-to-Deliverable Mapping Panel | `sprintId`, `deliverableId`, `contributionPercentage` |
-| 7 | Coordinator sets the weight of each deliverable (e.g., Documents 50%: Proposal 15%, SoW 35%; Demonstration 50%). | Frontend – Deliverable Weight Panel | `deliverableId`, `weightPercentage`, `termId` |
-| 8 | Coordinator sets the Scrum schedule (sprint start/end dates). | Frontend – Schedule Panel | `sprintId`, `startDate`, `endDate`, `termId` |
+| 7 | Coordinator sets the weight of each deliverable (e.g., Documents 50%: Proposal 15%, SoW 35%; Demonstration 50%). | Frontend – Deliverable Weight Panel | `deliverableId`, `weightPercentage` |
+| 8 | Coordinator sets the Scrum schedule (sprint start/end dates). | Frontend – Schedule Panel | `sprintId`, `startDate`, `endDate` |
 
 ---
 
@@ -145,7 +144,7 @@
 
 | **Step** | **Action** | **System Component** | **Required Data** |
 | --- | --- | --- | --- |
-| 1 | Student submits a group creation request within the active schedule window. The creator is automatically appointed as Team Leader. | Frontend – Group Creation Form / Backend | `studentId`, `groupName`, `termId` |
+| 1 | Student submits a group creation request within the active schedule window. The creator is automatically appointed as Team Leader. | Frontend – Group Creation Form / Backend | `studentId`, `groupName` |
 | 2 | Team Leader searches for peers by Student ID and sends group invitations. | Frontend – Group Dashboard | `groupId`, `targetStudentId` |
 | 3 | Invited students receive a notification. Upon acceptance, all other pending invitations for that student are automatically denied. | Frontend – Notification Panel / Backend | `invitationId`, `studentId`, `response: ACCEPTED` |
 | 4 | Team Leader enters the JIRA Space URL and Project Key to bind the group's JIRA workspace. | Frontend – Integration Settings | `groupId`, `jiraSpaceUrl`, `jiraProjectKey` |
@@ -163,13 +162,13 @@
 
 | **Step** | **Action** | **System Component** | **Required Data** |
 | --- | --- | --- | --- |
-| 1 | Team Leader browses available advisors and submits an Advisee Request. | Frontend – Advisor Discovery / Backend | `groupId`, `advisorId`, `termId` |
+| 1 | Team Leader browses available advisors and submits an Advisee Request. | Frontend – Advisor Discovery / Backend | `groupId`, `advisorId` |
 | 2 | Team Leader may also withdraw a pending request before it is reviewed. | Frontend – Group Dashboard | `requestId`, `groupId` |
 | 3 | Advisor receives a notification about the new request and reviews the group's profile. | Frontend – Advisor Notifications | `notificationId`, `groupId` |
 | 4 | Advisor accepts or rejects the request. Upon acceptance, a formal Advisor–Group association is created. | Frontend – Advisor Dashboard / Backend | `requestId`, `decision: ACCEPTED | REJECTED` |
 | 5 | If the advisor wishes to de-associate, they must explicitly **release** the group first. Only after release can the group submit a new advisee request. | Frontend – Advisor Dashboard | `groupId`, `advisorId` |
 | 6 | The Coordinator can transfer a group from one advisor to another directly. | Frontend – Coordinator Admin Panel | `groupId`, `currentAdvisorId`, `newAdvisorId` |
-| 7 | A scheduled daily background job checks whether the Advisor Association deadline has passed. | Backend – Scheduler / Cron Job | `deadline`, `termId` |
+| 7 | A scheduled daily background job checks whether the Advisor Association deadline has passed. | Backend – Scheduler / Cron Job | `deadline` |
 | 8 | The job queries all groups in `UNADVISED` status that are past the deadline. | Backend – Sanitization Service / Database | `status: UNADVISED`, `deadline` |
 | 9 | System automatically disbands all identified groups. Member slots are released and records are archived with reason `NO_ADVISOR`. | Backend – Sanitization Service / Database | `groupId`, `memberIds[]`, `disbandReason: NO_ADVISOR` |
 | 10 | All former members receive a notification about the disbandment. | Backend – Notification Service | `studentId[]`, `disbandReason` |
@@ -182,7 +181,7 @@
 
 | **Step** | **Action** | **System Component** | **Required Data** |
 | --- | --- | --- | --- |
-| 1 | Coordinator creates a new committee entity. | Frontend – Committee Management | `committeeName`, `termId` |
+| 1 | Coordinator creates a new committee entity. | Frontend – Committee Management | `committeeName` |
 | 2 | Coordinator assigns an advisor as the primary Advisor member of the committee. Each advisor is a member of a committee. | Frontend – Committee Assignment UI | `committeeId`, `advisorId`, `role: ADVISOR` |
 | 3 | Coordinator optionally assigns additional professors as Jury members. | Frontend – Committee Assignment UI | `committeeId`, `professorId[]`, `role: JURY` |
 | 4 | Coordinator assigns student groups to the committee. A group must be committee-assigned before it can submit a Proposal. | Frontend – Group Assignment Panel | `committeeId`, `groupId[]` |
@@ -198,7 +197,7 @@
 
 | **Step** | **Action** | **System Component** | **Required Data** |
 | --- | --- | --- | --- |
-| 1 | At the end of each sprint, a scheduled job triggers for all active groups with `TOOLS_BOUND` status. | Backend – Scheduler / Cron Job | `termId`, `currentSprintId`, active `groupId[]` |
+| 1 | At the end of each sprint, a scheduled job triggers for all active groups with `TOOLS_BOUND` status. | Backend – Scheduler / Cron Job | `currentSprintId`, active `groupId[]` |
 | 2 | System fetches all active stories in the sprint from the group's bound JIRA project. Fields extracted: Issue Key, Assignee, Story Points, Description. | External Service – JIRA REST API | `jiraProjectKey`, `sprintId`, `jiraApiToken` |
 | 3 | For each JIRA issue, system searches the bound GitHub Organization for branches whose names begin with the Issue Key. | External Service – GitHub REST API | `githubOrgName`, `repoName`, `issueKey`, `githubPAT` |
 | 4 | System retrieves the Pull Request associated with the matched branch and verifies whether it has been **merged** into the main branch. | External Service – GitHub REST API | `branchName`, `repoName` |
@@ -257,7 +256,7 @@
 | 6 | System computes the **Deliverable Scalar (DS)**: average of Scrum Scalar and Review Scalar. **`DS = AVG(ScrumScalar, ReviewScalar)`** | Backend – Grading Engine | `ScrumScalar`, `ReviewScalar` |
 | 7 | System computes the **Scaled Deliverable Grade**: **`ScaledGrade = B × DS`** | Backend – Grading Engine | `baseGrade (B)`, `deliverableScalar (DS)` |
 | 8 | System computes the **Weighted Total Grade** across all deliverables using Coordinator-configured weights: **`WeightedTotal = Σ (ScaledGrade × DeliverableWeight)`** | Backend – Grading Engine | `scaledGrades[]`, `deliverableWeights[]` |
-| 9 | System retrieves each student's **Individual Completion Ratio (Cᵢ)** for the term: ratio of story points completed vs. target. **`Cᵢ = completedStoryPoints ÷ targetStoryPoints`** | Backend – Grading Engine / Database | `studentId`, `completedPoints`, `targetPoints` |
+| 9 | System retrieves each student's **Individual Completion Ratio (Cᵢ)**: ratio of story points completed vs. target. **`Cᵢ = completedStoryPoints ÷ targetStoryPoints`** | Backend – Grading Engine / Database | `studentId`, `completedPoints`, `targetPoints` |
 | 10 | System computes each student's **Individual Final Grade**: **`Gᵢ = WeightedTotal × Cᵢ`** | Backend – Grading Engine | `WeightedTotal`, `Cᵢ`, `studentId` |
 | 11 | All final individual grades are persisted and made visible on the Advisor's dashboard. | Database – Final Grades Store / Frontend – Advisor Dashboard | `studentId`, `deliverableId`, `Gᵢ`, `WeightedTotal` |
 
