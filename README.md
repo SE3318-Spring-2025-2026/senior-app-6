@@ -109,13 +109,13 @@
 
 | **Step** | **Action** | **System Component** | **Required Data** |
 | --- | --- | --- | --- |
-| 1 | Coordinator logs in; system enforces mandatory password change on first login. | Frontend / Backend – Auth Service | `email`, `password`, `isFirstLogin` |
+| 1 | Coordinator logs in; system enforces mandatory password change on first login. | Frontend / Backend – Auth Service | `email`, `password` |
 | 2 | Coordinator uploads the list of eligible Student IDs. | Frontend – Admin Dashboard | `studentIds[]` |
-| 3 | Coordinator creates deliverable entries (Proposal, SoW, Demonstration) and sets their submission and review deadlines (bounded schedules). | Frontend – Deliverable Config Panel | `deliverableName`, `type`, `deadline` |
+| 3 | Coordinator creates deliverable entries (Proposal, SoW, Demonstration) and sets their submission and review deadlines (bounded schedules). | Frontend – Deliverable Config Panel | `name`, `type`, `submissionDeadline`, `reviewDeadline` |
 | 4 | Coordinator defines the evaluation rubric per deliverable: criterion name, grading type (Binary / Soft), and weight. | Frontend – Rubric Builder | `deliverableId`, `criterionName`, `gradingType`, `weight` |
-| 5 | Coordinator sets the per-sprint story point target for each student (used for Individual Evaluation). | Frontend – Sprint Config Panel | `sprintId`, `targetStoryPoints` |
+| 5 | Coordinator sets the per-sprint story point target for each student (used for Individual Evaluation). | Frontend – Sprint Config Panel | `sprintId`, `storyPointTarget` |
 | 6 | Coordinator defines which sprint(s) contribute to which deliverable and at what percentage. | Frontend – Sprint-to-Deliverable Mapping Panel | `sprintId`, `deliverableId`, `contributionPercentage` |
-| 7 | Coordinator sets the weight of each deliverable (e.g., Documents 50%: Proposal 15%, SoW 35%; Demonstration 50%). | Frontend – Deliverable Weight Panel | `deliverableId`, `weightPercentage` |
+| 7 | Coordinator sets the weight of each deliverable (e.g., Documents 50%: Proposal 15%, SoW 35%; Demonstration 50%). | Frontend – Deliverable Weight Panel | `deliverableId`, `weight` |
 | 8 | Coordinator sets the Scrum schedule (sprint start/end dates). | Frontend – Schedule Panel | `sprintId`, `startDate`, `endDate` |
 
 ---
@@ -126,14 +126,14 @@
 
 | **Step** | **Action** | **System Component** | **Required Data** |
 | --- | --- | --- | --- |
-| 1 | Admin manually registers a professor account into the system. | Frontend – Admin Panel / Backend | `professorName`, `email`, `department` |
-| 2 | System generates a one-time-use password reset link and dispatches it to the professor's email. | Backend – Notification & Auth Service | `professorId`, `email`, `resetToken` |
-| 3 | Professor logs in for the first time and is required to change their password before proceeding. | Frontend – Login Page / Backend | `email`, `newPassword` |
+| 1 | Admin manually registers a professor account into the system. | Frontend – Admin Panel / Backend | `name`, `email`, `department` |
+| 2 | System generates a one-time-use password reset link and dispatches it to the professor's email. | Backend – Notification & Auth Service | `staffId`, `email`, `token` |
+| 3 | Professor logs in for the first time and is required to change their password before proceeding. | Frontend – Login Page / Backend | `token`, `password` |
 | 4 | Student navigates to the login page and clicks "Sign in with GitHub". | Frontend – Login Page | *(UI action)* |
 | 5 | System redirects the student to GitHub's OAuth 2.0 authorization page via OAuth2. | External Service – GitHub OAuth | `client_id`, `redirect_uri`, `scope` |
-| 6 | Student grants permission; OAuth2 handles the callback and exchanges the authorization code for an access token. | Backend – Auth Service (OAuth2.js) | `code`, `client_secret` |
+| 6 | Student grants permission; Spring Security OAuth2 handles the callback and exchanges the authorization code for an access token. | Backend – Auth Service | `code`, `client_secret` |
 | 7 | Backend fetches the authenticated student's GitHub username from the GitHub API. | External Service – GitHub REST API | `OAuth access_token` |
-| 8 | System checks the GitHub username against the pre-uploaded list of valid Student IDs. If unmatched, access is denied with a readable error code. | Backend – Auth Service / Database | `githubUsername`, `studentId` |
+| 8 | System checks the GitHub username against the pre-uploaded list of valid Student IDs. If unmatched, access is denied with a readable error code. | Backend – Auth Service / Database | `githubUsername`, `student.studentId` |
 | 9 | If matched, a JWT session token is issued and role-based access control (RBAC) is enforced on all subsequent requests. | Backend – Auth Service / Frontend | `JWT`, `userId`, `role` |
 
 ---
