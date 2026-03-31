@@ -14,19 +14,8 @@ public class TestController {
         return "Hello, World!";
     }
 
-    @GetMapping("/random")
-    public String random() {
-        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < 10; i++) {
-            int index = (int) (Math.random() * characters.length());
-            sb.append(characters.charAt(index));
-        }
-        return sb.toString();
-    }
-
-    @GetMapping("/greet")
-    public String greet(@RequestParam String name) {
+    @GetMapping("/greeting")
+    public String greeting(@RequestParam String name) {
         return "Hello, " + name + "!";
     }
 }

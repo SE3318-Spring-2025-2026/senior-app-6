@@ -1,50 +1,63 @@
-<script setup lang="ts">
-	import { ref } from "vue";
-
-	const message = ref("");
-	const randomString = ref("");
-	const greeting = ref("");
-
-	async function fetchMessage() {
-		const response = await fetch("http://localhost:8080/api/test/hello");
-		message.value = await response.text();
-	}
-
-	async function fetchRandomString() {
-		const response = await fetch("http://localhost:8080/api/test/random");
-		randomString.value = await response.text();
-	}
-
-	async function fetchGreeting() {
-		const response = await fetch("http://localhost:8080/api/test/greet?name=Vue");
-		greeting.value = await response.text();
-	}
-
-	fetchMessage();
-	fetchRandomString();
-	fetchGreeting();
-</script>
 
 <template>
-	<main>
-		<h1>Welcome to Vue!</h1>
-		<p>{{ message }}</p>
-		<p>{{ randomString }}</p>
-		<p>{{ greeting }}</p>
-	</main>
+	<router-view />
 </template>
 
 <style>
-	body {
-		margin-left: 1rem;
-		background: #111;
-		color: #fff;
+	:root {
+		--font-family: "Roboto Mono", monospace;
+		--element-bg: #222;
+		--element-hover-bg: #333;
+		--element-color: aliceblue;
 	}
-</style>
 
-<style scoped>
-	main {
-		padding: 1rem;
-		font-family: "Roboto Mono", monospace;
+	html, body {
+		height: 100%;
+		margin: 0;
+		padding: 0;
 	}
+	body {
+		display: flex;
+		justify-content: center;
+		/* align-items: center; */
+		background: #111;
+		color: var(--element-color);
+		font-family: var(--font-family);
+	}
+
+	main{
+		margin: 2rem;
+		padding: 2rem;
+	}
+
+	label {
+		display: block;
+		margin-bottom: 0.5rem;
+	}
+
+	input {
+		background: var(--element-bg);
+		font-family: var(--font-family);
+		font-size: medium;
+		border: 1px solid #333;
+		color: var(--element-color);
+		padding: 0.5rem;
+		border-radius: 4px;
+	}
+
+	button {
+		background: var(--element-bg);
+		border: none;
+		font-size: medium;
+		color: var(--element-color);
+		font-family: var(--font-family);
+		padding: 0.5rem 1rem;
+		border-radius: 4px;
+		cursor: pointer;
+	}
+
+	button:hover {
+		background: var(--element-hover-bg);
+	}
+
 </style>
