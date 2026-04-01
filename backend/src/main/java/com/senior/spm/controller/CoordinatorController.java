@@ -13,11 +13,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.SprintRequest;
+import com.senior.spm.controller.request.StudentUploadRequest;
+import com.senior.spm.controller.request.UpdateSprintTargetRequest;
+import com.senior.spm.entity.Sprint;
+import com.senior.spm.entity.Student;
 import com.senior.spm.entity.Deliverable;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.entity.Sprint;
 import com.senior.spm.repository.DeliverableRepository;
 import com.senior.spm.repository.SprintRepository;
+import com.senior.spm.repository.StudentRepository;
 
 import jakarta.validation.Valid;
 
@@ -27,10 +32,12 @@ public class CoordinatorController {
 
     private final SprintRepository sprintRepository;
     private final DeliverableRepository deliverableRepository;
+    private final StudentRepository studentRepository;
 
-    public CoordinatorController(SprintRepository sprintRepository, DeliverableRepository deliverableRepository) {
+    public CoordinatorController(SprintRepository sprintRepository, DeliverableRepository deliverableRepository, StudentRepository studentRepository) {
         this.sprintRepository = sprintRepository;
         this.deliverableRepository = deliverableRepository;
+        this.studentRepository = studentRepository;
     }
 
     @PostMapping("/sprints")
@@ -67,8 +74,11 @@ public class CoordinatorController {
         Deliverable savedDeliverable = deliverableRepository.save(deliverable);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(savedDeliverable);
+    }
+
     @PatchMapping("/sprints/{id}/target")
-    public ResponseEntity<String> updateSprintTarget(@PathVariable UUID id, @Valid @RequestBody UpdateSprintTargetRequest request) {
+    public ResponseEntity<String> updateSprintTarget(@PathVariable UUID id,
+            @Valid @RequestBody UpdateSprintTargetRequest request) {
         // Check if sprint exists
         if (!sprintRepository.existsById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Sprint not found with ID: " + id);
@@ -80,5 +90,37 @@ public class CoordinatorController {
         sprintRepository.save(sprint);
 
         return ResponseEntity.status(HttpStatus.OK).body("Sprint target updated successfully");
+    }
+
+    @PostMapping("/students/upload")
+    public ResponseEntity<String> uploadStudentData(@Valid @RequestBody StudentUploadRequest request) {
+        if (request.getStudentIds().size() != request.getStudentIds().stream().distinct().count()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicate student IDs found in the request");
+        }
+
+        for (String studentId : request.getStudentIds()) {
+            if (studentId == null || studentId.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Invalid student ID format: " + studentId);
+            }
+            if (studentRepository.existsByStudentId(studentId)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Id " + studentId + " already exists in the database");
+            }
+        }
+
+        var students = request.getStudentIds().stream().map(id -> {
+            Student student = new Student();
+            student.setStudentId(id);
+            return student;
+        }).toList();
+
+        if (students.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No valid student IDs provided");
+        }
+
+        studentRepository.saveAll(students);
+
+        return ResponseEntity.status(HttpStatus.OK).body("Student data uploaded successfully");
     }
 }
