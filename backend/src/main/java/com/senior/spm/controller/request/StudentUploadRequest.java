@@ -10,5 +10,5 @@ import lombok.Data;
 public class StudentUploadRequest {
 
     @NotBlank
-    private List<@Pattern(regexp = "^\\d{11}$") String> studentIds;
+    private List<@Pattern(regexp = "^[0-9]{11}$") String> studentIds;
 }
