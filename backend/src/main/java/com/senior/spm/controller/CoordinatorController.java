@@ -11,9 +11,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.SprintRequest;
+import com.senior.spm.entity.Deliverable;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.entity.Sprint;
+import com.senior.spm.repository.DeliverableRepository;
 import com.senior.spm.repository.SprintRepository;
 
 import jakarta.validation.Valid;
@@ -23,9 +26,11 @@ import jakarta.validation.Valid;
 public class CoordinatorController {
 
     private final SprintRepository sprintRepository;
+    private final DeliverableRepository deliverableRepository;
 
-    public CoordinatorController(SprintRepository sprintRepository) {
+    public CoordinatorController(SprintRepository sprintRepository, DeliverableRepository deliverableRepository) {
         this.sprintRepository = sprintRepository;
+        this.deliverableRepository = deliverableRepository;
     }
 
     @PostMapping("/sprints")
@@ -45,6 +50,23 @@ public class CoordinatorController {
         return ResponseEntity.status(HttpStatus.CREATED).body("Sprint created with ID: " + savedSprint.getId());
     }
 
+    @PostMapping("/deliverables")
+    public ResponseEntity<Deliverable> createDeliverable(@Valid @RequestBody CreateDeliverableRequest request) {
+        // Validate that reviewDeadline is not before submissionDeadline
+        if (request.getReviewDeadline().isBefore(request.getSubmissionDeadline())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        // Create and save the deliverable
+        Deliverable deliverable = new Deliverable();
+        deliverable.setName(request.getName());
+        deliverable.setType(request.getType());
+        deliverable.setSubmissionDeadline(request.getSubmissionDeadline());
+        deliverable.setReviewDeadline(request.getReviewDeadline());
+
+        Deliverable savedDeliverable = deliverableRepository.save(deliverable);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedDeliverable);
     @PatchMapping("/sprints/{id}/target")
     public ResponseEntity<String> updateSprintTarget(@PathVariable UUID id, @Valid @RequestBody UpdateSprintTargetRequest request) {
         // Check if sprint exists
