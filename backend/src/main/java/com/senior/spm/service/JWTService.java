@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.senior.spm.entity.StaffUser;
+import com.senior.spm.entity.Student;
 import com.senior.spm.repository.StaffUserRepository;
 
 import io.jsonwebtoken.Claims;
@@ -62,6 +63,20 @@ public class JWTService {
                 .compact();
     }
 
+    public String issueToken(Student student) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("id", student.getId());
+        claims.put("githubUsername", student.getGithubUsername());
+        claims.put("role", "Student");
+        return Jwts.builder()
+                .claims(claims)
+                .subject(Student.class.getSimpleName())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(getSecretKey())
+                .compact();
+    }
+
     public boolean validateToken(String token) {
         try {
             var claims = getClaims(token);
@@ -72,10 +87,7 @@ public class JWTService {
                     return false;
                 }
                 var id = UUID.fromString(idString);
-                if (id == null) {
-                    return false;
-                }
-                return !staffUserRepository.findById(id).isEmpty();
+				return !staffUserRepository.findById(id).isEmpty();
             }
             return false;
         } catch (JwtException | IllegalArgumentException e) {
