@@ -78,31 +78,35 @@ Backend runs on `http://localhost:8080`
 
 1. Navigate to the `frontend/` folder
 
-2. Install dependencies:
-
-**Bun:**
-```bash
-bun install
-```
+2. To install dependencies:
 
 **npm:**
 ```bash
 npm install
 ```
 
-3. Run the frontend:
-
+//(Alternative) Bun is faster than npm 
 **Bun:**
 ```bash
-bun run dev
+bun install
 ```
+
+3. To run the frontend:
 
 **npm:**
 ```bash
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173`
+//(Alternative) Bun is faster than npm 
+**Bun:**
+```bash
+bun run dev
+```
+
+
+
+Frontend runs on `http://localhost:3000`
 
 ---
 
