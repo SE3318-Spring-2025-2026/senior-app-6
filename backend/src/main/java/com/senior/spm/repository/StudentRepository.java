@@ -1,5 +1,6 @@
 package com.senior.spm.repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,4 +12,8 @@ import com.senior.spm.entity.Student;
 public interface StudentRepository extends JpaRepository<Student, UUID> {
 
     boolean existsByStudentId(String studentId);
+
+    Optional<Student> findByStudentId(String studentId);
+
+    Optional<Student> findByGithubUsername(String githubUsername);
 }

@@ -8,8 +8,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.senior.spm.controller.request.GithubLoginRequest;
 import com.senior.spm.controller.request.LoginRequest;
+import com.senior.spm.controller.response.GithubLoginResponse;
 import com.senior.spm.controller.response.LoginResponse;
+import com.senior.spm.entity.Student;
+import com.senior.spm.repository.StudentRepository;
 import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.service.JWTService;
 
@@ -22,11 +26,14 @@ public class AuthController {
     private final JWTService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final StaffUserRepository staffUserRepository;
+    private final StudentRepository studentRepository;
 
-    public AuthController(JWTService jwtService, PasswordEncoder passwordEncoder, StaffUserRepository staffUserRepository) {
+    public AuthController(JWTService jwtService, PasswordEncoder passwordEncoder, StaffUserRepository staffUserRepository,
+            StudentRepository studentRepository) {
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.staffUserRepository = staffUserRepository;
+        this.studentRepository = studentRepository;
     }
 
     @PostMapping("/login")
@@ -48,5 +55,25 @@ public class AuthController {
         }
 
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+    }
+
+    @PostMapping("/github")
+    public GithubLoginResponse githubLogin(@Valid @RequestBody GithubLoginRequest request) {
+        var student = studentRepository.findByStudentId(request.getStudentId())
+                .or(() -> studentRepository.findByGithubUsername(request.getUsername()));
+
+        if (student.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Student ID not recognized");
+        }
+
+        Student validStudent = student.get();
+        var token = jwtService.issueToken(validStudent);
+
+        var userInfo = new GithubLoginResponse.UserInfo(
+                validStudent.getId(),
+                validStudent.getGithubUsername(),
+                "Student");
+
+        return new GithubLoginResponse(token, userInfo);
     }
 }
