@@ -1,10 +1,11 @@
 package com.senior.spm.filter;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -47,8 +48,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
             var claims = jwtService.getClaims(token);
+            var role = claims.get("role", String.class);
+            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
             SecurityContextHolder.getContext().setAuthentication(
-                    new UsernamePasswordAuthenticationToken(claims.get("mail", String.class), null, Collections.emptyList()));
+                    new UsernamePasswordAuthenticationToken(claims.get("id", String.class), null, authorities));
             filterChain.doFilter(request, response);
         } catch (ServletException | IOException e) {
             handlerExceptionResolver.resolveException(request, response, null, e);
