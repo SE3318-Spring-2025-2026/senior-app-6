@@ -31,7 +31,7 @@ public class PasswordResetToken {
     @JoinColumn(name = "staffId", nullable = false, foreignKey = @ForeignKey(name = "fk_prt_staff"))
     private StaffUser staff;
 
-    @Column(length = 512, nullable = false, unique = true)
+    @Column(length = 36, nullable = false, unique = true)
     private String token;
 
     @Column(nullable = false)
