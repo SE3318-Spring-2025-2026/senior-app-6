@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ public class Student {
     private UUID id;
 
     @Column(length = 11, nullable = false, unique = true)
+    @Pattern(regexp = "^[0-9]{11}$")
     private String studentId;
 
     @Column(length = 255, nullable = true, unique = true)

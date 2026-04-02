@@ -21,6 +21,6 @@ public class LoginResponse {
         private UUID id;
         private String mail;
         private StaffUser.Role role;
-        private boolean isFirstLogin;
+        private boolean firstLogin;
     }
 }
