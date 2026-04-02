@@ -1,0 +1,621 @@
+openapi: 3.0.3
+info:
+  title: SPM API
+  version: 1.0.0
+  description: Senior Project Management system API
+
+servers:
+  - url: /api
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorMessage:
+      type: object
+      properties:
+        message:
+          type: string
+
+    StaffUserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mail:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, COORDINATOR, PROFESSOR]
+        isFirstLogin:
+          type: boolean
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        userInfo:
+          $ref: '#/components/schemas/StaffUserInfo'
+
+    Sprint:
+      type: object
+      properties:
+        id:
+          type: integer
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        targetStoryPoint:
+          type: integer
+          minimum: 1
+
+    Deliverable:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [Proposal, SoW, Demonstration]
+        submissionDeadline:
+          type: string
+          format: date-time
+        reviewDeadline:
+          type: string
+          format: date-time
+        weightPercentage:
+          type: number
+
+    Criterion:
+      type: object
+      required:
+        - criterionName
+        - gradingType
+        - weight
+      properties:
+        criterionName:
+          type: string
+        gradingType:
+          type: string
+          enum: [Binary, Soft]
+        weight:
+          type: number
+
+security:
+  - bearerAuth: []
+
+paths:
+
+  /auth/login:
+    post:
+      summary: Login for professors, coordinators, and admins
+      security: []
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mail, password]
+              properties:
+                mail:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Authenticated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /auth/github:
+    post:
+      summary: Validate GitHub OAuth payload and issue JWT for students
+      security: []
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [accessToken, username, email, studentId]
+              properties:
+                accessToken:
+                  type: string
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                studentId:
+                  type: string
+      responses:
+        '200':
+          description: Student validated, JWT issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Missing or malformed payload
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Student ID not recognized or not on approved list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                message: "Student ID not recognized"
+
+  /auth/reset-password:
+    get:
+      summary: Validate a one-time password reset token
+      security: []
+      tags: [Auth]
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isValid:
+                    type: boolean
+              example:
+                isValid: true
+        '400':
+          description: Token invalid, expired, or already used
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isValid:
+                    type: boolean
+              example:
+                isValid: false
+        '404':
+          description: Token not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+    post:
+      summary: Redeem a reset token and set a new password
+      security: []
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, newPassword]
+              properties:
+                token:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password updated successfully
+        '400':
+          description: Token invalid/expired or password fails validation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /admin/register-professor:
+    post:
+      summary: Register a new professor and send password reset email
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mail]
+              properties:
+                mail:
+                  type: string
+      responses:
+        '201':
+          description: Professor created and reset email sent
+        '403':
+          description: Caller is not an Admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/students/upload:
+    post:
+      summary: Upload the list of eligible student IDs for the active term
+      tags: [Coordinator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [studentIds]
+              properties:
+                studentIds:
+                  type: array
+                  items:
+                    type: string
+                    pattern: '^[0-9]{11}$'
+      responses:
+        '201':
+          description: Students imported
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  importedCount:
+                    type: integer
+        '400':
+          description: Invalid student IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/sprints:
+    post:
+      summary: Create a new sprint
+      tags: [Coordinator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [startDate, endDate]
+              properties:
+                startDate:
+                  type: string
+                  format: date
+                endDate:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Sprint created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+        '400':
+          description: endDate is before startDate
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/sprints/{id}/target:
+    patch:
+      summary: Set the per-student story point target for a sprint
+      tags: [Coordinator]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [targetStoryPoint]
+              properties:
+                targetStoryPoint:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Target updated
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/sprints/{id}/deliverable-mapping:
+    post:
+      summary: Map a sprint to a deliverable with a contribution percentage
+      tags: [Coordinator]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [deliverableId, contributionPercentage]
+              properties:
+                deliverableId:
+                  type: integer
+                contributionPercentage:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+      responses:
+        '201':
+          description: Mapping created
+        '400':
+          description: Total contribution percentages for this deliverable exceed 100%
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/deliverables:
+    post:
+      summary: Create a new project deliverable
+      tags: [Coordinator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type, submissionDeadline, reviewDeadline]
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [Proposal, SoW, Demonstration]
+                submissionDeadline:
+                  type: string
+                  format: date-time
+                reviewDeadline:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Deliverable created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deliverable'
+        '400':
+          description: Mandatory fields missing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/deliverables/{id}:
+    patch:
+      summary: Update the details or deadlines of an existing deliverable
+      tags: [Coordinator]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [Proposal, SoW, Demonstration]
+                submissionDeadline:
+                  type: string
+                  format: date-time
+                reviewDeadline:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Deliverable updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Deliverable'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Deliverable not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/deliverables/{id}/weight:
+    patch:
+      summary: Set the final grade weight percentage for a deliverable
+      tags: [Coordinator]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [weightPercentage]
+              properties:
+                weightPercentage:
+                  type: number
+                  minimum: 0
+                  exclusiveMinimum: true
+      responses:
+        '200':
+          description: Weight updated
+        '400':
+          description: >
+            weightPercentage is not a positive number, or the new value would
+            cause total assigned weight across all deliverables to exceed 100%.
+            E.g. "Total deliverable weight cannot exceed 100% or be lower than 0%. Currently assigned: X%."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Deliverable not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/deliverables/{id}/rubric:
+    post:
+      summary: Define the evaluation rubric criteria for a deliverable
+      tags: [Coordinator]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [criteria]
+              properties:
+                criteria:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Criterion'
+      responses:
+        '201':
+          description: Rubric criteria saved
+        '400':
+          description: gradingType is not 'Binary' or 'Soft'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/publish:
+    post:
+      summary: Finalize configuration and activate the system for students
+      tags: [Coordinator]
+      responses:
+        '200':
+          description: System activated
+        '400':
+          description: Configuration is incomplete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
