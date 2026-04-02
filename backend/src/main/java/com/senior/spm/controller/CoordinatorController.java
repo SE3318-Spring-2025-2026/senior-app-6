@@ -15,6 +15,7 @@ import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
+import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.entity.Deliverable;
 import com.senior.spm.entity.Sprint;
 import com.senior.spm.entity.Student;
@@ -39,10 +40,10 @@ public class CoordinatorController {
     }
 
     @PostMapping("/sprints")
-    public ResponseEntity<String> createSprints(@Valid @RequestBody SprintRequest request) {
+    public ResponseEntity<?> createSprints(@Valid @RequestBody SprintRequest request) {
         // Validate that endDate is not before startDate
         if (request.getEndDate().isBefore(request.getStartDate())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("End date cannot be before start date");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("End date cannot be before start date"));
         }
 
         // Create and save the sprint
@@ -52,14 +53,14 @@ public class CoordinatorController {
 
         Sprint savedSprint = sprintRepository.save(sprint);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body("Sprint created with ID: " + savedSprint.getId());
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedSprint);
     }
 
     @PostMapping("/deliverables")
-    public ResponseEntity<Deliverable> createDeliverable(@Valid @RequestBody CreateDeliverableRequest request) {
+    public ResponseEntity<?> createDeliverable(@Valid @RequestBody CreateDeliverableRequest request) {
         // Validate that reviewDeadline is not before submissionDeadline
         if (request.getReviewDeadline().isBefore(request.getSubmissionDeadline())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Review deadline cannot be before submission deadline"));
         }
 
         // Create and save the deliverable
@@ -75,35 +76,31 @@ public class CoordinatorController {
     }
 
     @PatchMapping("/sprints/{id}/target")
-    public ResponseEntity<String> updateSprintTarget(@PathVariable UUID id,
+    public ResponseEntity<ErrorMessage> updateSprintTarget(@PathVariable UUID id,
             @Valid @RequestBody UpdateSprintTargetRequest request) {
         // Check if sprint exists
-        if (!sprintRepository.existsById(id)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Sprint not found with ID: " + id);
+        var sprint = sprintRepository.findById(id);
+        if (sprint.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage("Sprint not found with ID: " + id));
         }
 
         // Retrieve the sprint and update the target
-        Sprint sprint = sprintRepository.findById(id).get();
-        sprint.setStoryPointTarget(request.getTargetStoryPoint());
-        sprintRepository.save(sprint);
+        sprint.get().setStoryPointTarget(request.getStoryPointTarget());
+        sprintRepository.save(sprint.get());
 
-        return ResponseEntity.status(HttpStatus.OK).body("Sprint target updated successfully");
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PostMapping("/students/upload")
-    public ResponseEntity<String> uploadStudentData(@Valid @RequestBody StudentUploadRequest request) {
+    public ResponseEntity<ErrorMessage> uploadStudentData(@Valid @RequestBody StudentUploadRequest request) {
         if (request.getStudentIds().size() != request.getStudentIds().stream().distinct().count()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Duplicate student IDs found in the request");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Duplicate student IDs found in the request"));
         }
 
         for (String studentId : request.getStudentIds()) {
-            if (studentId == null || studentId.trim().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Invalid student ID format: " + studentId);
-            }
             if (studentRepository.existsByStudentId(studentId)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Id " + studentId + " already exists in the database");
+                        .body(new ErrorMessage("Id " + studentId + " already exists in the database"));
             }
         }
 
@@ -114,11 +111,11 @@ public class CoordinatorController {
         }).toList();
 
         if (students.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No valid student IDs provided");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("No valid student IDs provided"));
         }
 
         studentRepository.saveAll(students);
 
-        return ResponseEntity.status(HttpStatus.OK).body("Student data uploaded successfully");
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

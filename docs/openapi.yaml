@@ -31,9 +31,21 @@ components:
           type: string
         role:
           type: string
-          enum: [ADMIN, COORDINATOR, PROFESSOR]
-        isFirstLogin:
+          enum: [Admin, Coordinator, Professor]
+        firstLogin:
           type: boolean
+
+    StudentUserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        githubUsername:
+          type: string
+        role:
+          type: string
+          enum: [Student]
 
     LoginResponse:
       type: object
@@ -43,18 +55,27 @@ components:
         userInfo:
           $ref: '#/components/schemas/StaffUserInfo'
 
+    GithubLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        userInfo:
+          $ref: '#/components/schemas/StudentUserInfo'
+
     Sprint:
       type: object
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
         startDate:
           type: string
           format: date
         endDate:
           type: string
           format: date
-        targetStoryPoint:
+        storyPointTarget:
           type: integer
           minimum: 1
 
@@ -62,7 +83,8 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: string
+          format: uuid
         name:
           type: string
         type:
@@ -74,7 +96,7 @@ components:
         reviewDeadline:
           type: string
           format: date-time
-        weightPercentage:
+        weight:
           type: number
 
     Criterion:
@@ -145,24 +167,22 @@ paths:
           application/json:
             schema:
               type: object
-              required: [accessToken, username, email, studentId]
+              required: [accessToken, username, studentId]
               properties:
                 accessToken:
                   type: string
                 username:
                   type: string
-                email:
-                  type: string
-                  format: email
                 studentId:
                   type: string
+                  pattern: '^[0-9]{11}$'
       responses:
         '200':
           description: Student validated, JWT issued
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginResponse'
+                $ref: '#/components/schemas/GithubLoginResponse'
         '400':
           description: Missing or malformed payload
           content:
@@ -268,6 +288,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: Professor with same mail already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: Server error during professor creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
 
   /coordinator/students/upload:
     post:
@@ -289,15 +321,8 @@ paths:
       responses:
         '201':
           description: Students imported
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  importedCount:
-                    type: integer
         '400':
-          description: Invalid student IDs
+          description: Invalid studentId format, empty list, already uploaded id or duplicate IDs in the list
           content:
             application/json:
               schema:
@@ -356,16 +381,17 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [targetStoryPoint]
+              required: [storyPointTarget]
               properties:
-                targetStoryPoint:
+                storyPointTarget:
                   type: integer
                   minimum: 1
       responses:
@@ -393,7 +419,8 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -403,7 +430,8 @@ paths:
               required: [deliverableId, contributionPercentage]
               properties:
                 deliverableId:
-                  type: integer
+                  type: string
+                  format: uuid
                 contributionPercentage:
                   type: number
                   minimum: 0
@@ -455,7 +483,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Deliverable'
         '400':
-          description: Mandatory fields missing
+          description: Review deadline is before the submission deadline, or missing required fields
           content:
             application/json:
               schema:
@@ -476,7 +504,8 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -524,16 +553,17 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [weightPercentage]
+              required: [weight]
               properties:
-                weightPercentage:
+                weight:
                   type: number
                   minimum: 0
                   exclusiveMinimum: true
@@ -542,7 +572,7 @@ paths:
           description: Weight updated
         '400':
           description: >
-            weightPercentage is not a positive number, or the new value would
+            weight is not a positive number, or the new value would
             cause total assigned weight across all deliverables to exceed 100%.
             E.g. "Total deliverable weight cannot exceed 100% or be lower than 0%. Currently assigned: X%."
           content:
@@ -571,7 +601,8 @@ paths:
           in: path
           required: true
           schema:
-            type: integer
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
