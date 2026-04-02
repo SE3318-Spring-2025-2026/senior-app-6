@@ -159,6 +159,36 @@ paths:
         "401":
           description: GitHub username not recognized
 
+  /api/coordinator/student/upload:
+    post:
+      summary: Upload a list of recognized student IDs
+      tags: [Coordinator]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [studentIds]
+              properties:
+                studentIds:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 11
+                    maxLength: 11
+      responses:
+        "200":
+          description: Upload succeeded
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
 components:
   schemas:
     AuthResponse:
