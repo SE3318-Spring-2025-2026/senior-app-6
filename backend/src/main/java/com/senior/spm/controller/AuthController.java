@@ -76,6 +76,8 @@ public class AuthController {
         staffUser.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         staffUserRepository.save(staffUser);
         passwordResetTokenRepository.delete(resetToken);
+	}
+	
     @PostMapping("/github")
     public GithubLoginResponse githubLogin(@Valid @RequestBody GithubLoginRequest request) {
         var student = studentRepository.findByStudentId(request.getStudentId())
