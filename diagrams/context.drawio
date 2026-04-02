@@ -1,0 +1,123 @@
+<mxfile host="65bd71144e">
+    <diagram id="5nyH-t0YxXCwuwHZ9EBh" name="Page-2">
+        <mxGraphModel dx="1245" dy="862" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1300" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="8NnlPGIfxjqf_4lL-sZN-23" style="edgeStyle=none;html=1;" parent="1" source="2" target="3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="8NnlPGIfxjqf_4lL-sZN-24" value="&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;Auth Data, Group Requests,&lt;/span&gt;&lt;br style=&quot;color: rgb(63, 63, 63); scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251);&quot;&gt;&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;Deliverable Submissions, Bindings&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="8NnlPGIfxjqf_4lL-sZN-23" vertex="1" connectable="0">
+                    <mxGeometry x="-0.0095" y="-2" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="2" value="&lt;b&gt;0.0&lt;/b&gt;&lt;br&gt;Senior Project&lt;br&gt;Management System" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;verticalAlign=middle;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="300" width="220" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Student" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="280" y="30" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="8NnlPGIfxjqf_4lL-sZN-26" style="edgeStyle=none;html=1;" parent="1" source="4" target="2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="8NnlPGIfxjqf_4lL-sZN-27" value="&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;Password Reset Links&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="8NnlPGIfxjqf_4lL-sZN-26" vertex="1" connectable="0">
+                    <mxGeometry x="0.0147" y="-1" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="4" value="Admin" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="650" y="20" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="Coordinator" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1220" width="130" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="Advisor / Jury" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="1190" y="620" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="External: GitHub API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="970" y="720" width="180" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="External: JIRA API" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=13;fontStyle=1;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="960" width="160" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="Professor Registration,&lt;br&gt;LLM API Keys" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" parent="1" target="4" edge="1">
+                    <mxGeometry x="0.4425" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="530" y="320"/>
+                            <mxPoint x="530" y="300"/>
+                            <mxPoint x="780" y="300"/>
+                            <mxPoint x="780" y="30"/>
+                        </Array>
+                        <mxPoint as="offset"/>
+                        <mxPoint x="530" y="320" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="13" value="Analytics, Group Statuses" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;entryX=0;entryY=0.3;" parent="1" target="5" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="910" y="333"/>
+                            <mxPoint x="910" y="12"/>
+                        </Array>
+                        <mxPoint x="550" y="333" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="14" value="Term Config, Rubrics,&lt;br&gt;Deadlines, Weights" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" target="2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1010" y="20"/>
+                            <mxPoint x="1010" y="355"/>
+                        </Array>
+                        <mxPoint x="590" y="364" as="targetPoint"/>
+                        <mxPoint x="1220" y="20" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="15" value="Assigned Groups, Dashboards,&lt;br&gt;Read-only Submissions" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;entryX=0;entryY=0.7;" parent="1" target="5" edge="1">
+                    <mxGeometry x="0.4008" relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="557" y="372"/>
+                            <mxPoint x="557" y="370"/>
+                            <mxPoint x="1160" y="370"/>
+                            <mxPoint x="1160" y="28"/>
+                        </Array>
+                        <mxPoint x="556" y="372" as="sourcePoint"/>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="16" value="Advisee Approvals, Reviews,&lt;br&gt;Sprint &amp; Rubric Grades" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;exitX=1;exitY=0.8;exitDy=0;entryX=0;entryY=0.5;" parent="1" source="2" target="6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="OAuth Requests, PAT Queries" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;exitX=1;exitY=0.95;exitDy=0;entryX=0;entryY=0.3;" parent="1" source="2" target="7" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="User Identity, PR Diffs,&lt;br&gt;PRComments" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;exitX=0;exitY=0.7;entryX=0.588;entryY=0.949;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="7" target="2" edge="1">
+                    <mxGeometry x="-0.1129" relative="1" as="geometry">
+                        <mxPoint x="-1" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="19" value="Project Key, Fetch Requests" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;exitX=0.186;exitY=0.884;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="2" target="8" edge="1">
+                    <mxGeometry x="-0.2419" relative="1" as="geometry">
+                        <mxPoint x="515.9600000000002" y="934.48" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="381" y="403"/>
+                            <mxPoint x="380" y="403"/>
+                        </Array>
+                        <mxPoint x="440" y="410" as="sourcePoint"/>
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="20" value="Active Stories, Assignees,&lt;br&gt;Story Points" style="edgeStyle=orthogonalEdgeStyle;html=1;fontSize=11;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="8" target="2" edge="1">
+                    <mxGeometry x="-0.1608" relative="1" as="geometry">
+                        <mxPoint x="310" y="960" as="sourcePoint"/>
+                        <Array as="points">
+                            <mxPoint x="240" y="980"/>
+                            <mxPoint x="240" y="355"/>
+                        </Array>
+                        <mxPoint y="-1" as="offset"/>
+                        <mxPoint x="360.0799999999999" y="400" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
