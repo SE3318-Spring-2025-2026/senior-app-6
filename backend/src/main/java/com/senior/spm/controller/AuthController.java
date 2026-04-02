@@ -1,5 +1,7 @@
 package com.senior.spm.controller;
 
+import java.time.LocalDateTime;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,11 +12,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.senior.spm.controller.request.GithubLoginRequest;
 import com.senior.spm.controller.request.LoginRequest;
-import com.senior.spm.controller.response.GithubLoginResponse;
+import com.senior.spm.controller.request.ResetPasswordRequest;
 import com.senior.spm.controller.response.LoginResponse;
-import com.senior.spm.entity.Student;
+import com.senior.spm.controller.response.GithubLoginResponse;
+import com.senior.spm.repository.PasswordResetTokenRepository;
 import com.senior.spm.repository.StudentRepository;
 import com.senior.spm.repository.StaffUserRepository;
+import com.senior.spm.entity.Student;
 import com.senior.spm.service.JWTService;
 
 import jakarta.validation.Valid;
@@ -26,13 +30,15 @@ public class AuthController {
     private final JWTService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final StaffUserRepository staffUserRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final StudentRepository studentRepository;
 
     public AuthController(JWTService jwtService, PasswordEncoder passwordEncoder, StaffUserRepository staffUserRepository,
-            StudentRepository studentRepository) {
+            PasswordResetTokenRepository passwordResetTokenRepository, StudentRepository studentRepository) {
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.staffUserRepository = staffUserRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.studentRepository = studentRepository;
     }
 
@@ -57,6 +63,19 @@ public class AuthController {
         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
     }
 
+    @PostMapping("/reset-password")
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        var resetToken = passwordResetTokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired token"));
+
+        if (resetToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or expired token");
+        }
+
+        var staffUser = resetToken.getStaff();
+        staffUser.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        staffUserRepository.save(staffUser);
+        passwordResetTokenRepository.delete(resetToken);
     @PostMapping("/github")
     public GithubLoginResponse githubLogin(@Valid @RequestBody GithubLoginRequest request) {
         var student = studentRepository.findByStudentId(request.getStudentId())
