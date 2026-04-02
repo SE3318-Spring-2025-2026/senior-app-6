@@ -2,9 +2,11 @@ package com.senior.spm.controller;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.dialect.lock.OptimisticEntityLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -67,6 +69,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
+    @Transactional
     public ResponseEntity<ErrorMessage> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         var resetToken = passwordResetTokenRepository.findByToken(request.getToken());
         if (resetToken.isEmpty()) {
@@ -82,8 +85,12 @@ public class AuthController {
         var staffUser = resetToken.get().getStaff();
         staffUser.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         staffUser.setFirstLogin(false);
-        staffUserRepository.save(staffUser);
-        passwordResetTokenRepository.delete(resetToken.get());
+        try {
+            staffUserRepository.save(staffUser);
+            passwordResetTokenRepository.delete(resetToken.get());
+        } catch (IllegalArgumentException | OptimisticEntityLockException e) {
+            throw new RuntimeException("Server error while resetting password: " + e.getMessage(), e);
+        }
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

@@ -253,7 +253,7 @@ paths:
 
   /admin/register-professor:
     post:
-      summary: Register a new professor and send password reset email
+      summary: Register a new professor and return the reset token for initial password setup
       tags: [Admin]
       requestBody:
         required: true
@@ -267,7 +267,14 @@ paths:
                   type: string
       responses:
         '201':
-          description: Professor created and reset email sent
+          description: Professor created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resetToken:
+                    type: string
         '403':
           description: Caller is not an Admin
           content:
