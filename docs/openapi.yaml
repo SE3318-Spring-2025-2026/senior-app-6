@@ -212,26 +212,12 @@ paths:
       responses:
         '200':
           description: Token is valid
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  isValid:
-                    type: boolean
-              example:
-                isValid: true
         '400':
           description: Token invalid, expired, or already used
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  isValid:
-                    type: boolean
-              example:
-                isValid: false
+                $ref: '#/components/schemas/ErrorMessage'
         '404':
           description: Token not found
           content:

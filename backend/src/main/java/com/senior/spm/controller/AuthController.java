@@ -5,11 +5,12 @@ import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.senior.spm.controller.request.GithubLoginRequest;
 import com.senior.spm.controller.request.LoginRequest;
@@ -45,7 +46,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) throws ResponseStatusException {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         var mail = request.getMail();
 
         var staffUser = staffUserRepository.findByMail(mail);
@@ -73,13 +74,31 @@ public class AuthController {
         }
 
         if (resetToken.get().getExpiresAt().isBefore(LocalDateTime.now())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Invalid or expired token"));
+            passwordResetTokenRepository.delete(resetToken.get());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorMessage("Password reset token has expired, please request a new one"));
         }
 
         var staffUser = resetToken.get().getStaff();
         staffUser.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        staffUser.setFirstLogin(false);
         staffUserRepository.save(staffUser);
         passwordResetTokenRepository.delete(resetToken.get());
+
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @GetMapping("/reset-password")
+    public ResponseEntity<ErrorMessage> validateResetToken(@RequestParam String token) {
+        var resetToken = passwordResetTokenRepository.findByToken(token);
+        if (resetToken.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage("Token is not found"));
+        }
+        if (resetToken.get().getExpiresAt().isBefore(LocalDateTime.now())) {
+            passwordResetTokenRepository.delete(resetToken.get());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Token has expired"));
+        }
+        var staffUser = resetToken.get().getStaff();
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

@@ -35,9 +35,6 @@ public class PasswordResetToken {
     private String token;
 
     @Column(nullable = false)
-    private boolean used = false;
-
-    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
