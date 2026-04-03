@@ -7,10 +7,6 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, KeyRound, Loader2, Lock, ShieldCheck } from "lucide-react";
-import {
-  validateResetPasswordToken,
-  setPasswordWithToken,
-} from "@/lib/api-client";
 
 const resetPasswordSchema = z
   .object({
@@ -30,17 +26,37 @@ type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 type TokenValidationState = "loading" | "invalid" | "valid";
 
-/**
- * Reset Password Page Content
- * Validates token and allows user to set new password
- */
+function isMockTokenValid(token: string | null): boolean {
+  if (!token) {
+    return false;
+  }
+
+  const normalizedToken = token.trim().toLowerCase();
+  if (!normalizedToken || normalizedToken === "invalid" || normalizedToken === "expired") {
+    return false;
+  }
+
+  return true;
+}
+
+function mockSetPassword(token: string, newPassword: string): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log("Mock POST /api/auth/reset-password", {
+        token,
+        newPasswordLength: newPassword.length,
+      });
+      resolve();
+    }, 800);
+  });
+}
+
 function ResetPasswordPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = useMemo(() => searchParams.get("token"), [searchParams]);
 
-  const [tokenValidationState, setTokenValidationState] =
-    useState<TokenValidationState>("loading");
+  const [tokenValidationState, setTokenValidationState] = useState<TokenValidationState>("loading");
   const [successMessage, setSuccessMessage] = useState("");
 
   const form = useForm<ResetPasswordFormValues>({
@@ -52,51 +68,28 @@ function ResetPasswordPageContent() {
     mode: "onSubmit",
   });
 
-  /**
-   * Validate token on component mount
-   * Calls GET /api/auth/reset-password?token=...
-   */
   useEffect(() => {
-    const validateToken = async () => {
-      if (!token) {
-        setTokenValidationState("invalid");
-        return;
-      }
+    const validationTimer = window.setTimeout(() => {
+      const isValid = isMockTokenValid(token);
+      setTokenValidationState(isValid ? "valid" : "invalid");
+    }, 1000);
 
-      try {
-        await validateResetPasswordToken(token);
-        setTokenValidationState("valid");
-      } catch (err) {
-        setTokenValidationState("invalid");
-      }
+    return () => {
+      window.clearTimeout(validationTimer);
     };
-
-    validateToken();
   }, [token]);
 
-  /**
-   * Handle password reset form submission
-   * Calls POST /api/auth/reset-password with token and newPassword
-   */
   const handleSubmit = form.handleSubmit(async (values) => {
     if (!token) {
       return;
     }
 
-    try {
-      await setPasswordWithToken(token, values.newPassword);
-      setSuccessMessage("Password set successfully. Redirecting...");
+    await mockSetPassword(token, values.newPassword);
+    setSuccessMessage("Password set successfully. Redirecting...");
 
-      window.setTimeout(() => {
-        router.push("/login");
-      }, 1400);
-    } catch (err) {
-      const errorMsg =
-        err && typeof err === "object" && "message" in err
-          ? String(err.message)
-          : "Failed to set password";
-      form.setError("root", { message: errorMsg });
-    }
+    window.setTimeout(() => {
+      router.push("/login");
+    }, 1400);
   });
 
   return (

@@ -163,7 +163,8 @@ export default function CoordinatorDeliverablesPage() {
 
   /**
    * Fetch deliverables from backend on component mount
-   * Calls GET /coordinator/deliverables endpoint
+   * Note: Currently no GET endpoint exists, so this fetches seeded data
+   * TODO: Implement GET /coordinator/deliverables endpoint
    */
   useEffect(() => {
     const fetchDeliverables = async () => {
@@ -171,14 +172,21 @@ export default function CoordinatorDeliverablesPage() {
       setFetchError(null);
 
       try {
-        const token = getAuthToken();
-        if (!token) {
-          router.push("/login");
-          return;
-        }
-        const { getDeliverables } = await import("@/lib/api-client");
-        const data = await getDeliverables(token);
-        setDeliverables(data);
+        // TODO: Replace with real API call when endpoint is available
+        // const token = getAuthToken();
+        // const data = await getDeliverables(token);
+        // setDeliverables(data);
+
+        // For now, use mock data
+        setDeliverables([
+          {
+            id: "seed-1",
+            name: "Initial Project Proposal",
+            type: "Proposal",
+            submissionDeadline: "2026-04-08T17:00",
+            reviewDeadline: "2026-04-10T17:00",
+          },
+        ]);
       } catch (err) {
         const errorMsg =
           err && typeof err === "object" && "message" in err

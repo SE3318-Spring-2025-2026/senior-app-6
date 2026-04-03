@@ -39,19 +39,6 @@ type StudentFormValues = z.infer<typeof studentSchema>;
 type AuthTab = "students" | "faculty";
 
 /**
- * Helper function to map role to dashboard URL
- */
-function getRoleDashboardUrl(role: string): string {
-  const roleMap: Record<string, string> = {
-    ADMIN: "/admin/dashboard",
-    COORDINATOR: "/coordinator/dashboard",
-    PROFESSOR: "/professor/dashboard",
-    STUDENT: "/student/dashboard",
-  };
-  return roleMap[role] || "/403";
-}
-
-/**
  * Main login page content component
  * Handles both faculty/admin and student authentication flows
  */
@@ -88,35 +75,21 @@ function LoginPageContent() {
   /**
    * Handle faculty/admin login via email and password
    * Communicates with backend API for authentication
-   * Stores JWT token and redirects to role-specific dashboard
    */
   const handleFacultySubmit = facultyForm.handleSubmit(async (values) => {
     setFacultyErrorMessage("");
 
     try {
       const response = await loginFaculty(values.email, values.password);
-      // Store token in localStorage
+      // Store token in localStorage (consider using httpOnly cookie in production)
       localStorage.setItem("authToken", response.token);
-      // Store user info including role for role-based routing
-      localStorage.setItem("userInfo", JSON.stringify(response.userInfo));
-      
-      // Redirect to role-specific dashboard
-      const dashboardUrl = getRoleDashboardUrl(response.userInfo.role);
-      router.push(dashboardUrl);
+      // Redirect to dashboard
+      router.push("/dashboard");
     } catch (error: unknown) {
-      const errorObj = error as any;
-      let errorMsg = "Authentication failed. Please try again.";
-      
-      // Handle specific error cases
-      if (errorObj.status === 403) {
-        errorMsg = "Your student ID is not registered in the system.";
-        router.push("?error=StudentNotRegistered");
-      } else if (errorObj.status === 401) {
-        errorMsg = "Invalid email or password.";
-      } else if (errorObj.message) {
-        errorMsg = String(errorObj.message);
-      }
-      
+      const errorMsg =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "Authentication failed. Please try again.";
       setFacultyErrorMessage(errorMsg);
     }
   });
@@ -124,7 +97,6 @@ function LoginPageContent() {
   /**
    * Handle student GitHub login
    * Initiates the OAuth flow with GitHub
-   * For student login, role is determined post-GitHub authentication
    */
   const handleStudentSubmit = studentForm.handleSubmit(async (values) => {
     setStudentErrorMessage("");
@@ -132,25 +104,37 @@ function LoginPageContent() {
     try {
       const response = await loginStudent(values.studentId);
       if (response.redirectUrl) {
-        // GitHub OAuth redirect
         window.location.href = response.redirectUrl;
       } else {
-        // If no redirect URL, assume student login returns userInfo
-        // Store token and redirect to student dashboard
-        router.push("/student/dashboard");
+        // Fallback if no redirect URL provided
+        router.push("/dashboard");
       }
     } catch (error: unknown) {
-      const errorObj = error as any;
-      let errorMsg = "GitHub login failed. Please try again.";
-      
-      // Handle 403 Forbidden - student not registered
-      if (errorObj.status === 403) {
-        errorMsg = "Your student ID is not registered in the system.";
-        setStudentErrorMessage(errorMsg);
-      } else if (errorObj.message) {
-        errorMsg = String(errorObj.message);
-        setStudentErrorMessage(errorMsg);
+      const errorMsg =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "GitHub login failed. Please try again.";
+      setStudentErrorMessage(errorMsg);
+    }
+  });
+
+  const handleStudentSubmit = studentForm.handleSubmit(async (values) => {
+    setStudentErrorMessage("");
+
+    try {
+      const response = await loginStudent(values.studentId);
+      if (response.redirectUrl) {
+        window.location.href = response.redirectUrl;
+      } else {
+        // Fallback if no redirect URL provided
+        router.push("/dashboard");
       }
+    } catch (error: unknown) {
+      const errorMsg =
+        error && typeof error === "object" && "message" in error
+          ? String(error.message)
+          : "GitHub login failed. Please try again.";
+      setStudentErrorMessage(errorMsg);
     }
   });
 
@@ -355,6 +339,8 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
+      <section className="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-lg transition-colors dark:border-white/10 dark:bg-black/40 dark:text-[aliceblue] dark:backdrop-blur-xl md:p-8">
         <header className="mb-6 space-y-3 text-center">
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl border border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-300/30 dark:bg-blue-400/10 dark:text-blue-300">
             <LayoutDashboard className="h-5 w-5" aria-hidden="true" />

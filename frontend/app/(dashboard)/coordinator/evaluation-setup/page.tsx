@@ -110,7 +110,7 @@ export default function CoordinatorEvaluationSetupPage() {
 
   /**
    * Handle rubric submission
-   * Validates form, calls backend API, shows success message
+   * Validates form, calls backend API (TODO), shows success message
    */
   const onSubmit = form.handleSubmit(async (values) => {
     try {
@@ -119,23 +119,14 @@ export default function CoordinatorEvaluationSetupPage() {
         throw new Error("Authentication required");
       }
 
-      const { createRubric } = await import("@/lib/api-client");
-      await createRubric(values.deliverableId, values.criteria, token);
-      
-      console.log("✓ Rubric created successfully");
-      alert("✓ Rubric created successfully");
-      
-      // Reset form
-      form.reset({
-        deliverableId: "",
-        criteria: [
-          {
-            criterionName: "Code Quality",
-            weight: 30,
-            gradingType: "Soft",
-          },
-        ],
-      });
+      // TODO: Implement backend API call
+      // const response = await createRubric(values, token);
+      // Show success message and reset form
+
+      console.log("Rubric data:", values);
+      alert(
+        "✓ Rubric created successfully (API integration pending)"
+      );
     } catch (err) {
       const errorMsg =
         err && typeof err === "object" && "message" in err
