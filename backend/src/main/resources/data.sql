@@ -20,3 +20,28 @@ VALUES
 		UUID_TO_BIN ("00000000-0000-0000-0000-000000000002"),
 		"23070006018"
 	);
+INSERT
+	IGNORE
+INTO
+	staff_user (id, first_login, mail, password_hash, role)
+VALUES
+	(
+		UUID_TO_BIN ("00000000-0000-0000-0000-000000000003"),
+		FALSE,
+		"coordinator@test.com",
+		"$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq",
+		"COORDINATOR"
+	);
+
+INSERT
+	IGNORE
+INTO
+	staff_user (id, first_login, mail, password_hash, role)
+VALUES
+	(
+		UUID_TO_BIN ("00000000-0000-0000-0000-000000000004"),
+		FALSE,
+		"professor@test.com",
+		"$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq",
+		"PROFESSOR"
+	);
