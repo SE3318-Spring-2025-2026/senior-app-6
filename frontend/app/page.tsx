@@ -1,65 +1,138 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, LayoutDashboard, GraduationCap, LogIn } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950">
+      {/* Navigation */}
+      <nav className="border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2">
+            <LayoutDashboard className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <span className="text-xl font-bold text-slate-900 dark:text-white">
+              SPM Dashboard
+            </span>
+          </div>
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+          >
+            <LogIn className="h-4 w-4" aria-hidden="true" />
+            Sign In
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-2xl space-y-8 text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
+            Senior Project Management System
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+          <p className="text-lg text-slate-600 dark:text-slate-300">
+            A comprehensive platform for managing university senior projects,
+            coordinating teams, and tracking deliverables with ease.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link
+              href="/auth/login"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
+              <LogIn className="h-4 w-4" aria-hidden="true" />
+              Get Started
+            </Link>
             <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              href="#features"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
             >
-              Learning
-            </a>{" "}
-            center.
+              Learn More
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <h2 className="mb-12 text-center text-3xl font-bold text-slate-900 dark:text-white">
+            Key Features
+          </h2>
+
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {/* Feature 1 */}
+            <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-800">
+              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
+                <LayoutDashboard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+                Dashboard
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Centralized project management with real-time updates and
+                notifications.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-800">
+              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900">
+                <GraduationCap className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+                Team Management
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Organize students and faculty, assign roles, and manage
+                permissions seamlessly.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-800">
+              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900">
+                <ArrowRight className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+                Workflow Management
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Define and track project phases, milestones, and deliverables.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action Section */}
+      <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="rounded-lg border border-slate-200 bg-blue-50 p-8 text-center dark:border-slate-800 dark:bg-blue-900/20">
+          <h2 className="mb-4 text-2xl font-bold text-slate-900 dark:text-white">
+            Ready to get started?
+          </h2>
+          <p className="mb-6 text-slate-600 dark:text-slate-300">
+            Sign in with your university credentials or GitHub account.
+          </p>
+          <Link
+            href="/auth/login"
+            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+          >
+            <LogIn className="h-4 w-4" aria-hidden="true" />
+            Sign In Now
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <p className="text-center text-sm text-slate-600 dark:text-slate-400">
+            © 2026 Senior Project Management System. All rights reserved.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </footer>
+    </main>
   );
 }
