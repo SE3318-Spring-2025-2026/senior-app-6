@@ -121,8 +121,7 @@ export default function CoordinatorSprintSetupPage() {
 
   /**
    * Fetch sprints from backend on component mount
-   * Note: Currently no GET endpoint exists, so using mock data
-   * TODO: Implement GET /coordinator/sprints endpoint
+   * Calls GET /coordinator/sprints endpoint
    */
   useEffect(() => {
     const fetchSprints = async () => {
@@ -130,26 +129,14 @@ export default function CoordinatorSprintSetupPage() {
       setFetchError(null);
 
       try {
-        // TODO: Replace with real API call when endpoint is available
-        // const token = getAuthToken();
-        // const data = await getSprints(token);
-        // setSprints(data);
-
-        // For now, use mock data
-        setSprints([
-          {
-            id: "sprint-1",
-            startDate: "2026-04-01",
-            endDate: "2026-04-14",
-            storyPointTarget: 50,
-          },
-          {
-            id: "sprint-2",
-            startDate: "2026-04-15",
-            endDate: "2026-04-28",
-            storyPointTarget: 60,
-          },
-        ]);
+        const token = getAuthToken();
+        if (!token) {
+          router.push("/login");
+          return;
+        }
+        const { getSprints } = await import("@/lib/api-client");
+        const data = await getSprints(token);
+        setSprints(data);
       } catch (err) {
         const errorMsg =
           err && typeof err === "object" && "message" in err
