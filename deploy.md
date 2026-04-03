@@ -117,3 +117,4 @@ Frontend runs on `http://localhost:3000`
 - `application.properties` is gitignored — never commit it
 - Dont forget to create `application.properties` inside `src/main/resources/application.properties` and fill it with your credentials
 - jwt.token needs a base64 encoded string which is generated from a string that is at least 32 characters long
+- for testing purposes the password of the adminn is `test`
