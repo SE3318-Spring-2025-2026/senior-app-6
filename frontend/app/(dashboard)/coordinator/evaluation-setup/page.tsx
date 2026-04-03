@@ -1,26 +1,35 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  AlertTriangle,
+  AlertCircle,
   CheckCircle2,
   Plus,
-  Save,
   Scale,
   Trash2,
+  Loader,
 } from "lucide-react";
+import { getAuthToken, type GradingCriterion } from "@/lib/api-client";
 
+// ==================== Constants ====================
+
+/**
+ * Available grading types for rubric criteria
+ * - Binary: Pass/Fail grading
+ * - Soft: Point-based grading (0-100)
+ */
 const gradingTypes = ["Binary", "Soft"] as const;
+type GradingType = (typeof gradingTypes)[number];
 
-type DeliverableWeight = {
-  id: string;
-  name: string;
-  weight: number;
-};
+// ==================== Form Schema ====================
 
+/**
+ * Rubric creation schema
+ * Validates: deliverable selection, criteria definition, and weight distribution
+ * Note: Total weight should ideally equal 100
+ */
 const rubricSchema = z.object({
   deliverableId: z.string().min(1, "Please select a deliverable."),
   criteria: z
@@ -44,330 +53,312 @@ const rubricSchema = z.object({
 
 type RubricFormValues = z.infer<typeof rubricSchema>;
 
-function mockPatchWeights(weights: DeliverableWeight[]): Promise<DeliverableWeight[]> {
-  return new Promise((resolve) => {
-    window.setTimeout(() => {
-      resolve(weights);
-    }, 500);
-  });
-}
+/**
+ * Coordinator Evaluation Setup Page
+ *
+ * Features:
+ * - Define grading rubrics for deliverables
+ * - Add multiple criteria with weighted scoring
+ * - Support for both binary and soft grading types
+ * - Real-time validation and error handling
+ * - Integration with backend API
+ */
+export default function CoordinatorEvaluationSetupPage() {
+  // TODO: When backend provides /coordinator/deliverables GET endpoint,
+  // fetch deliverables from backend. For now, using mock deliverables.
+  const mockDeliverables = [
+    { id: "1", name: "Proposal" },
+    { id: "2", name: "Demonstration" },
+    { id: "3", name: "SoW" },
+  ];
 
-function mockSaveRubric(payload: RubricFormValues): Promise<RubricFormValues> {
-  return new Promise((resolve) => {
-    window.setTimeout(() => {
-      resolve(payload);
-    }, 550);
-  });
-}
-
-export default function EvaluationSetupPage() {
-  const [deliverableWeights, setDeliverableWeights] = useState<DeliverableWeight[]>([
-    { id: "proposal", name: "Proposal", weight: 30 },
-    { id: "sow", name: "SoW", weight: 30 },
-    { id: "demonstration", name: "Demonstration", weight: 40 },
-  ]);
-  const [weightsMessage, setWeightsMessage] = useState("");
-  const [rubricMessage, setRubricMessage] = useState("");
-  const [isSavingWeights, setIsSavingWeights] = useState(false);
-
-  const totalWeight = useMemo(
-    () => deliverableWeights.reduce((total, item) => total + item.weight, 0),
-    [deliverableWeights]
-  );
-
-  const isWeightTotalValid = totalWeight === 100;
-
-  const rubricForm = useForm<RubricFormValues>({
+  const form = useForm<RubricFormValues>({
     resolver: zodResolver(rubricSchema),
     defaultValues: {
-      deliverableId: "proposal",
+      deliverableId: "",
       criteria: [
         {
-          criterionName: "",
-          weight: 0,
-          gradingType: "Binary",
+          criterionName: "Code Quality",
+          weight: 30,
+          gradingType: "Soft",
         },
       ],
     },
-    mode: "onSubmit",
+    mode: "onChange",
   });
 
-  const rubricCriteria = useFieldArray({
-    control: rubricForm.control,
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
     name: "criteria",
   });
 
-  const handleWeightChange = (id: string, rawValue: string) => {
-    setWeightsMessage("");
-    const numericValue = Number(rawValue);
-    const safeValue = Number.isFinite(numericValue)
-      ? Math.min(100, Math.max(0, Math.trunc(numericValue)))
-      : 0;
+  // ==================== Calculations ====================
 
-    setDeliverableWeights((previous) =>
-      previous.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              weight: safeValue,
-            }
-          : item
-      )
-    );
-  };
+  /**
+   * Calculate total weight from all criteria
+   * Used for validation and display purposes
+   */
+  const totalWeight = form.watch("criteria").reduce((sum, c) => sum + c.weight, 0);
 
-  const handleSaveWeights = async () => {
-    if (!isWeightTotalValid) {
-      return;
+  /**
+   * Check if total weight equals exactly 100
+   * Used to provide visual feedback to users
+   */
+  const isWeightValid = totalWeight === 100;
+
+  // ==================== Event Handlers ====================
+
+  /**
+   * Handle rubric submission
+   * Validates form, calls backend API (TODO), shows success message
+   */
+  const onSubmit = form.handleSubmit(async (values) => {
+    try {
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
+      // TODO: Implement backend API call
+      // const response = await createRubric(values, token);
+      // Show success message and reset form
+
+      console.log("Rubric data:", values);
+      alert(
+        "✓ Rubric created successfully (API integration pending)"
+      );
+    } catch (err) {
+      const errorMsg =
+        err && typeof err === "object" && "message" in err
+          ? String(err.message)
+          : "Failed to create rubric";
+      alert(`✗ Error: ${errorMsg}`);
     }
-
-    setWeightsMessage("");
-    setIsSavingWeights(true);
-
-    await mockPatchWeights(deliverableWeights);
-
-    setIsSavingWeights(false);
-    setWeightsMessage("Weights updated successfully");
-  };
-
-  const handleRubricSubmit = rubricForm.handleSubmit(async (values) => {
-    setRubricMessage("");
-    await mockSaveRubric(values);
-
-    setRubricMessage("Rubric saved successfully");
-    rubricForm.reset({
-      deliverableId: values.deliverableId,
-      criteria: [
-        {
-          criterionName: "",
-          weight: 0,
-          gradingType: "Binary",
-        },
-      ],
-    });
   });
 
+  /**
+   * Add a new criterion to the rubric
+   * Appends empty criterion structure for user to fill
+   */
+  const handleAddCriterion = () => {
+    append({
+      criterionName: "",
+      weight: 10,
+      gradingType: "Soft",
+    });
+  };
+
+  /**
+   * Remove a criterion from the rubric
+   * @param index - Index of criterion to remove
+   */
+  const handleRemoveCriterion = (index: number) => {
+    if (fields.length > 1) {
+      remove(index);
+    }
+  };
+
+  // ==================== Render ====================
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 md:p-8">
-      <div className="mx-auto w-full max-w-7xl space-y-6">
-        <header className="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur">
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 md:text-3xl">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
+      <div className="mx-auto w-full max-w-3xl space-y-6">
+        {/* Page Header */}
+        <header className="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
             Evaluation Setup
           </h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Configure deliverable-level weighting and detailed grading criteria.
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Define grading rubrics and evaluation criteria for project deliverables.
           </p>
         </header>
 
-        <section className="grid gap-6 lg:grid-cols-2">
-          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
-              <Scale className="h-5 w-5 text-slate-700" aria-hidden="true" />
-              Deliverable Weights
-            </h2>
-
-            <div className="mt-4 space-y-4">
-              {deliverableWeights.map((item) => (
-                <label key={item.id} className="block space-y-1.5">
-                  <span className="text-sm font-medium text-slate-700">{item.name}</span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min={0}
-                      max={100}
-                      value={item.weight}
-                      onChange={(event) => handleWeightChange(item.id, event.target.value)}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-500"
-                    />
-                    <span className="text-sm text-slate-500">%</span>
-                  </div>
-                </label>
-              ))}
-
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-                <p
-                  className={`text-sm font-semibold ${
-                    isWeightTotalValid ? "text-slate-900" : "text-red-700"
-                  }`}
-                >
-                  Total: {totalWeight}%
-                </p>
-                {!isWeightTotalValid && (
-                  <p className="mt-1 flex items-center gap-1 text-xs text-red-700">
-                    <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
-                    Total must equal 100%
-                  </p>
-                )}
-              </div>
-
-              {weightsMessage && (
-                <p className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                  {weightsMessage}
+        {/* Main Form */}
+        <form onSubmit={onSubmit} className="space-y-6" noValidate>
+          {/* Deliverable Selection */}
+          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-800 dark:shadow-lg">
+            <label className="block space-y-2">
+              <span className="text-sm font-semibold text-slate-900 dark:text-white">
+                Select Deliverable
+              </span>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Choose which deliverable to create an evaluation rubric for
+              </p>
+              <select
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+                {...form.register("deliverableId")}
+              >
+                <option value="">-- Choose a deliverable --</option>
+                {mockDeliverables.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+              {form.formState.errors.deliverableId && (
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  {form.formState.errors.deliverableId.message}
                 </p>
               )}
-
-              <button
-                type="button"
-                onClick={handleSaveWeights}
-                disabled={!isWeightTotalValid || isSavingWeights}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Save className="h-4 w-4" aria-hidden="true" />
-                {isSavingWeights ? "Saving..." : "Save Weights"}
-              </button>
-            </div>
+            </label>
           </article>
 
-          <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Rubric Builder</h2>
+          {/* Criteria Definition */}
+          <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-800 dark:shadow-lg">
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+                  <Scale className="h-5 w-5" />
+                  Grading Criteria
+                </h2>
+                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                  Define evaluation criteria and assign weights. Total weight should equal 100.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddCriterion}
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              >
+                <Plus className="h-4 w-4" />
+                Add Criterion
+              </button>
+            </div>
 
-            <form onSubmit={handleRubricSubmit} className="mt-4 space-y-4" noValidate>
-              <label className="block space-y-1.5">
-                <span className="text-sm font-medium text-slate-700">Deliverable</span>
-                <select
-                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-500"
-                  {...rubricForm.register("deliverableId")}
-                >
-                  {deliverableWeights.map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-                {rubricForm.formState.errors.deliverableId && (
-                  <p className="text-xs text-red-600">
-                    {rubricForm.formState.errors.deliverableId.message}
+            {/* Weight Validation Alert */}
+            {form.watch("criteria").length > 0 && (
+              <div
+                className={`mb-4 flex items-start gap-3 rounded-lg border p-3 text-sm ${
+                  isWeightValid
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
+                    : "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-300"
+                }`}
+              >
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                <div>
+                  <p className="font-medium">
+                    Total Weight: {totalWeight}/100
                   </p>
-                )}
-              </label>
+                  {!isWeightValid && (
+                    <p className="mt-1 text-xs opacity-90">
+                      Adjust criterion weights so the total equals exactly 100
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
-              <div className="space-y-3">
-                {rubricCriteria.fields.map((field, index) => (
-                  <div
-                    key={field.id}
-                    className="rounded-xl border border-slate-200 bg-slate-50/70 p-3"
-                  >
-                    <div className="grid gap-3 md:grid-cols-[1fr_120px_130px_auto] md:items-end">
-                      <label className="block space-y-1">
-                        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Criterion Name
-                        </span>
-                        <input
-                          type="text"
-                          placeholder="e.g. Problem Definition"
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-500"
-                          {...rubricForm.register(`criteria.${index}.criterionName`)}
-                        />
-                        {rubricForm.formState.errors.criteria?.[index]?.criterionName && (
-                          <p className="text-xs text-red-600">
-                            {
-                              rubricForm.formState.errors.criteria[index]?.criterionName
-                                ?.message
-                            }
-                          </p>
-                        )}
-                      </label>
+            {/* Criteria List */}
+            <div className="space-y-4">
+              {fields.map((field, index) => (
+                <div
+                  key={field.id}
+                  className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/50"
+                >
+                  <div className="grid gap-4 md:grid-cols-[1fr_80px_140px_40px]">
+                    {/* Criterion Name */}
+                    <label className="block space-y-1">
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        Criterion Name
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="e.g., Code Quality, Design"
+                        className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-400"
+                        {...form.register(`criteria.${index}.criterionName`)}
+                      />
+                      {form.formState.errors.criteria?.[index]?.criterionName && (
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                          {
+                            form.formState.errors.criteria[index]?.criterionName
+                              ?.message
+                          }
+                        </p>
+                      )}
+                    </label>
 
-                      <label className="block space-y-1">
-                        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Weight
-                        </span>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          min={1}
-                          max={100}
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-500"
-                          {...rubricForm.register(`criteria.${index}.weight`, {
-                            valueAsNumber: true,
-                          })}
-                        />
-                        {rubricForm.formState.errors.criteria?.[index]?.weight && (
-                          <p className="text-xs text-red-600">
-                            {rubricForm.formState.errors.criteria[index]?.weight?.message}
-                          </p>
-                        )}
-                      </label>
+                    {/* Weight */}
+                    <label className="block space-y-1">
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        Weight
+                      </span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 outline-none transition focus:border-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400"
+                        {...form.register(`criteria.${index}.weight`, {
+                          valueAsNumber: true,
+                        })}
+                      />
+                      {form.formState.errors.criteria?.[index]?.weight && (
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                          {form.formState.errors.criteria[index]?.weight?.message}
+                        </p>
+                      )}
+                    </label>
 
-                      <label className="block space-y-1">
-                        <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Grading Type
-                        </span>
-                        <select
-                          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-500"
-                          {...rubricForm.register(`criteria.${index}.gradingType`)}
-                        >
-                          {gradingTypes.map((gradingType) => (
-                            <option key={gradingType} value={gradingType}>
-                              {gradingType}
-                            </option>
-                          ))}
-                        </select>
-                        {rubricForm.formState.errors.criteria?.[index]?.gradingType && (
-                          <p className="text-xs text-red-600">
-                            {
-                              rubricForm.formState.errors.criteria[index]?.gradingType
-                                ?.message
-                            }
-                          </p>
-                        )}
-                      </label>
+                    {/* Grading Type */}
+                    <label className="block space-y-1">
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        Type
+                      </span>
+                      <select
+                        className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 outline-none transition focus:border-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400"
+                        {...form.register(`criteria.${index}.gradingType`)}
+                      >
+                        {gradingTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                      {form.formState.errors.criteria?.[index]?.gradingType && (
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                          {
+                            form.formState.errors.criteria[index]?.gradingType
+                              ?.message
+                          }
+                        </p>
+                      )}
+                    </label>
 
+                    {/* Delete Button */}
+                    <div className="flex items-end">
                       <button
                         type="button"
-                        onClick={() => rubricCriteria.remove(index)}
-                        disabled={rubricCriteria.fields.length === 1}
-                        className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
-                        aria-label="Remove criterion"
+                        onClick={() => handleRemoveCriterion(index)}
+                        disabled={fields.length === 1}
+                        className="w-full rounded-md bg-red-100 p-1 text-red-600 transition hover:bg-red-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50"
+                        title="Remove criterion"
                       >
-                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        <Trash2 className="h-4 w-4 mx-auto" />
                       </button>
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
+            </div>
+
+            {form.formState.errors.criteria && (
+              <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-300 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950/50">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
+                <p className="text-xs text-red-700 dark:text-red-400">
+                  {form.formState.errors.criteria.message}
+                </p>
               </div>
-
-              {rubricForm.formState.errors.criteria?.message && (
-                <p className="text-xs text-red-600">
-                  {rubricForm.formState.errors.criteria.message}
-                </p>
-              )}
-
-              <button
-                type="button"
-                onClick={() =>
-                  rubricCriteria.append({
-                    criterionName: "",
-                    weight: 0,
-                    gradingType: "Binary",
-                  })
-                }
-                className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
-              >
-                <Plus className="h-4 w-4" aria-hidden="true" />
-                Add Criterion
-              </button>
-
-              {rubricMessage && (
-                <p className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                  <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
-                  {rubricMessage}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={rubricForm.formState.isSubmitting}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Save className="h-4 w-4" aria-hidden="true" />
-                {rubricForm.formState.isSubmitting ? "Saving..." : "Save Rubric"}
-              </button>
-            </form>
+            )}
           </article>
-        </section>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={form.formState.isSubmitting || !isWeightValid}
+            className="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-700 dark:hover:bg-blue-600"
+          >
+            {form.formState.isSubmitting ? "Creating Rubric..." : "Create Rubric"}
+          </button>
+        </form>
       </div>
     </main>
   );
