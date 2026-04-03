@@ -92,7 +92,7 @@ export interface StudentUploadRequest {
  */
 async function apiCall<T>(
   endpoint: string,
-  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" = "GET",
   body?: unknown,
   token?: string
 ): Promise<T> {
