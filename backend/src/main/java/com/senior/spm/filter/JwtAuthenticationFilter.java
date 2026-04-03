@@ -2,6 +2,7 @@ package com.senior.spm.filter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -49,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
             var claims = jwtService.getClaims(token);
             var role = claims.get("role", String.class);
-            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()));
+            var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase(Locale.ROOT)));
             SecurityContextHolder.getContext().setAuthentication(
                     new UsernamePasswordAuthenticationToken(claims.get("id", String.class), null, authorities));
             filterChain.doFilter(request, response);
