@@ -124,7 +124,6 @@ public class CoordinatorController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-
     @PatchMapping("/deliverables/{id}")
     public ResponseEntity<?> updateDeliverable(@PathVariable UUID id,
             @RequestBody UpdateDeliverableRequest request) {
@@ -155,6 +154,7 @@ public class CoordinatorController {
         // Save and return the updated deliverable
         Deliverable updatedDeliverable = deliverableRepository.save(existingDeliverable);
         return ResponseEntity.status(HttpStatus.OK).body(updatedDeliverable);
+    }
 
     @PostMapping("/publish")
     public ResponseEntity<?> publishSystem() {
