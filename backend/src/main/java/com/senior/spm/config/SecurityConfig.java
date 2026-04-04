@@ -32,6 +32,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/test/**").permitAll()
                 .requestMatchers(HttpMethod.PATCH, "/api/coordinator/deliverables/*/weight").hasRole("Coordinator")
+                .requestMatchers(HttpMethod.POST, "/api/coordinator/deliverables/*/rubric").hasRole("Coordinator")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
