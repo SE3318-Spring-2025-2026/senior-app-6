@@ -153,6 +153,6 @@ public class CoordinatorController {
         // Save the updated system state
         systemStateRepository.save(systemState);
 
-        return ResponseEntity.status(HttpStatus.OK).body(new ErrorMessage("System published successfully"));
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
