@@ -1,9 +1,9 @@
 spring.application.name=spm
 spring.datasource.url=jdbc:mysql://localhost:3306/spm
-spring.datasource.username=
-spring.datasource.password=
+spring.datasource.username=spm
+spring.datasource.password=1234
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.defer-datasource-initialization=true
 spring.sql.init.mode=always
-jwt.secret=
+jwt.secret=myVerySecretKey123456789
 jwt.expiration=604800000

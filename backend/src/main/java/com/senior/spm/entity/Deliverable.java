@@ -43,6 +43,9 @@ public class Deliverable {
     @Column(precision = 5, scale = 2)
     private BigDecimal weight;
 
+    @Column(nullable = false)
+    private UUID termId;
+
     public enum DeliverableType {
         Proposal, SoW, Demonstration
     }
