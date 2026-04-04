@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
+import com.senior.spm.controller.request.UpdateDeliverableRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.entity.Deliverable;
@@ -123,6 +124,38 @@ public class CoordinatorController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @PatchMapping("/deliverables/{id}")
+    public ResponseEntity<?> updateDeliverable(@PathVariable UUID id,
+            @RequestBody UpdateDeliverableRequest request) {
+        // Check if deliverable exists
+        var deliverable = deliverableRepository.findById(id);
+        if (deliverable.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage("Deliverable not found with ID: " + id));
+        }
+
+        // Update non-null fields
+        Deliverable existingDeliverable = deliverable.get();
+        if (request.getName() != null) {
+            existingDeliverable.setName(request.getName());
+        }
+        if (request.getType() != null) {
+            existingDeliverable.setType(request.getType());
+        }
+        if (request.getSubmissionDeadline() != null) {
+            existingDeliverable.setSubmissionDeadline(request.getSubmissionDeadline());
+        }
+        if (request.getReviewDeadline() != null) {
+            existingDeliverable.setReviewDeadline(request.getReviewDeadline());
+        }
+        if (request.getWeight() != null) {
+            existingDeliverable.setWeight(request.getWeight());
+        }
+
+        // Save and return the updated deliverable
+        Deliverable updatedDeliverable = deliverableRepository.save(existingDeliverable);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedDeliverable);
+    }
+
     @PostMapping("/publish")
     public ResponseEntity<?> publishSystem() {
         // Validate that students exist
@@ -154,5 +187,6 @@ public class CoordinatorController {
         systemStateRepository.save(systemState);
 
         return ResponseEntity.status(HttpStatus.OK).build();
+
     }
 }
