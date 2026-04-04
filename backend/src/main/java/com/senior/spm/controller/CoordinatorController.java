@@ -19,9 +19,11 @@ import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.entity.Deliverable;
 import com.senior.spm.entity.Sprint;
 import com.senior.spm.entity.Student;
+import com.senior.spm.entity.SystemState;
 import com.senior.spm.repository.DeliverableRepository;
 import com.senior.spm.repository.SprintRepository;
 import com.senior.spm.repository.StudentRepository;
+import com.senior.spm.repository.SystemStateRepository;
 
 import jakarta.validation.Valid;
 
@@ -32,11 +34,13 @@ public class CoordinatorController {
     private final SprintRepository sprintRepository;
     private final DeliverableRepository deliverableRepository;
     private final StudentRepository studentRepository;
+    private final SystemStateRepository systemStateRepository;
 
-    public CoordinatorController(SprintRepository sprintRepository, DeliverableRepository deliverableRepository, StudentRepository studentRepository) {
+    public CoordinatorController(SprintRepository sprintRepository, DeliverableRepository deliverableRepository, StudentRepository studentRepository, SystemStateRepository systemStateRepository) {
         this.sprintRepository = sprintRepository;
         this.deliverableRepository = deliverableRepository;
         this.studentRepository = studentRepository;
+        this.systemStateRepository = systemStateRepository;
     }
 
     @PostMapping("/sprints")
@@ -117,5 +121,38 @@ public class CoordinatorController {
         studentRepository.saveAll(students);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PostMapping("/publish")
+    public ResponseEntity<?> publishSystem() {
+        // Validate that students exist
+        if (studentRepository.count() == 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Incomplete configuration: Missing students"));
+        }
+
+        // Validate that sprints exist
+        if (sprintRepository.count() == 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Incomplete configuration: Missing sprints"));
+        }
+
+        // Validate that deliverables exist
+        if (deliverableRepository.count() == 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Incomplete configuration: Missing deliverables"));
+        }
+
+        // Get or create the system state
+        SystemState systemState;
+        if (systemStateRepository.count() == 0) {
+            systemState = new SystemState();
+            systemState.setStatus(SystemState.Status.ACTIVE);
+        } else {
+            systemState = systemStateRepository.findAll().get(0);
+            systemState.setStatus(SystemState.Status.ACTIVE);
+        }
+
+        // Save the updated system state
+        systemStateRepository.save(systemState);
+
+        return ResponseEntity.status(HttpStatus.OK).body(new ErrorMessage("System published successfully"));
     }
 }
