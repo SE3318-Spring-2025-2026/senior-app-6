@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.senior.spm.controller.response.ErrorMessage;
+import com.senior.spm.exception.ExternalToolValidationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -35,6 +36,16 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorMessage> handleRuntimeException(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorMessage("An unexpected error occurred: " + ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorMessage("An unexpected error occurred: " + ex.getMessage()));
+    }
+
+    // Maps JiraValidationException and GitHubValidationException (both extend
+    // ExternalToolValidationException) to HTTP 422 Unprocessable Entity.
+    // The exception message is the exact user-facing string defined in the API spec
+    // (e.g. "JIRA validation failed: API token is invalid or expired").
+    @ExceptionHandler(ExternalToolValidationException.class)
+    public ResponseEntity<ErrorMessage> handleExternalToolValidation(ExternalToolValidationException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(new ErrorMessage(ex.getMessage()));
     }
 }
