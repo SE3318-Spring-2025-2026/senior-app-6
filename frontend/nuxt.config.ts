@@ -15,9 +15,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api",
-      githubClientId: process.env.NUXT_PUBLIC_GITHUB_CLIENT_ID || "",
-      githubRedirectUri: process.env.NUXT_PUBLIC_GITHUB_REDIRECT_URI || "http://localhost:3000/auth/github-callback",
+      apiBaseUrl: "http://localhost:8080/api",
+      githubClientId: "",
+      githubRedirectUri: "http://localhost:3000/auth/github-callback",
     },
   },
 
