@@ -1,3 +1,9 @@
+<script setup lang="ts">
+	import { ArrowRight, LayoutDashboard, GraduationCap, LogIn } from "lucide-vue-next";
+
+	definePageMeta({ middleware: 'guest' })
+</script>
+
 <template>
   <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950">
     <!-- Navigation -->
@@ -129,7 +135,3 @@
     </footer>
   </main>
 </template>
-
-<script setup lang="ts">
-import { ArrowRight, LayoutDashboard, GraduationCap, LogIn } from "lucide-vue-next";
-</script>

@@ -1,3 +1,140 @@
+<script setup lang="ts">
+	import { z } from "zod";
+	import { useAuthStore } from "~/stores/auth";
+	import {
+		AlertCircle,
+		GraduationCap,
+		LayoutDashboard,
+		LogIn,
+		Mail,
+		Shield,
+		Lock
+	} from "lucide-vue-next";
+
+	import { GitHubIcon as Github } from "vue3-simple-icons";
+
+	const router = useRouter();
+	const route = useRoute();
+	const authStore = useAuthStore();
+	const { loginFaculty, initiateGithubOAuth } = useApiClient();
+
+	function getDashboardPath(role: string): string {
+		const roles: Set<String> = new Set(["Admin", "Professor", "Coordinator", "Student"]);
+		if (roles.has(role)) {
+			return `/${role.toLowerCase()}/dashboard`;
+		}
+		return "/auth/login";
+	}
+
+	// Form validation schemas
+	const facultySchema = z.object({
+		email: z.string().email("Please enter a valid email address."),
+		password: z.string().min(1, "Password is required."),
+	});
+
+	const studentSchema = z.object({
+		studentId: z
+			.string()
+			.trim()
+			.min(1, "Student ID is required.")
+			.regex(/^[0-9]{11}$/, "Student ID must be exactly 11 digits."),
+	});
+
+	type AuthTab = "students" | "faculty";
+
+	const activeTab = ref<AuthTab>("students");
+	const facultyErrorMessage = ref("");
+	const studentErrorMessage = ref("");
+
+	const showStudentNotRegisteredAlert = computed(() => route.query.error === "StudentNotRegistered");
+
+	// Faculty form
+	const facultyEmail = ref("");
+	const facultyPassword = ref("");
+	const facultySubmitting = ref(false);
+	const facultyErrors = ref<{ email?: string; password?: string }>({});
+
+	// Student form
+	const studentId = ref("");
+	const studentSubmitting = ref(false);
+	const studentErrors = ref<{ studentId?: string }>({});
+
+	const isStudentButtonDisabled = computed(() =>
+	{
+		if (!studentId.value)
+		{
+			return true;
+		}
+		return studentId.value.trim() === "" || studentId.value.length !== 11;
+	});
+
+	async function handleFacultySubmit() {
+		facultyErrorMessage.value = "";
+		facultyErrors.value = {};
+
+		const result = facultySchema.safeParse({
+			email: facultyEmail.value,
+			password: facultyPassword.value,
+		});
+
+		if (!result.success) {
+			const fieldErrors = result.error.flatten().fieldErrors;
+			facultyErrors.value = {
+				email: fieldErrors.email?.[0],
+				password: fieldErrors.password?.[0],
+			};
+			return;
+		}
+
+		facultySubmitting.value = true;
+		try {
+			const response = await loginFaculty(result.data.email, result.data.password);
+			authStore.login(response.token, {
+				userType: 'Staff',
+				id: response.userInfo.id,
+				mail: response.userInfo.mail,
+				role: response.userInfo.role,
+				firstLogin: response.userInfo.firstLogin,
+			} as StaffUser);
+			router.push(getDashboardPath(response.userInfo.role));
+		} catch (error: unknown) {
+			const errorMsg =
+				error && typeof error === "object" && "message" in error
+					? String(error.message)
+					: "Authentication failed. Please try again.";
+			facultyErrorMessage.value = errorMsg;
+		} finally {
+			facultySubmitting.value = false;
+		}
+	}
+
+	async function handleStudentSubmit() {
+		studentErrorMessage.value = "";
+		studentErrors.value = {};
+
+		const result = studentSchema.safeParse({ studentId: studentId.value });
+
+		if (!result.success) {
+			const fieldErrors = result.error.flatten().fieldErrors;
+			studentErrors.value = { studentId: fieldErrors.studentId?.[0] };
+			return;
+		}
+
+		studentSubmitting.value = true;
+		try {
+			// Redirect to GitHub OAuth - backend will handle the rest
+			initiateGithubOAuth(result.data.studentId);
+		} catch (error: unknown) {
+			const errorMsg =
+				error && typeof error === "object" && "message" in error
+					? String(error.message)
+					: "GitHub login failed. Please try again.";
+			studentErrorMessage.value = errorMsg;
+			studentSubmitting.value = false;
+		}
+	}
+</script>
+
 <template>
   <main class="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4 py-10 transition-colors dark:bg-slate-950">
     <!-- Background gradient -->
@@ -7,8 +144,8 @@
       :style="{
         background: 'radial-gradient(48rem 28rem at 50% 34%, rgba(59,130,246,0.14), rgba(15,23,42,0) 70%)',
         filter: 'blur(14px)',
-      }"
-    />
+      }">
+		</div>
 
     <!-- Login card -->
     <section class="relative z-10 w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-lg transition-colors dark:border-slate-700 dark:bg-slate-900 dark:shadow-xl md:p-8">
@@ -134,10 +271,10 @@
           <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
             Student ID
           </span>
-          <input
+          <NumericInput
             v-model="studentId"
-            type="text"
             placeholder="e.g., 202400123"
+						maxlength="11"
             class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
           />
           <p v-if="studentErrors.studentId" class="text-xs text-red-600 dark:text-red-400">
@@ -164,134 +301,3 @@
     </section>
   </main>
 </template>
-
-<script setup lang="ts">
-import { z } from "zod";
-import { useAuthStore } from "~/stores/auth";
-import {
-  AlertCircle,
-  GraduationCap,
-  LayoutDashboard,
-  LogIn,
-  Mail,
-  Shield,
-  Lock,
-  Github,
-} from "lucide-vue-next";
-
-const router = useRouter();
-const route = useRoute();
-const authStore = useAuthStore();
-const { loginFaculty, initiateGithubOAuth } = useApiClient();
-
-function getDashboardPath(role: string): string {
-  const map: Record<string, string> = {
-    Admin: "/admin/dashboard",
-    Coordinator: "/coordinator/dashboard",
-    Professor: "/professor/dashboard",
-    Student: "/student/dashboard",
-  };
-  return map[role] || "/auth/login";
-}
-
-// Form validation schemas
-const facultySchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(1, "Password is required."),
-});
-
-const studentSchema = z.object({
-  studentId: z
-    .string()
-    .trim()
-    .min(1, "Student ID is required.")
-    .regex(/^[0-9]{11}$/, "Student ID must be exactly 11 digits."),
-});
-
-type AuthTab = "students" | "faculty";
-
-const activeTab = ref<AuthTab>("students");
-const facultyErrorMessage = ref("");
-const studentErrorMessage = ref("");
-
-const showStudentNotRegisteredAlert = computed(() => route.query.error === "StudentNotRegistered");
-
-// Faculty form
-const facultyEmail = ref("");
-const facultyPassword = ref("");
-const facultySubmitting = ref(false);
-const facultyErrors = ref<{ email?: string; password?: string }>({});
-
-// Student form
-const studentId = ref("");
-const studentSubmitting = ref(false);
-const studentErrors = ref<{ studentId?: string }>({});
-
-const isStudentButtonDisabled = computed(() => !studentId.value?.trim());
-
-async function handleFacultySubmit() {
-  facultyErrorMessage.value = "";
-  facultyErrors.value = {};
-
-  const result = facultySchema.safeParse({
-    email: facultyEmail.value,
-    password: facultyPassword.value,
-  });
-
-  if (!result.success) {
-    const fieldErrors = result.error.flatten().fieldErrors;
-    facultyErrors.value = {
-      email: fieldErrors.email?.[0],
-      password: fieldErrors.password?.[0],
-    };
-    return;
-  }
-
-  facultySubmitting.value = true;
-  try {
-    const response = await loginFaculty(result.data.email, result.data.password);
-    authStore.login(response.token, {
-      userType: 'Staff',
-      id: response.userInfo.id,
-      mail: response.userInfo.mail,
-      role: response.userInfo.role,
-      firstLogin: response.userInfo.firstLogin,
-    } as StaffUser);
-    router.push(getDashboardPath(response.userInfo.role));
-  } catch (error: unknown) {
-    const errorMsg =
-      error && typeof error === "object" && "message" in error
-        ? String(error.message)
-        : "Authentication failed. Please try again.";
-    facultyErrorMessage.value = errorMsg;
-  } finally {
-    facultySubmitting.value = false;
-  }
-}
-
-async function handleStudentSubmit() {
-  studentErrorMessage.value = "";
-  studentErrors.value = {};
-
-  const result = studentSchema.safeParse({ studentId: studentId.value });
-
-  if (!result.success) {
-    const fieldErrors = result.error.flatten().fieldErrors;
-    studentErrors.value = { studentId: fieldErrors.studentId?.[0] };
-    return;
-  }
-
-  studentSubmitting.value = true;
-  try {
-    // Redirect to GitHub OAuth - backend will handle the rest
-    initiateGithubOAuth(result.data.studentId);
-  } catch (error: unknown) {
-    const errorMsg =
-      error && typeof error === "object" && "message" in error
-        ? String(error.message)
-        : "GitHub login failed. Please try again.";
-    studentErrorMessage.value = errorMsg;
-    studentSubmitting.value = false;
-  }
-}
-</script>

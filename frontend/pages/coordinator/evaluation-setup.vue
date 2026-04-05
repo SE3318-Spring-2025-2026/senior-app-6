@@ -1,3 +1,112 @@
+<script setup lang="ts">
+	import { z } from "zod";
+	import { AlertCircle, CheckCircle2, Plus, Scale, Trash2 } from "lucide-vue-next";
+
+	const { getAuthToken, fetchDeliverables, createRubric } = useApiClient();
+
+	const gradingTypes = ["Binary", "Soft"] as const;
+
+	interface DeliverableOption {
+		id: string;
+		name: string;
+	}
+
+	interface CriterionEntry {
+		criterionName: string;
+		weight: number;
+		gradingType: "Binary" | "Soft";
+	}
+
+	const availableDeliverables = ref<DeliverableOption[]>([]);
+	const deliverablesLoading = ref(true);
+	const deliverablesError = ref<string | null>(null);
+	const deliverableId = ref("");
+	const criteria = ref<CriterionEntry[]>([
+		{ criterionName: "Code Quality", weight: 30, gradingType: "Soft" },
+	]);
+	const submitting = ref(false);
+	const formErrors = ref<Record<string, string>>({});
+	const successMessage = ref("");
+
+	const totalWeight = computed(() => criteria.value.reduce((sum, c) => sum + (c.weight || 0), 0));
+	const isWeightValid = computed(() => totalWeight.value === 100);
+
+	function handleAddCriterion() {
+		criteria.value.push({ criterionName: "", weight: 10, gradingType: "Soft" });
+	}
+
+	function handleRemoveCriterion(index: number) {
+		if (criteria.value.length > 1) {
+			criteria.value.splice(index, 1);
+		}
+	}
+
+	const rubricSchema = z.object({
+		deliverableId: z.string().min(1, "Please select a deliverable."),
+		criteria: z
+			.array(
+				z.object({
+					criterionName: z.string().trim().min(1, "Criterion name is required."),
+					weight: z.number().min(1, "Weight must be at least 1.").max(100, "Weight cannot exceed 100."),
+					gradingType: z.enum(gradingTypes),
+				})
+			)
+			.min(1, "At least one criterion is required."),
+	});
+
+	async function onSubmit() {
+		formErrors.value = {};
+
+		const result = rubricSchema.safeParse({
+			deliverableId: deliverableId.value,
+			criteria: criteria.value,
+		});
+
+		if (!result.success) {
+			const fe = result.error.flatten();
+			formErrors.value = {
+				deliverableId: fe.fieldErrors.deliverableId?.[0] || "",
+				criteria: fe.fieldErrors.criteria?.[0] || "",
+			};
+			return;
+		}
+
+		submitting.value = true;
+		try {
+			const token = getAuthToken();
+			if (!token) throw new Error("Authentication required");
+
+			await createRubric(result.data, token);
+			formErrors.value = {};
+			deliverableId.value = "";
+			criteria.value = [{ criterionName: "", weight: 100, gradingType: "Soft" }];
+			successMessage.value = "Rubric created successfully.";
+			setTimeout(() => (successMessage.value = ""), 3000);
+		} catch (err) {
+			const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to create rubric";
+			formErrors.value = { criteria: errorMsg };
+		} finally {
+			submitting.value = false;
+		}
+	}
+
+	onMounted(async () => {
+		deliverablesLoading.value = true;
+		deliverablesError.value = null;
+		try {
+			const token = getAuthToken();
+			if (!token) throw new Error("Authentication required. Please log in.");
+			const data = await fetchDeliverables(token);
+			availableDeliverables.value = data.map((d) => ({ id: d.id, name: d.name }));
+		} catch (err) {
+			const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to load deliverables";
+			deliverablesError.value = errorMsg;
+		} finally {
+			deliverablesLoading.value = false;
+		}
+	});
+</script>
+
 <template>
   <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
     <div class="mx-auto w-full max-w-3xl space-y-6">
@@ -167,112 +276,3 @@
     </div>
   </main>
 </template>
-
-<script setup lang="ts">
-import { z } from "zod";
-import { AlertCircle, CheckCircle2, Plus, Scale, Trash2 } from "lucide-vue-next";
-
-const { getAuthToken, fetchDeliverables, createRubric } = useApiClient();
-
-const gradingTypes = ["Binary", "Soft"] as const;
-
-interface DeliverableOption {
-  id: string;
-  name: string;
-}
-
-interface CriterionEntry {
-  criterionName: string;
-  weight: number;
-  gradingType: "Binary" | "Soft";
-}
-
-const availableDeliverables = ref<DeliverableOption[]>([]);
-const deliverablesLoading = ref(true);
-const deliverablesError = ref<string | null>(null);
-const deliverableId = ref("");
-const criteria = ref<CriterionEntry[]>([
-  { criterionName: "Code Quality", weight: 30, gradingType: "Soft" },
-]);
-const submitting = ref(false);
-const formErrors = ref<Record<string, string>>({});
-const successMessage = ref("");
-
-const totalWeight = computed(() => criteria.value.reduce((sum, c) => sum + (c.weight || 0), 0));
-const isWeightValid = computed(() => totalWeight.value === 100);
-
-function handleAddCriterion() {
-  criteria.value.push({ criterionName: "", weight: 10, gradingType: "Soft" });
-}
-
-function handleRemoveCriterion(index: number) {
-  if (criteria.value.length > 1) {
-    criteria.value.splice(index, 1);
-  }
-}
-
-const rubricSchema = z.object({
-  deliverableId: z.string().min(1, "Please select a deliverable."),
-  criteria: z
-    .array(
-      z.object({
-        criterionName: z.string().trim().min(1, "Criterion name is required."),
-        weight: z.number().min(1, "Weight must be at least 1.").max(100, "Weight cannot exceed 100."),
-        gradingType: z.enum(gradingTypes),
-      })
-    )
-    .min(1, "At least one criterion is required."),
-});
-
-async function onSubmit() {
-  formErrors.value = {};
-
-  const result = rubricSchema.safeParse({
-    deliverableId: deliverableId.value,
-    criteria: criteria.value,
-  });
-
-  if (!result.success) {
-    const fe = result.error.flatten();
-    formErrors.value = {
-      deliverableId: fe.fieldErrors.deliverableId?.[0] || "",
-      criteria: fe.fieldErrors.criteria?.[0] || "",
-    };
-    return;
-  }
-
-  submitting.value = true;
-  try {
-    const token = getAuthToken();
-    if (!token) throw new Error("Authentication required");
-
-    await createRubric(result.data, token);
-    formErrors.value = {};
-    deliverableId.value = "";
-    criteria.value = [{ criterionName: "", weight: 100, gradingType: "Soft" }];
-    successMessage.value = "Rubric created successfully.";
-    setTimeout(() => (successMessage.value = ""), 3000);
-  } catch (err) {
-    const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to create rubric";
-    formErrors.value = { criteria: errorMsg };
-  } finally {
-    submitting.value = false;
-  }
-}
-
-onMounted(async () => {
-  deliverablesLoading.value = true;
-  deliverablesError.value = null;
-  try {
-    const token = getAuthToken();
-    if (!token) throw new Error("Authentication required. Please log in.");
-    const data = await fetchDeliverables(token);
-    availableDeliverables.value = data.map((d) => ({ id: d.id, name: d.name }));
-  } catch (err) {
-    const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to load deliverables";
-    deliverablesError.value = errorMsg;
-  } finally {
-    deliverablesLoading.value = false;
-  }
-});
-</script>

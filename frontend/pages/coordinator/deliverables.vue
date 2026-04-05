@@ -1,3 +1,182 @@
+<script setup lang="ts">
+	import { z } from "zod";
+	import { CalendarDays, CheckCircle2, Edit, Plus, AlertCircle, Loader as LoaderIcon } from "lucide-vue-next";
+	import type { Deliverable } from "~/composables/useApiClient";
+
+	const { createDeliverable, updateDeliverable, getAuthToken, fetchDeliverables } = useApiClient();
+
+	const deliverableTypes = ["Proposal", "SoW", "Demonstration"] as const;
+
+	const deliverableCreateSchema = z
+		.object({
+			name: z.string().trim().min(2, "Deliverable name must be at least 2 characters."),
+			type: z.enum(deliverableTypes, { error: "Please select a valid deliverable type." }),
+			submissionDeadline: z.string().min(1, "Submission deadline is required."),
+			reviewDeadline: z.string().min(1, "Review deadline is required."),
+		})
+		.refine(
+			(v) => new Date(v.reviewDeadline).getTime() > new Date(v.submissionDeadline).getTime(),
+			{ path: ["reviewDeadline"], message: "Review deadline must be after submission deadline." }
+		);
+
+	const deliverableEditSchema = z
+		.object({
+			submissionDeadline: z.string().min(1, "Submission deadline is required."),
+			reviewDeadline: z.string().min(1, "Review deadline is required."),
+		})
+		.refine(
+			(v) => new Date(v.reviewDeadline).getTime() > new Date(v.submissionDeadline).getTime(),
+			{ path: ["reviewDeadline"], message: "Review deadline must be after submission deadline." }
+		);
+
+	// State
+	const deliverables = ref<Deliverable[]>([]);
+	const isLoading = ref(true);
+	const fetchError = ref<string | null>(null);
+	const createError = ref<string | null>(null);
+	const editError = ref<string | null>(null);
+	const createMessage = ref("");
+	const editMessage = ref("");
+	const activeEditId = ref<string | null>(null);
+
+	// Create form
+	const createName = ref("");
+	const createType = ref<(typeof deliverableTypes)[number]>("Proposal");
+	const createSubmissionDeadline = ref("");
+	const createReviewDeadline = ref("");
+	const createSubmitting = ref(false);
+	const createErrors = ref<Record<string, string>>({});
+
+	// Edit form
+	const editSubmissionDeadline = ref("");
+	const editReviewDeadline = ref("");
+	const editSubmitting = ref(false);
+	const editErrors = ref<Record<string, string>>({});
+
+	function formatDeadline(value: string): string {
+		const parsed = new Date(value);
+		if (Number.isNaN(parsed.getTime())) return "Invalid date";
+		return parsed.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+	}
+
+	onMounted(async () => {
+		isLoading.value = true;
+		fetchError.value = null;
+		try {
+			const token = getAuthToken();
+			if (!token) throw new Error("Authentication required. Please log in.");
+			deliverables.value = await fetchDeliverables(token);
+		} catch (err) {
+			const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to load deliverables";
+			fetchError.value = errorMsg;
+		} finally {
+			isLoading.value = false;
+		}
+	});
+
+	async function handleCreateSubmit() {
+		createMessage.value = "";
+		createError.value = null;
+		createErrors.value = {};
+
+		const result = deliverableCreateSchema.safeParse({
+			name: createName.value,
+			type: createType.value,
+			submissionDeadline: createSubmissionDeadline.value,
+			reviewDeadline: createReviewDeadline.value,
+		});
+
+		if (!result.success) {
+			const fe = result.error.flatten().fieldErrors;
+			createErrors.value = {
+				name: fe.name?.[0] || "",
+				type: fe.type?.[0] || "",
+				submissionDeadline: fe.submissionDeadline?.[0] || "",
+				reviewDeadline: fe.reviewDeadline?.[0] || "",
+			};
+			return;
+		}
+
+		createSubmitting.value = true;
+		try {
+			const token = getAuthToken();
+			if (!token) throw new Error("Authentication required");
+
+			const created = await createDeliverable(result.data, token);
+			deliverables.value.unshift(created);
+
+			createName.value = "";
+			createType.value = "Proposal";
+			createSubmissionDeadline.value = "";
+			createReviewDeadline.value = "";
+			createMessage.value = "✓ Deliverable created successfully";
+			setTimeout(() => (createMessage.value = ""), 3000);
+		} catch (err) {
+			const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to create deliverable";
+			createError.value = errorMsg;
+		} finally {
+			createSubmitting.value = false;
+		}
+	}
+
+	function handleOpenEdit(item: Deliverable) {
+		editMessage.value = "";
+		editError.value = null;
+		editErrors.value = {};
+		activeEditId.value = item.id;
+		editSubmissionDeadline.value = item.submissionDeadline;
+		editReviewDeadline.value = item.reviewDeadline;
+	}
+
+	function handleCancelEdit() {
+		activeEditId.value = null;
+		editError.value = null;
+	}
+
+	async function handleEditSubmit() {
+		if (!activeEditId.value) return;
+		editMessage.value = "";
+		editError.value = null;
+		editErrors.value = {};
+
+		const result = deliverableEditSchema.safeParse({
+			submissionDeadline: editSubmissionDeadline.value,
+			reviewDeadline: editReviewDeadline.value,
+		});
+
+		if (!result.success) {
+			const fe = result.error.flatten().fieldErrors;
+			editErrors.value = {
+				submissionDeadline: fe.submissionDeadline?.[0] || "",
+				reviewDeadline: fe.reviewDeadline?.[0] || "",
+			};
+			return;
+		}
+
+		editSubmitting.value = true;
+		try {
+			const token = getAuthToken();
+			if (!token) throw new Error("Authentication required");
+
+			const updated = await updateDeliverable(activeEditId.value, result.data, token);
+			deliverables.value = deliverables.value.map((item) =>
+				item.id === updated.id
+					? { ...item, submissionDeadline: updated.submissionDeadline, reviewDeadline: updated.reviewDeadline }
+					: item
+			);
+
+			editMessage.value = "✓ Deliverable updated successfully";
+			activeEditId.value = null;
+			setTimeout(() => (editMessage.value = ""), 3000);
+		} catch (err) {
+			const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to update deliverable";
+			editError.value = errorMsg;
+		} finally {
+			editSubmitting.value = false;
+		}
+	}
+</script>
+
 <template>
   <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
     <div class="mx-auto w-full max-w-7xl space-y-6">
@@ -227,182 +406,3 @@
     </div>
   </main>
 </template>
-
-<script setup lang="ts">
-import { z } from "zod";
-import { CalendarDays, CheckCircle2, Edit, Plus, AlertCircle, Loader as LoaderIcon } from "lucide-vue-next";
-import type { Deliverable } from "~/composables/useApiClient";
-
-const { createDeliverable, updateDeliverable, getAuthToken, fetchDeliverables } = useApiClient();
-
-const deliverableTypes = ["Proposal", "SoW", "Demonstration"] as const;
-
-const deliverableCreateSchema = z
-  .object({
-    name: z.string().trim().min(2, "Deliverable name must be at least 2 characters."),
-    type: z.enum(deliverableTypes, { error: "Please select a valid deliverable type." }),
-    submissionDeadline: z.string().min(1, "Submission deadline is required."),
-    reviewDeadline: z.string().min(1, "Review deadline is required."),
-  })
-  .refine(
-    (v) => new Date(v.reviewDeadline).getTime() > new Date(v.submissionDeadline).getTime(),
-    { path: ["reviewDeadline"], message: "Review deadline must be after submission deadline." }
-  );
-
-const deliverableEditSchema = z
-  .object({
-    submissionDeadline: z.string().min(1, "Submission deadline is required."),
-    reviewDeadline: z.string().min(1, "Review deadline is required."),
-  })
-  .refine(
-    (v) => new Date(v.reviewDeadline).getTime() > new Date(v.submissionDeadline).getTime(),
-    { path: ["reviewDeadline"], message: "Review deadline must be after submission deadline." }
-  );
-
-// State
-const deliverables = ref<Deliverable[]>([]);
-const isLoading = ref(true);
-const fetchError = ref<string | null>(null);
-const createError = ref<string | null>(null);
-const editError = ref<string | null>(null);
-const createMessage = ref("");
-const editMessage = ref("");
-const activeEditId = ref<string | null>(null);
-
-// Create form
-const createName = ref("");
-const createType = ref<(typeof deliverableTypes)[number]>("Proposal");
-const createSubmissionDeadline = ref("");
-const createReviewDeadline = ref("");
-const createSubmitting = ref(false);
-const createErrors = ref<Record<string, string>>({});
-
-// Edit form
-const editSubmissionDeadline = ref("");
-const editReviewDeadline = ref("");
-const editSubmitting = ref(false);
-const editErrors = ref<Record<string, string>>({});
-
-function formatDeadline(value: string): string {
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return "Invalid date";
-  return parsed.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
-}
-
-onMounted(async () => {
-  isLoading.value = true;
-  fetchError.value = null;
-  try {
-    const token = getAuthToken();
-    if (!token) throw new Error("Authentication required. Please log in.");
-    deliverables.value = await fetchDeliverables(token);
-  } catch (err) {
-    const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to load deliverables";
-    fetchError.value = errorMsg;
-  } finally {
-    isLoading.value = false;
-  }
-});
-
-async function handleCreateSubmit() {
-  createMessage.value = "";
-  createError.value = null;
-  createErrors.value = {};
-
-  const result = deliverableCreateSchema.safeParse({
-    name: createName.value,
-    type: createType.value,
-    submissionDeadline: createSubmissionDeadline.value,
-    reviewDeadline: createReviewDeadline.value,
-  });
-
-  if (!result.success) {
-    const fe = result.error.flatten().fieldErrors;
-    createErrors.value = {
-      name: fe.name?.[0] || "",
-      type: fe.type?.[0] || "",
-      submissionDeadline: fe.submissionDeadline?.[0] || "",
-      reviewDeadline: fe.reviewDeadline?.[0] || "",
-    };
-    return;
-  }
-
-  createSubmitting.value = true;
-  try {
-    const token = getAuthToken();
-    if (!token) throw new Error("Authentication required");
-
-    const created = await createDeliverable(result.data, token);
-    deliverables.value.unshift(created);
-
-    createName.value = "";
-    createType.value = "Proposal";
-    createSubmissionDeadline.value = "";
-    createReviewDeadline.value = "";
-    createMessage.value = "✓ Deliverable created successfully";
-    setTimeout(() => (createMessage.value = ""), 3000);
-  } catch (err) {
-    const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to create deliverable";
-    createError.value = errorMsg;
-  } finally {
-    createSubmitting.value = false;
-  }
-}
-
-function handleOpenEdit(item: Deliverable) {
-  editMessage.value = "";
-  editError.value = null;
-  editErrors.value = {};
-  activeEditId.value = item.id;
-  editSubmissionDeadline.value = item.submissionDeadline;
-  editReviewDeadline.value = item.reviewDeadline;
-}
-
-function handleCancelEdit() {
-  activeEditId.value = null;
-  editError.value = null;
-}
-
-async function handleEditSubmit() {
-  if (!activeEditId.value) return;
-  editMessage.value = "";
-  editError.value = null;
-  editErrors.value = {};
-
-  const result = deliverableEditSchema.safeParse({
-    submissionDeadline: editSubmissionDeadline.value,
-    reviewDeadline: editReviewDeadline.value,
-  });
-
-  if (!result.success) {
-    const fe = result.error.flatten().fieldErrors;
-    editErrors.value = {
-      submissionDeadline: fe.submissionDeadline?.[0] || "",
-      reviewDeadline: fe.reviewDeadline?.[0] || "",
-    };
-    return;
-  }
-
-  editSubmitting.value = true;
-  try {
-    const token = getAuthToken();
-    if (!token) throw new Error("Authentication required");
-
-    const updated = await updateDeliverable(activeEditId.value, result.data, token);
-    deliverables.value = deliverables.value.map((item) =>
-      item.id === updated.id
-        ? { ...item, submissionDeadline: updated.submissionDeadline, reviewDeadline: updated.reviewDeadline }
-        : item
-    );
-
-    editMessage.value = "✓ Deliverable updated successfully";
-    activeEditId.value = null;
-    setTimeout(() => (editMessage.value = ""), 3000);
-  } catch (err) {
-    const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to update deliverable";
-    editError.value = errorMsg;
-  } finally {
-    editSubmitting.value = false;
-  }
-}
-</script>

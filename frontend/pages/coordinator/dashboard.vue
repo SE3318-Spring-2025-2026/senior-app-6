@@ -1,3 +1,21 @@
+<script setup lang="ts">
+	import { LogOut, Play, FileText, ClipboardCheck, Send } from "lucide-vue-next";
+	import { useAuthStore } from "~/stores/auth";
+
+	definePageMeta({
+		middleware: "auth",
+		roles: ["Coordinator"],
+	});
+
+	const router = useRouter();
+	const authStore = useAuthStore();
+
+	function handleLogout() {
+		authStore.logout();
+		router.push("/auth/login");
+	}
+</script>
+
 <template>
   <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
     <div class="mx-auto w-full max-w-5xl space-y-6">
@@ -79,21 +97,3 @@
     </div>
   </main>
 </template>
-
-<script setup lang="ts">
-import { LogOut, Play, FileText, ClipboardCheck, Send } from "lucide-vue-next";
-import { useAuthStore } from "~/stores/auth";
-
-definePageMeta({
-  middleware: "auth",
-  roles: ["Coordinator"],
-});
-
-const router = useRouter();
-const authStore = useAuthStore();
-
-function handleLogout() {
-  authStore.logout();
-  router.push("/auth/login");
-}
-</script>

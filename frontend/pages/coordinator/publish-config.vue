@@ -1,3 +1,82 @@
+<script setup lang="ts">
+	import {
+		AlertCircle,
+		CheckCircle2,
+		Play,
+		FileText,
+		ShieldAlert,
+		Loader as LoaderIcon,
+	} from "lucide-vue-next";
+	import type { Sprint, Deliverable } from "~/composables/useApiClient";
+
+	const { getAuthToken, fetchSprints, fetchDeliverables, publishConfig } = useApiClient();
+
+	const sprints = ref<Sprint[]>([]);
+	const deliverables = ref<Deliverable[]>([]);
+	const isLoading = ref(true);
+	const fetchError = ref<string | null>(null);
+
+	const showConfirmModal = ref(false);
+	const publishSubmitting = ref(false);
+	const publishError = ref<string | null>(null);
+	const publishSuccess = ref(false);
+
+	function formatDate(value: string): string {
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return "Invalid date";
+		return date.toLocaleDateString("en-US", {
+			weekday: "short",
+			year: "numeric",
+			month: "short",
+			day: "numeric",
+		});
+	}
+
+	onMounted(async () => {
+		isLoading.value = true;
+		fetchError.value = null;
+		try {
+			const token = getAuthToken();
+			if (!token) throw new Error("Authentication required. Please log in.");
+			const [sprintData, deliverableData] = await Promise.all([
+				fetchSprints(token),
+				fetchDeliverables(token),
+			]);
+			sprints.value = sprintData;
+			deliverables.value = deliverableData;
+		} catch (err) {
+			const errorMsg =
+				err && typeof err === "object" && "message" in err
+					? String(err.message)
+					: "Failed to load data";
+			fetchError.value = errorMsg;
+		} finally {
+			isLoading.value = false;
+		}
+	});
+
+	async function handlePublish() {
+		publishError.value = null;
+		publishSubmitting.value = true;
+		try {
+			const token = getAuthToken();
+			if (!token) throw new Error("Authentication required");
+			await publishConfig(token);
+			publishSuccess.value = true;
+			showConfirmModal.value = false;
+		} catch (err) {
+			const errorMsg =
+				err && typeof err === "object" && "message" in err
+					? String(err.message)
+					: "Failed to publish configuration";
+			publishError.value = errorMsg;
+			showConfirmModal.value = false;
+		} finally {
+			publishSubmitting.value = false;
+		}
+	}
+</script>
+
 <template>
   <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
     <div class="mx-auto w-full max-w-4xl space-y-6">
@@ -167,82 +246,3 @@
     </Teleport>
   </main>
 </template>
-
-<script setup lang="ts">
-import {
-  AlertCircle,
-  CheckCircle2,
-  Play,
-  FileText,
-  ShieldAlert,
-  Loader as LoaderIcon,
-} from "lucide-vue-next";
-import type { Sprint, Deliverable } from "~/composables/useApiClient";
-
-const { getAuthToken, fetchSprints, fetchDeliverables, publishConfig } = useApiClient();
-
-const sprints = ref<Sprint[]>([]);
-const deliverables = ref<Deliverable[]>([]);
-const isLoading = ref(true);
-const fetchError = ref<string | null>(null);
-
-const showConfirmModal = ref(false);
-const publishSubmitting = ref(false);
-const publishError = ref<string | null>(null);
-const publishSuccess = ref(false);
-
-function formatDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Invalid date";
-  return date.toLocaleDateString("en-US", {
-    weekday: "short",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-onMounted(async () => {
-  isLoading.value = true;
-  fetchError.value = null;
-  try {
-    const token = getAuthToken();
-    if (!token) throw new Error("Authentication required. Please log in.");
-    const [sprintData, deliverableData] = await Promise.all([
-      fetchSprints(token),
-      fetchDeliverables(token),
-    ]);
-    sprints.value = sprintData;
-    deliverables.value = deliverableData;
-  } catch (err) {
-    const errorMsg =
-      err && typeof err === "object" && "message" in err
-        ? String(err.message)
-        : "Failed to load data";
-    fetchError.value = errorMsg;
-  } finally {
-    isLoading.value = false;
-  }
-});
-
-async function handlePublish() {
-  publishError.value = null;
-  publishSubmitting.value = true;
-  try {
-    const token = getAuthToken();
-    if (!token) throw new Error("Authentication required");
-    await publishConfig(token);
-    publishSuccess.value = true;
-    showConfirmModal.value = false;
-  } catch (err) {
-    const errorMsg =
-      err && typeof err === "object" && "message" in err
-        ? String(err.message)
-        : "Failed to publish configuration";
-    publishError.value = errorMsg;
-    showConfirmModal.value = false;
-  } finally {
-    publishSubmitting.value = false;
-  }
-}
-</script>

@@ -11,6 +11,7 @@ interface StudentUser {
 	id: string;
 	studentId: string;
 	githubUsername: string | null;
+	readonly role: 'Student';
 }
 
 type User = StaffUser | StudentUser;

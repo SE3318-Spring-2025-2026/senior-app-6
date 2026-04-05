@@ -1,3 +1,15 @@
+<script setup lang="ts">
+	import { Moon, Sun } from "lucide-vue-next";
+
+	const colorMode = useColorMode();
+
+	const isDark = computed(() => colorMode.value === "dark");
+
+	function toggleColorMode() {
+		colorMode.preference = isDark.value ? "light" : "dark";
+	}
+</script>
+
 <template>
   <button
     type="button"
@@ -10,15 +22,3 @@
     <Moon v-else :size="18" />
   </button>
 </template>
-
-<script setup lang="ts">
-import { Moon, Sun } from "lucide-vue-next";
-
-const colorMode = useColorMode();
-
-const isDark = computed(() => colorMode.value === "dark");
-
-function toggleColorMode() {
-  colorMode.preference = isDark.value ? "light" : "dark";
-}
-</script>

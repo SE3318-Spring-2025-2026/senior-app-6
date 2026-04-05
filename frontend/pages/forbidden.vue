@@ -1,3 +1,17 @@
+<script setup lang="ts">
+	import { ShieldX } from "lucide-vue-next";
+
+	const router = useRouter();
+
+	function goBack() {
+		if (window.history.length > 1) {
+			router.back();
+		} else {
+			router.push("/auth/login");
+		}
+	}
+</script>
+
 <template>
   <main class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
     <div class="w-full max-w-md text-center">
@@ -27,17 +41,3 @@
     </div>
   </main>
 </template>
-
-<script setup lang="ts">
-import { ShieldX } from "lucide-vue-next";
-
-const router = useRouter();
-
-function goBack() {
-  if (window.history.length > 1) {
-    router.back();
-  } else {
-    router.push("/auth/login");
-  }
-}
-</script>

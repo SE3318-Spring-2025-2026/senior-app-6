@@ -9,7 +9,7 @@ import { useAuthStore } from '~/stores/auth';
  * - Unauthenticated users → /auth/login
  * - Authenticated users without a matching role → /forbidden
  */
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(to => {
   const authStore = useAuthStore();
 
   if (!authStore.isAuthenticated || !authStore.userInfo) {

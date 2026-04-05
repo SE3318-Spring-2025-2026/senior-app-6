@@ -1,3 +1,83 @@
+<script setup lang="ts">
+	import { Loader2 } from "lucide-vue-next";
+	import { useAuthStore } from "~/stores/auth";
+
+	const router = useRouter();
+	const route = useRoute();
+	const authStore = useAuthStore();
+	const { completeGithubLogin } = useApiClient();
+
+	const status = ref<"loading" | "error" | "success">("loading");
+	const message = ref("");
+
+	onMounted(async () => {
+		try {
+			const code = route.query.code as string | undefined;
+			const state = route.query.state as string | undefined;
+			const error = route.query.error as string | undefined;
+
+			// Check for OAuth error from GitHub
+			if (error) {
+				status.value = "error";
+				message.value = `GitHub authorization failed: ${error}`;
+				return;
+			}
+
+			// Validate code is present
+			if (!code) {
+				status.value = "error";
+				message.value = "No authorization code received from GitHub. Please try again.";
+				return;
+			}
+
+			// CSRF: validate state parameter
+			const savedState = sessionStorage.getItem("github_oauth_state");
+			if (!state || state !== savedState) {
+				status.value = "error";
+				message.value = "Invalid state parameter. This may be a CSRF attack. Please try again.";
+				return;
+			}
+
+			// Retrieve stored studentId
+			const studentId = sessionStorage.getItem("github_student_id");
+			if (!studentId) {
+				status.value = "error";
+				message.value = "Student ID not found. Please go back and enter your Student ID.";
+				return;
+			}
+
+			// Clean up session storage
+			sessionStorage.removeItem("github_oauth_state");
+			sessionStorage.removeItem("github_student_id");
+
+			// Send code + studentId to backend; backend exchanges code for token
+			const response = await completeGithubLogin(code, studentId);
+
+			// Store auth state via Pinia store
+			authStore.login(response.token, {
+				userType: 'Student',
+				id: response.userInfo.id,
+				studentId,
+				githubUsername: response.userInfo.githubUsername,
+			} as StudentUser);
+
+			status.value = "success";
+			message.value = "Authentication successful. Redirecting...";
+
+			setTimeout(() => {
+				router.push("/student/dashboard");
+			}, 1500);
+		} catch (err: unknown) {
+			status.value = "error";
+			const errorMsg =
+				err && typeof err === "object" && "message" in err
+					? String(err.message)
+					: "An unexpected error occurred. Please try again.";
+			message.value = errorMsg;
+		}
+	});
+</script>
+
 <template>
   <main class="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-10 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
     <!-- Background gradient for dark mode -->
@@ -62,83 +142,3 @@
     </section>
   </main>
 </template>
-
-<script setup lang="ts">
-import { Loader2 } from "lucide-vue-next";
-import { useAuthStore } from "~/stores/auth";
-
-const router = useRouter();
-const route = useRoute();
-const authStore = useAuthStore();
-const { completeGithubLogin } = useApiClient();
-
-const status = ref<"loading" | "error" | "success">("loading");
-const message = ref("");
-
-onMounted(async () => {
-  try {
-    const code = route.query.code as string | undefined;
-    const state = route.query.state as string | undefined;
-    const error = route.query.error as string | undefined;
-
-    // Check for OAuth error from GitHub
-    if (error) {
-      status.value = "error";
-      message.value = `GitHub authorization failed: ${error}`;
-      return;
-    }
-
-    // Validate code is present
-    if (!code) {
-      status.value = "error";
-      message.value = "No authorization code received from GitHub. Please try again.";
-      return;
-    }
-
-    // CSRF: validate state parameter
-    const savedState = sessionStorage.getItem("github_oauth_state");
-    if (!state || state !== savedState) {
-      status.value = "error";
-      message.value = "Invalid state parameter. This may be a CSRF attack. Please try again.";
-      return;
-    }
-
-    // Retrieve stored studentId
-    const studentId = sessionStorage.getItem("github_student_id");
-    if (!studentId) {
-      status.value = "error";
-      message.value = "Student ID not found. Please go back and enter your Student ID.";
-      return;
-    }
-
-    // Clean up session storage
-    sessionStorage.removeItem("github_oauth_state");
-    sessionStorage.removeItem("github_student_id");
-
-    // Send code + studentId to backend; backend exchanges code for token
-    const response = await completeGithubLogin(code, studentId);
-
-    // Store auth state via Pinia store
-    authStore.login(response.token, {
-      userType: 'Student',
-      id: response.userInfo.id,
-      studentId,
-      githubUsername: response.userInfo.githubUsername,
-    } as StudentUser);
-
-    status.value = "success";
-    message.value = "Authentication successful. Redirecting...";
-
-    setTimeout(() => {
-      router.push("/student/dashboard");
-    }, 1500);
-  } catch (err: unknown) {
-    status.value = "error";
-    const errorMsg =
-      err && typeof err === "object" && "message" in err
-        ? String(err.message)
-        : "An unexpected error occurred. Please try again.";
-    message.value = errorMsg;
-  }
-});
-</script>
