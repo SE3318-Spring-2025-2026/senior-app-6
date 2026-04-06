@@ -145,6 +145,7 @@ public class CoordinatorController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorMessage("Deliverable not found with ID: " + request.getDeliverableId()));
         }
+		
         var mapping = sprintDeliverableMappingRepository.findBySprintIdAndDeliverableId(id, request.getDeliverableId());
         if (!mapping.isEmpty()) {
             var existingMapping = mapping.get();
