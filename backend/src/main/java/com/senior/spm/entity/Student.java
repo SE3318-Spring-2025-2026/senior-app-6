@@ -2,7 +2,10 @@ package com.senior.spm.entity;
 
 import java.util.UUID;
 
+import com.senior.spm.converter.AccessTokenEncryptionConverter;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -30,4 +33,8 @@ public class Student {
 
     @Column(length = 255, nullable = true, unique = true)
     private String githubUsername;
+
+    @Column(nullable = true, unique = true)
+    @Convert(converter = AccessTokenEncryptionConverter.class)
+    private String accessToken;
 }
