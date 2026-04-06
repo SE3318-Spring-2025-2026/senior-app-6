@@ -1,5 +1,6 @@
 package com.senior.spm.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,5 +13,7 @@ import com.senior.spm.entity.SprintDeliverableMapping;
 public interface SprintDeliverableMappingRepository extends JpaRepository<SprintDeliverableMapping, UUID> {
 
     Optional<SprintDeliverableMapping> findBySprintIdAndDeliverableId(UUID sprintId, UUID deliverableId);
+
+    List<SprintDeliverableMapping> findAllByDeliverableId(UUID deliverableId);
 
 }

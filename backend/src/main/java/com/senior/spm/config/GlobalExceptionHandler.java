@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.senior.spm.controller.response.ErrorMessage;
+import com.senior.spm.exception.RepositoryException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -33,8 +34,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorMessage(message));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorMessage> handleRuntimeException(RuntimeException ex) {
+    @ExceptionHandler(RepositoryException.class)
+    public ResponseEntity<ErrorMessage> handleRepositoryException(RepositoryException ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorMessage("An unexpected error occurred: " + ex.getMessage()));
     }
 }
