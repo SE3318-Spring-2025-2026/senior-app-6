@@ -15,6 +15,7 @@
 			const code = route.query.code as string | undefined;
 			const state = route.query.state as string | undefined;
 			const error = route.query.error as string | undefined;
+			console.log("GitHub callback received with query params:", route.query);
 
 			// Check for OAuth error from GitHub
 			if (error) {
@@ -49,6 +50,8 @@
 			// Clean up session storage
 			sessionStorage.removeItem("github_oauth_state");
 			sessionStorage.removeItem("github_student_id");
+
+			console.log("Received GitHub callback with code:", code, "and studentId:", studentId);
 
 			// Send code + studentId to backend; backend exchanges code for token
 			const response = await completeGithubLogin(code, studentId);
@@ -88,7 +91,7 @@
         background: 'radial-gradient(48rem 28rem at 50% 34%, rgba(59,130,246,0.14), rgba(15,23,42,0) 70%)',
         filter: 'blur(14px)',
       }"
-    />
+    ></div>
 
     <section class="relative z-10 w-full max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:shadow-xl md:p-8">
       <!-- Loading State -->

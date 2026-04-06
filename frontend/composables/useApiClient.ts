@@ -58,8 +58,7 @@ export interface CreateRubricRequest {
 }
 
 export interface GithubLoginRequest {
-  accessToken: string;
-  username: string;
+  code: string;
   studentId: string;
 }
 

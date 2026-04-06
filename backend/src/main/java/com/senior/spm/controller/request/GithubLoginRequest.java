@@ -8,10 +8,7 @@ import lombok.Data;
 public class GithubLoginRequest {
 
     @NotBlank
-    private String accessToken;
-
-    @NotBlank
-    private String username;
+    private String code;
 
     @NotBlank
     @Pattern(regexp = "^[0-9]{11}$")
