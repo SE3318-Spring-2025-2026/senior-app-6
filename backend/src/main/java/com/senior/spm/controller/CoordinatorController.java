@@ -11,17 +11,24 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.senior.spm.controller.request.AddRubricRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
+import com.senior.spm.controller.request.MapDeliverablesRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
+import com.senior.spm.controller.request.UpdateDeliverableWeightRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.entity.Deliverable;
+import com.senior.spm.entity.RubricCriterion;
 import com.senior.spm.entity.Sprint;
+import com.senior.spm.entity.SprintDeliverableMapping;
 import com.senior.spm.entity.Student;
 import com.senior.spm.entity.SystemState;
 import com.senior.spm.repository.DeliverableRepository;
+import com.senior.spm.repository.RubricCriterionRepository;
+import com.senior.spm.repository.SprintDeliverableMappingRepository;
 import com.senior.spm.repository.SprintRepository;
 import com.senior.spm.repository.StudentRepository;
 import com.senior.spm.repository.SystemStateRepository;
@@ -36,12 +43,21 @@ public class CoordinatorController {
     private final DeliverableRepository deliverableRepository;
     private final StudentRepository studentRepository;
     private final SystemStateRepository systemStateRepository;
+    private final RubricCriterionRepository rubricCriterionRepository;
+    private final SprintDeliverableMappingRepository sprintDeliverableMappingRepository;
 
-    public CoordinatorController(SprintRepository sprintRepository, DeliverableRepository deliverableRepository, StudentRepository studentRepository, SystemStateRepository systemStateRepository) {
+    public CoordinatorController(SprintRepository sprintRepository,
+            DeliverableRepository deliverableRepository,
+            StudentRepository studentRepository,
+            SystemStateRepository systemStateRepository,
+            RubricCriterionRepository rubricCriterionRepository,
+            SprintDeliverableMappingRepository sprintDeliverableMappingRepository) {
         this.sprintRepository = sprintRepository;
         this.deliverableRepository = deliverableRepository;
         this.studentRepository = studentRepository;
         this.systemStateRepository = systemStateRepository;
+        this.rubricCriterionRepository = rubricCriterionRepository;
+        this.sprintDeliverableMappingRepository = sprintDeliverableMappingRepository;
     }
 
     @PostMapping("/sprints")
@@ -80,18 +96,78 @@ public class CoordinatorController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedDeliverable);
     }
 
+    @PatchMapping("/deliverables/{id}/weight")
+    public ResponseEntity<?> updateDeliverableWeight(@PathVariable UUID id,
+            @Valid @RequestBody UpdateDeliverableWeightRequest request) {
+        var deliverable = deliverableRepository.findById(id);
+        if (deliverable.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage("Deliverable not found with ID: " + id));
+        }
+
+        Deliverable existingDeliverable = deliverable.get();
+        existingDeliverable.setWeight(request.getWeightPercentage());
+        Deliverable updatedDeliverable = deliverableRepository.save(existingDeliverable);
+
+        return ResponseEntity.status(HttpStatus.OK).body(updatedDeliverable);
+    }
+
+    @PostMapping("/deliverables/{id}/rubric")
+    public ResponseEntity<?> addRubricToDeliverable(@PathVariable UUID id,
+            @Valid @RequestBody AddRubricRequest request) {
+        var deliverable = deliverableRepository.findById(id);
+        if (deliverable.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorMessage("Deliverable not found with ID: " + id));
+        }
+
+        var rubricCriterion = new RubricCriterion();
+        rubricCriterion.setDeliverable(deliverable.get());
+        rubricCriterion.setCriterionName(request.getCriterionName());
+        rubricCriterion.setGradingType(request.getGradingType());
+        rubricCriterion.setWeight(request.getWeightPercentage());
+        rubricCriterion.setDeliverable(deliverable.get());
+        rubricCriterionRepository.save(rubricCriterion);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(rubricCriterion);
+    }
+
+    @PostMapping("/sprints/{id}/deliverable-mapping")
+    public ResponseEntity<?> mapDeliverablesToSprint(@PathVariable UUID id,
+            @RequestBody MapDeliverablesRequest request) {
+        var sprint = sprintRepository.findById(id);
+        if (sprint.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorMessage("Sprint not found with ID: " + id));
+        }
+
+        var deliverable = deliverableRepository.findById(request.getDeliverableId());
+        if (deliverable.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorMessage("Deliverable not found with ID: " + request.getDeliverableId()));
+        }
+        var mapping = sprintDeliverableMappingRepository.findBySprintIdAndDeliverableId(id, request.getDeliverableId());
+        if (!mapping.isEmpty()) {
+            var existingMapping = mapping.get();
+            existingMapping.setContributionPercentage(request.getContributionPercentage());
+            sprintDeliverableMappingRepository.save(existingMapping);
+        } else {
+            var newMapping = new SprintDeliverableMapping();
+            newMapping.setSprint(sprint.get());
+            newMapping.setDeliverable(deliverable.get());
+            newMapping.setContributionPercentage(request.getContributionPercentage());
+            sprintDeliverableMappingRepository.save(newMapping);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
     @PatchMapping("/sprints/{id}/target")
     public ResponseEntity<ErrorMessage> updateSprintTarget(@PathVariable UUID id,
             @Valid @RequestBody UpdateSprintTargetRequest request) {
-        // Check if sprint exists
         var sprint = sprintRepository.findById(id);
         if (sprint.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage("Sprint not found with ID: " + id));
         }
-
-        // Retrieve the sprint and update the target
-        sprint.get().setStoryPointTarget(request.getStoryPointTarget());
-        sprintRepository.save(sprint.get());
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
