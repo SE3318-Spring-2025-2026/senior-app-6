@@ -36,7 +36,7 @@ public class JiraValidationService {
      *                                 timeout/network → unreachable)
      */
     public void validate(String jiraSpaceUrl, String jiraProjectKey, String jiraApiToken) {
-        var url = jiraSpaceUrl.stripTrailing() + "/rest/api/3/project/" + jiraProjectKey;
+        var url = jiraSpaceUrl.strip().replaceAll("/+$", "") + "/rest/api/3/project/" + jiraProjectKey;
 
         var headers = new HttpHeaders();
         // JIRA Cloud accepts a Bearer token; on-prem may need Basic – Bearer covers
