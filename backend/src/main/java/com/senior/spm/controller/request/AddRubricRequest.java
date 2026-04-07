@@ -28,5 +28,5 @@ public class AddRubricRequest {
 
     @NotNull
     @Range(min = 0, max = 100, message = "Weight percentage must be between 0 and 100")
-    private BigDecimal weightPercentage;
+    private BigDecimal weight;
 }
