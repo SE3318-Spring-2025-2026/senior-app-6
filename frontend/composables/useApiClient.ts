@@ -108,8 +108,8 @@ async function apiCall<T>(
       } as ApiError;
     }
 
-    const data = await response.json();
-    return data as T;
+    const text = await response.text();
+    return (text ? JSON.parse(text) : null) as T;
   } catch (error) {
     if (error instanceof TypeError) {
       throw { status: 0, message: `Network error: ${error.message}` } as ApiError;
