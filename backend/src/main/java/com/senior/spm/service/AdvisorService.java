@@ -15,6 +15,7 @@ import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.RequestNotFoundException;
 import com.senior.spm.exception.RequestNotPendingException;
 import com.senior.spm.repository.AdvisorRequestRepository;
+import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.service.dto.AdvisorRequestDetail;
 import com.senior.spm.service.dto.AdvisorRequestSummary;
@@ -28,6 +29,7 @@ public class AdvisorService {
 
     private final AdvisorRequestRepository advisorRequestRepository;
     private final ProjectGroupRepository projectGroupRepository;
+    private final GroupMembershipRepository groupMembershipRepository;
     private final TermConfigService termConfigService;
 
     @Transactional(readOnly = true)
@@ -40,7 +42,7 @@ public class AdvisorService {
                 .groupId(req.getGroup().getId())
                 .groupName(req.getGroup().getGroupName())
                 .termId(req.getGroup().getTermId())
-                .memberCount(req.getGroup().getMembers().size())
+                .memberCount((int) groupMembershipRepository.countByGroupId(req.getGroup().getId()))
                 .sentAt(req.getSentAt())
                 .build()
         ).collect(Collectors.toList());
@@ -122,6 +124,11 @@ public class AdvisorService {
         advisorRequestRepository.save(request);
 
         ProjectGroup group = request.getGroup();
+        
+        if (group.getStatus() != ProjectGroup.GroupStatus.TOOLS_BOUND) {
+            throw new RequestNotPendingException("Group is no longer in TOOLS_BOUND status");
+        }
+        
         group.setAdvisor(request.getAdvisor());
         group.setStatus(ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
         projectGroupRepository.save(group);

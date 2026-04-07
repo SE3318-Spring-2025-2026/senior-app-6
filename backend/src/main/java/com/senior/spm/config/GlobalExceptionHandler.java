@@ -12,7 +12,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.senior.spm.controller.response.ErrorMessage;
+import com.senior.spm.exception.AdvisorAtCapacityException;
 import com.senior.spm.exception.ExternalToolValidationException;
+import com.senior.spm.exception.ForbiddenException;
+import com.senior.spm.exception.RequestNotFoundException;
+import com.senior.spm.exception.RequestNotPendingException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -47,5 +51,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ExternalToolValidationException.class)
     public ResponseEntity<ErrorMessage> handleExternalToolValidation(ExternalToolValidationException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AdvisorAtCapacityException.class)
+    public ResponseEntity<ErrorMessage> handleAdvisorAtCapacity(AdvisorAtCapacityException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorMessage> handleForbidden(ForbiddenException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(RequestNotFoundException.class)
+    public ResponseEntity<ErrorMessage> handleRequestNotFound(RequestNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(RequestNotPendingException.class)
+    public ResponseEntity<ErrorMessage> handleRequestNotPending(RequestNotPendingException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
     }
 }

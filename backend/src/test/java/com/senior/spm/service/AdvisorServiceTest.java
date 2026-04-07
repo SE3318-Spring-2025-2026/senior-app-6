@@ -35,6 +35,7 @@ import com.senior.spm.exception.RequestNotFoundException;
 import com.senior.spm.exception.RequestNotPendingException;
 import com.senior.spm.repository.AdvisorRequestRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
+import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.service.dto.AdvisorRequestDetail;
 import com.senior.spm.service.dto.AdvisorRequestSummary;
 import com.senior.spm.service.dto.AdvisorRespondResponse;
@@ -44,6 +45,7 @@ class AdvisorServiceTest {
 
     @Mock private AdvisorRequestRepository advisorRequestRepository;
     @Mock private ProjectGroupRepository projectGroupRepository;
+    @Mock private GroupMembershipRepository groupMembershipRepository;
     @Mock private TermConfigService termConfigService;
 
     @InjectMocks
@@ -128,6 +130,7 @@ class AdvisorServiceTest {
         ));
         when(advisorRequestRepository.findByAdvisorIdAndStatus(PROFESSOR_ID, RequestStatus.PENDING))
                 .thenReturn(List.of(pendingRequest));
+        when(groupMembershipRepository.countByGroupId(GROUP_ID)).thenReturn(3L);
 
         List<AdvisorRequestSummary> result = advisorService.getPendingRequestsForAdvisor(PROFESSOR_ID);
 
