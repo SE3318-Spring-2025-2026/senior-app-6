@@ -57,6 +57,13 @@ export interface CreateRubricRequest {
   criteria: GradingCriterion[];
 }
 
+export interface RubricCriterionResponse {
+  id: string;
+  criterionName: string;
+  gradingType: "Binary" | "Soft";
+  weight: number;
+}
+
 export interface GithubLoginRequest {
   code: string;
   studentId: string;
@@ -246,6 +253,19 @@ export function useApiClient() {
 
   }
 
+  async function fetchRubric(deliverableId: string, token?: string): Promise<RubricCriterionResponse[]> {
+    return apiCall<RubricCriterionResponse[]>(`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`, "GET", undefined, token);
+  }
+
+  async function updateRubric(deliverableId: string, criteria: GradingCriterion[], token?: string): Promise<RubricCriterionResponse[]> {
+    const payload = criteria.map(c => ({
+      criterionName: c.criterionName,
+      gradingType: c.gradingType,
+      weightPercentage: c.weight,
+    }));
+    return apiCall<RubricCriterionResponse[]>(`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`, "PUT", payload, token);
+  }
+
   async function createSprintDeliverableMapping(
     sprintId: string,
     deliverableId: string,
@@ -284,6 +304,8 @@ export function useApiClient() {
     fetchDeliverables,
     fetchSprints,
     createRubric,
+    fetchRubric,
+    updateRubric,
     createSprintDeliverableMapping,
     publishConfig,
     registerProfessor,

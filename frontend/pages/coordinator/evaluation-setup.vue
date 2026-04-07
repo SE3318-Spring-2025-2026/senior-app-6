@@ -1,8 +1,8 @@
 <script setup lang="ts">
 	import { z } from "zod";
-	import { AlertCircle, CheckCircle2, Plus, Scale, Trash2 } from "lucide-vue-next";
+	import { AlertCircle, CheckCircle2, Loader2, Pencil, Plus, Scale, Trash2 } from "lucide-vue-next";
 
-	const { getAuthToken, fetchDeliverables, createRubric } = useApiClient();
+	const { getAuthToken, fetchDeliverables, createRubric, fetchRubric, updateRubric } = useApiClient();
 
 	const gradingTypes = ["Binary", "Soft"] as const;
 
@@ -28,6 +28,10 @@
 	const formErrors = ref<Record<string, string>>({});
 	const successMessage = ref("");
 
+	// Edit mode state
+	const isEditMode = ref(false);
+	const rubricLoading = ref(false);
+
 	const totalWeight = computed(() => criteria.value.reduce((sum, c) => sum + (c.weight || 0), 0));
 	const isWeightValid = computed(() => totalWeight.value === 100);
 
@@ -40,6 +44,42 @@
 			criteria.value.splice(index, 1);
 		}
 	}
+
+	// When deliverable changes, load existing rubric
+	watch(deliverableId, async (newId) => {
+		formErrors.value = {};
+		successMessage.value = "";
+		if (!newId) {
+			isEditMode.value = false;
+			criteria.value = [{ criterionName: "Code Quality", weight: 30, gradingType: "Soft" }];
+			return;
+		}
+
+		rubricLoading.value = true;
+		try {
+			const token = getAuthToken();
+			if (!token) throw new Error("Authentication required");
+
+			const existingCriteria = await fetchRubric(newId, token);
+			if (existingCriteria && existingCriteria.length > 0) {
+				isEditMode.value = true;
+				criteria.value = existingCriteria.map(c => ({
+					criterionName: c.criterionName,
+					weight: c.weight,
+					gradingType: c.gradingType,
+				}));
+			} else {
+				isEditMode.value = false;
+				criteria.value = [{ criterionName: "", weight: 100, gradingType: "Soft" }];
+			}
+		} catch {
+			// If fetch fails, default to create mode
+			isEditMode.value = false;
+			criteria.value = [{ criterionName: "", weight: 100, gradingType: "Soft" }];
+		} finally {
+			rubricLoading.value = false;
+		}
+	});
 
 	const rubricSchema = z.object({
 		deliverableId: z.string().min(1, "Please select a deliverable."),
@@ -76,14 +116,19 @@
 			const token = getAuthToken();
 			if (!token) throw new Error("Authentication required");
 
-			await createRubric(result.data, token);
+			if (isEditMode.value) {
+				await updateRubric(result.data.deliverableId, result.data.criteria, token);
+				successMessage.value = "Rubric updated successfully.";
+			} else {
+				await createRubric(result.data, token);
+				isEditMode.value = true;
+				successMessage.value = "Rubric created successfully.";
+			}
+
 			formErrors.value = {};
-			deliverableId.value = "";
-			criteria.value = [{ criterionName: "", weight: 100, gradingType: "Soft" }];
-			successMessage.value = "Rubric created successfully.";
 			setTimeout(() => (successMessage.value = ""), 3000);
 		} catch (err) {
-			const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to create rubric";
+			const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to save rubric";
 			formErrors.value = { criteria: errorMsg };
 		} finally {
 			submitting.value = false;
@@ -116,7 +161,7 @@
           Evaluation Setup
         </h1>
         <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Define grading rubrics and evaluation criteria for project deliverables.
+          Define grading rubrics and evaluation criteria for project deliverables. Select a deliverable to edit its existing rubric or create a new one.
         </p>
       </header>
 
@@ -127,7 +172,7 @@
           <label class="block space-y-2">
             <span class="text-sm font-semibold text-slate-900 dark:text-white">Select Deliverable</span>
             <p class="text-xs text-slate-600 dark:text-slate-400">
-              Choose which deliverable to create an evaluation rubric for
+              Choose which deliverable to create or edit an evaluation rubric for
             </p>
             <select
               v-model="deliverableId"
@@ -143,6 +188,16 @@
             <p v-if="formErrors.deliverableId" class="text-xs text-red-600 dark:text-red-400">
               {{ formErrors.deliverableId }}
             </p>
+            <!-- Rubric loading indicator -->
+            <div v-if="rubricLoading" class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <Loader2 class="h-3.5 w-3.5 animate-spin" />
+              Loading existing rubric...
+            </div>
+            <!-- Edit mode badge -->
+            <div v-if="isEditMode && !rubricLoading" class="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400">
+              <Pencil class="h-3 w-3" />
+              Editing existing rubric
+            </div>
           </label>
         </article>
 
@@ -266,10 +321,13 @@
 
           <button
             type="submit"
-            :disabled="submitting || !isWeightValid"
+            :disabled="submitting || !isWeightValid || rubricLoading"
             class="w-full rounded-lg bg-blue-600 px-4 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-700 dark:hover:bg-blue-600"
           >
-            {{ submitting ? "Creating Rubric..." : "Create Rubric" }}
+            {{ submitting
+              ? (isEditMode ? "Updating Rubric..." : "Creating Rubric...")
+              : (isEditMode ? "Update Rubric" : "Create Rubric")
+            }}
           </button>
         </div>
       </form>
