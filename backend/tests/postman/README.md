@@ -1,23 +1,87 @@
-# Coordinator QA Tests
+Coordinator QA Tests
+Description
 
-## Description
-Postman collection for testing Coordinator setup flow.
+This Postman collection is designed to test the Coordinator workflow, including student upload, deliverable management, sprint creation, and publish operations.
 
-## Covered Scenarios
+The tests validate API behavior under different scenarios, including authorization, input validation, and business logic rules.
 
-### Student Upload
-- Unauthorized (403)
-- Success (201)
-- Duplicate IDs (400)
-- Invalid Format (400)
-- Empty List (400)
-- Existing ID (400)
+Test Strategy
+Postman Tests → End-to-end API validation
+Focus areas:
+HTTP status codes
+Authorization (RBAC)
+Input validation
+Business logic
+Covered Scenarios
+1. Authentication
+Login – Coordinator
+Login – Admin
+2. Student Upload
+Unauthenticated (401)
+Forbidden (403)
+Success (201)
+Duplicate IDs (400)
+Invalid Format (400)
+Empty List (400)
+Existing ID (400)
+3. Deliverable Management
+Unauthorized (403)
+Success (201)
+Reversed Deadlines (400)
+Missing Field (400)
+4. Deliverable Weight
+Unauthorized (403)
+Success (200)
+Invalid ID (404)
+5. Rubric
+Unauthorized (403)
+Success (201)
+Invalid Deliverable ID (404)
+Invalid Grading Type
+6. Sprint & Publish Flow
 
-### Deliverable
-- Unauthorized (403)
-- Success (201)
-- Reversed Deadlines (400)
-- Missing Field (400)
+Sprint
+Unauthorized (403)
+Success (201)
+End Before Start (400)
+Sprint Mapping
+Unauthorized (403)
+Success (201)
+Exceeds 100% (400)
 
-## Limitations
-Rubric and deliverable weight endpoints were not available in the current backend implementation during testing, so they are not included in this collection.
+Publish
+Unauthorized (403)
+Success (200)
+Incomplete Config (400)
+Missing Students (400)
+Missing Sprints (400)
+Missing Deliverables (400)
+
+Key Validations
+ Correct HTTP status codes are returned
+ Role-based access control (RBAC) is enforced
+ Input validation (format, duplicates, empty inputs)
+ Business rules are properly validated (deadlines, mapping limits, publish requirements)
+
+Notes
+Tests cover both happy path and error scenarios
+A real coordinator workflow is simulated end-to-end
+All tests were successfully executed and passed
+
+QA Summary
+Total scenarios tested: 20+
+Coverage: Auth, Student Upload, Deliverable, Sprint, Publish
+All tests passed successfully
+API behavior validated as expected
+
+## How to Use
+
+Import the following Postman collections:
+
+1. coordinator-qa-tests.postman_collection.json
+2. coordinator-qa-tests-part2.postman_collection.json
+
+Set environment variable:
+baseUrl = http://localhost:8080
+
+Run both collections using Postman Runner.
