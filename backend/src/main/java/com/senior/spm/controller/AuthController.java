@@ -20,11 +20,11 @@ import com.senior.spm.controller.request.ResetPasswordRequest;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.controller.response.GithubLoginResponse;
 import com.senior.spm.controller.response.LoginResponse;
-import com.senior.spm.entity.Student;
 import com.senior.spm.exception.RepositoryException;
 import com.senior.spm.repository.PasswordResetTokenRepository;
 import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.repository.StudentRepository;
+import com.senior.spm.service.GithubService;
 import com.senior.spm.service.JWTService;
 
 import jakarta.validation.Valid;
@@ -38,14 +38,17 @@ public class AuthController {
     private final StaffUserRepository staffUserRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final StudentRepository studentRepository;
+    private final GithubService githubService;
 
     public AuthController(JWTService jwtService, PasswordEncoder passwordEncoder, StaffUserRepository staffUserRepository,
-            PasswordResetTokenRepository passwordResetTokenRepository, StudentRepository studentRepository) {
+            PasswordResetTokenRepository passwordResetTokenRepository, StudentRepository studentRepository,
+            GithubService githubService) {
         this.jwtService = jwtService;
         this.passwordEncoder = passwordEncoder;
         this.staffUserRepository = staffUserRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.studentRepository = studentRepository;
+        this.githubService = githubService;
     }
 
     @PostMapping("/login")
@@ -111,22 +114,47 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    private record GithubTokenRequest(
+            String client_id,
+            String client_secret,
+            String code) {
+
+    }
+
+    private record GithubTokenResponse(
+            String access_token,
+            String token_type,
+            String scope) {
+
+    }
+
     @PostMapping("/github")
     public ResponseEntity<?> githubLogin(@Valid @RequestBody GithubLoginRequest request) {
-        var student = studentRepository.findByStudentId(request.getStudentId())
-                .or(() -> studentRepository.findByGithubUsername(request.getUsername()));
-
-        if (student.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorMessage("Student ID not recognized"));
+        var studentOpt = studentRepository.findByStudentId(request.getStudentId());
+        if (studentOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage("Student ID not found"));
         }
 
-        Student validStudent = student.get();
-        var token = jwtService.issueToken(validStudent);
+        var githubTokenResponse = githubService.exchangeCodeForAccessToken(request.getCode());
+
+        if (githubTokenResponse == null || githubTokenResponse.accessToken() == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorMessage("Failed to retrieve access token from GitHub"));
+        }
+
+        var githubUser = githubService.getGithubUser(githubTokenResponse.accessToken());
+
+        studentOpt.get().setGithubUsername(githubUser.login());
+        studentOpt.get().setAccessToken(githubTokenResponse.accessToken());
+
+        studentRepository.save(studentOpt.get());
+
+        var token = jwtService.issueToken(studentOpt.get());
 
         var userInfo = new GithubLoginResponse.UserInfo(
-                validStudent.getId(),
-                validStudent.getGithubUsername(),
-                "Student");
+                studentOpt.get().getId(),
+                studentOpt.get().getGithubUsername(),
+                "STUDENT");
 
         return ResponseEntity.status(HttpStatus.OK).body(new GithubLoginResponse(token, userInfo));
     }
