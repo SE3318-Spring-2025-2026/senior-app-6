@@ -1,6 +1,6 @@
 package com.senior.spm.entity;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -10,46 +10,37 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "staffUser")
+@Table(name = "schedule_window")
 @Getter
 @Setter
 @NoArgsConstructor
-public class StaffUser {
+public class ScheduleWindow {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
-    private String mail;
-
     @Column(nullable = false)
-    private String passwordHash;
+    private String termId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;
+    private WindowType type;
 
     @Column(nullable = false)
-    private boolean firstLogin = true;
+    private LocalDateTime opensAt;
 
     @Column(nullable = false)
-    private int advisorCapacity = 5;
+    private LocalDateTime closesAt;
 
-    @OneToMany(mappedBy = "advisor")
-    private List<ProjectGroup> advisedGroups;
-
-    @OneToMany(mappedBy = "advisor")
-    private List<AdvisorRequest> receivedRequests;
-
-    public enum Role {
-        Admin, Coordinator, Professor
+    public enum WindowType {
+        GROUP_CREATION,
+        ADVISOR_ASSOCIATION
     }
 }
