@@ -20,6 +20,7 @@ import com.senior.spm.controller.request.RegisterProfessorRequest;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.entity.PasswordResetToken;
 import com.senior.spm.entity.StaffUser;
+import com.senior.spm.exception.RepositoryException;
 import com.senior.spm.repository.PasswordResetTokenRepository;
 import com.senior.spm.repository.StaffUserRepository;
 
@@ -67,7 +68,7 @@ public class AdminController {
             resetToken.setStaff(staffUser);
             passwordResetTokenRepository.save(resetToken);
         } catch (IllegalArgumentException | OptimisticEntityLockException e) {
-            throw new RuntimeException("Server error while creating professor: " + e.getMessage(), e);
+            throw new RepositoryException("Server error while creating professor: " + e.getMessage(), e);
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("resetToken", token));

@@ -1,5 +1,6 @@
 package com.senior.spm.controller;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -145,19 +146,32 @@ public class CoordinatorController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ErrorMessage("Deliverable not found with ID: " + request.getDeliverableId()));
         }
-		
-        var mapping = sprintDeliverableMappingRepository.findBySprintIdAndDeliverableId(id, request.getDeliverableId());
-        if (!mapping.isEmpty()) {
-            var existingMapping = mapping.get();
-            existingMapping.setContributionPercentage(request.getContributionPercentage());
-            sprintDeliverableMappingRepository.save(existingMapping);
-        } else {
+
+        var existingMappingOpt = sprintDeliverableMappingRepository.findBySprintIdAndDeliverableId(id, request.getDeliverableId());
+        var existingMappings = sprintDeliverableMappingRepository.findAllByDeliverableId(request.getDeliverableId());
+
+        BigDecimal otherMappingsTotal = existingMappings.stream()
+                .filter(m -> !m.getSprint().getId().equals(id))
+                .map(SprintDeliverableMapping::getContributionPercentage)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal newTotal = otherMappingsTotal.add(request.getContributionPercentage());
+
+        if (newTotal.compareTo(new BigDecimal("100.00")) > 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorMessage("Total contribution exceeds 100%. Remaining capacity: "
+                            + (new BigDecimal("100.00").subtract(otherMappingsTotal)) + "%"));
+        }
+
+        SprintDeliverableMapping mappingToSave = existingMappingOpt.orElseGet(() -> {
             var newMapping = new SprintDeliverableMapping();
             newMapping.setSprint(sprint.get());
             newMapping.setDeliverable(deliverable.get());
-            newMapping.setContributionPercentage(request.getContributionPercentage());
-            sprintDeliverableMappingRepository.save(newMapping);
-        }
+            return newMapping;
+        });
+
+        mappingToSave.setContributionPercentage(request.getContributionPercentage());
+        sprintDeliverableMappingRepository.save(mappingToSave);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }

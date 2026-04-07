@@ -6,6 +6,8 @@ import org.hibernate.validator.constraints.Range;
 
 import com.senior.spm.entity.RubricCriterion;
 
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -21,6 +23,7 @@ public class AddRubricRequest {
     private String criterionName;
 
     @NotNull
+    @Enumerated(EnumType.STRING)
     private RubricCriterion.GradingType gradingType;
 
     @NotNull
