@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.senior.spm.controller.dto.BindGithubRequest;
 import com.senior.spm.controller.dto.BindJiraRequest;
+import com.senior.spm.controller.dto.BindToolResponse;
 import com.senior.spm.controller.dto.CreateGroupRequest;
 import com.senior.spm.controller.dto.GroupDetailResponse;
 import com.senior.spm.controller.dto.InvitationResponse;
@@ -125,31 +126,77 @@ public class GroupController {
     }
 
     /**
-     * Bind JIRA workspace to the group.
-     * Auth: Student JWT (must be TEAM_LEADER of groupId)
-     * POST /api/groups/{groupId}/jira
+     * Bind a JIRA workspace to the group.
+     *
+     * <p>Validates the JIRA credentials with a live API call before persisting anything.
+     * The API token is encrypted (AES-256-GCM) before storage — it never appears in the
+     * response or database in plaintext.
+     *
+     * <p>Auth: Student JWT — requester must be {@code TEAM_LEADER} of {@code groupId}.
+     *
+     * @param groupId UUID of the group to bind
+     * @param request {@link BindJiraRequest} containing {@code jiraSpaceUrl},
+     *                {@code jiraProjectKey}, and {@code jiraApiToken} (all required)
+     * @return 200 with {@link BindToolResponse} containing non-sensitive JIRA metadata
+     *         and updated group status
+     *
+     *         Error responses:
+     *         - 400: group is DISBANDED or DTO validation fails
+     *         - 403: requester is not TEAM_LEADER
+     *         - 404: group not found
+     *         - 422: JIRA live validation failed (invalid token, unknown project key, unreachable URL)
      */
     @PostMapping("/{groupId}/jira")
-    public ResponseEntity<GroupDetailResponse> bindJira(
+    public ResponseEntity<BindToolResponse> bindJira(
         @PathVariable UUID groupId,
         @Valid @RequestBody BindJiraRequest request
     ) {
-        // TODO: Issue #49 — wire to GroupService.bindJira(groupId, extractStudentUUIDFromJWT(), request)
-        throw new UnsupportedOperationException("Not implemented yet");
+        UUID requesterUUID = extractStudentUUIDFromJWT();
+        BindToolResponse response = groupService.bindJira(
+            groupId,
+            request.getJiraSpaceUrl(),
+            request.getJiraProjectKey(),
+            request.getJiraApiToken(),
+            requesterUUID
+        );
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * Bind GitHub organization to the group.
-     * Auth: Student JWT (must be TEAM_LEADER of groupId)
-     * POST /api/groups/{groupId}/github
+     * Bind a GitHub organization to the group.
+     *
+     * <p>Validates the GitHub PAT with two sequential live API calls (org existence +
+     * {@code repo} scope check) before persisting anything. The PAT is encrypted
+     * (AES-256-GCM) before storage — it never appears in the response or database
+     * in plaintext.
+     *
+     * <p>Auth: Student JWT — requester must be {@code TEAM_LEADER} of {@code groupId}.
+     *
+     * @param groupId UUID of the group to bind
+     * @param request {@link BindGithubRequest} containing {@code githubOrgName}
+     *                and {@code githubPat} (both required)
+     * @return 200 with {@link BindToolResponse} containing non-sensitive GitHub metadata
+     *         and updated group status
+     *
+     *         Error responses:
+     *         - 400: group is DISBANDED or DTO validation fails
+     *         - 403: requester is not TEAM_LEADER
+     *         - 404: group not found
+     *         - 422: GitHub live validation failed (invalid PAT, org not found, missing repo scope)
      */
     @PostMapping("/{groupId}/github")
-    public ResponseEntity<GroupDetailResponse> bindGithub(
+    public ResponseEntity<BindToolResponse> bindGithub(
         @PathVariable UUID groupId,
         @Valid @RequestBody BindGithubRequest request
     ) {
-        // TODO: Issue #49 — wire to GroupService.bindGithub(groupId, extractStudentUUIDFromJWT(), request)
-        throw new UnsupportedOperationException("Not implemented yet");
+        UUID requesterUUID = extractStudentUUIDFromJWT();
+        BindToolResponse response = groupService.bindGitHub(
+            groupId,
+            request.getGithubOrgName(),
+            request.getGithubPat(),
+            requesterUUID
+        );
+        return ResponseEntity.ok(response);
     }
 
     /**
