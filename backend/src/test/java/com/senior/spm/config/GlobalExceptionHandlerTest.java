@@ -5,8 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
+import com.senior.spm.exception.AdvisorAtCapacityException;
+import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GitHubValidationException;
 import com.senior.spm.exception.JiraValidationException;
+import com.senior.spm.exception.RequestNotFoundException;
+import com.senior.spm.exception.RequestNotPendingException;
 
 /**
  * Verifies that GlobalExceptionHandler maps both JiraValidationException and
@@ -59,6 +63,47 @@ class GlobalExceptionHandlerTest {
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getMessage()).isEqualTo(message);
+    }
+
+    // ── P3 advisor exceptions ─────────────────────────────────────────────
+    //
+    // These tests INTENTIONALLY FAIL until the corresponding @ExceptionHandler
+    // methods are added to GlobalExceptionHandler. That is the bug from PR #82.
+
+    @Test
+    void advisorAtCapacityException_mapsTo400() {
+        var ex = new AdvisorAtCapacityException("You have reached your maximum group capacity for this term");
+        var response = handler.handleAdvisorAtCapacity(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void forbiddenException_mapsTo403() {
+        var ex = new ForbiddenException("This request is not addressed to you");
+        var response = handler.handleForbidden(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void requestNotFoundException_mapsTo404() {
+        var ex = new RequestNotFoundException("Request not found");
+        var response = handler.handleRequestNotFound(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void requestNotPendingException_mapsTo400() {
+        var ex = new RequestNotPendingException("Request is no longer pending");
+        var response = handler.handleRequestNotPending(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
     }
 
     // ── Never returns a different status ─────────────────────────────────
