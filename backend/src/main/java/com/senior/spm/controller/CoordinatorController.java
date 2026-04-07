@@ -1,9 +1,11 @@
 package com.senior.spm.controller;
 
 import java.util.UUID;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.senior.spm.controller.dto.GroupDetailResponse;
+import com.senior.spm.controller.request.CoordinatorMemberRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
@@ -25,6 +29,7 @@ import com.senior.spm.repository.DeliverableRepository;
 import com.senior.spm.repository.SprintRepository;
 import com.senior.spm.repository.StudentRepository;
 import com.senior.spm.repository.SystemStateRepository;
+import com.senior.spm.service.GroupService;
 
 import jakarta.validation.Valid;
 
@@ -36,12 +41,19 @@ public class CoordinatorController {
     private final DeliverableRepository deliverableRepository;
     private final StudentRepository studentRepository;
     private final SystemStateRepository systemStateRepository;
+    private final GroupService groupService;
 
-    public CoordinatorController(SprintRepository sprintRepository, DeliverableRepository deliverableRepository, StudentRepository studentRepository, SystemStateRepository systemStateRepository) {
+    public CoordinatorController(
+            SprintRepository sprintRepository,
+            DeliverableRepository deliverableRepository,
+            StudentRepository studentRepository,
+            SystemStateRepository systemStateRepository,
+            GroupService groupService) {
         this.sprintRepository = sprintRepository;
         this.deliverableRepository = deliverableRepository;
         this.studentRepository = studentRepository;
         this.systemStateRepository = systemStateRepository;
+        this.groupService = groupService;
     }
 
     @PostMapping("/sprints")
@@ -188,5 +200,75 @@ public class CoordinatorController {
 
         return ResponseEntity.status(HttpStatus.OK).build();
 
+    }
+
+    // ========== GROUP MANAGEMENT ENDPOINTS ==========
+
+    @GetMapping("/groups")
+    public ResponseEntity<List<GroupDetailResponse>> listGroups() {
+        try {
+            List<GroupDetailResponse> groups = groupService.getGroupsForActiveTerm();
+            return ResponseEntity.status(HttpStatus.OK).body(groups);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @GetMapping("/groups/{groupId}")
+    public ResponseEntity<?> getGroupDetail(@PathVariable UUID groupId) {
+        try {
+            GroupDetailResponse group = groupService.getGroupDetail(groupId);
+            return ResponseEntity.status(HttpStatus.OK).body(group);
+        } catch (com.senior.spm.exception.GroupNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PatchMapping("/groups/{groupId}/members")
+    public ResponseEntity<?> updateGroupMembers(
+            @PathVariable UUID groupId,
+            @Valid @RequestBody CoordinatorMemberRequest request) {
+        try {
+            // Validate action
+            if (!request.getAction().equals("ADD") && !request.getAction().equals("REMOVE")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorMessage("action must be ADD or REMOVE"));
+            }
+
+            GroupDetailResponse result;
+            if (request.getAction().equals("ADD")) {
+                result = groupService.coordinatorAddStudent(groupId, request.getStudentId());
+            } else {
+                result = groupService.coordinatorRemoveStudent(groupId, request.getStudentId());
+            }
+
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        } catch (com.senior.spm.exception.GroupNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (com.senior.spm.exception.StudentNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (com.senior.spm.exception.ForbiddenException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
+        } catch (com.senior.spm.exception.BusinessRuleException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PatchMapping("/groups/{groupId}/disband")
+    public ResponseEntity<?> disbandGroup(@PathVariable UUID groupId) {
+        try {
+            GroupDetailResponse result = groupService.disbandGroup(groupId);
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        } catch (com.senior.spm.exception.GroupNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (com.senior.spm.exception.BusinessRuleException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.senior.spm.controller.dto.GroupDetailResponse;
+import com.senior.spm.entity.AdvisorRequest;
+import com.senior.spm.entity.AdvisorRequest.RequestStatus;
 import com.senior.spm.entity.GroupMembership;
 import com.senior.spm.entity.GroupMembership.MemberRole;
 import com.senior.spm.entity.ProjectGroup;
@@ -17,8 +19,14 @@ import com.senior.spm.entity.ProjectGroup.GroupStatus;
 import com.senior.spm.entity.ScheduleWindow;
 import com.senior.spm.entity.Student;
 import com.senior.spm.exception.AlreadyInGroupException;
+import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.DuplicateGroupNameException;
+import com.senior.spm.exception.ForbiddenException;
+import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.ScheduleWindowClosedException;
+import com.senior.spm.exception.StudentNotFoundException;
+import com.senior.spm.repository.AdvisorRequestRepository;
+import com.senior.spm.repository.GroupInvitationRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.ScheduleWindowRepository;
@@ -34,6 +42,8 @@ public class GroupService {
     private final ProjectGroupRepository projectGroupRepository;
     private final GroupMembershipRepository groupMembershipRepository;
     private final StudentRepository studentRepository;
+    private final GroupInvitationRepository groupInvitationRepository;
+    private final AdvisorRequestRepository advisorRequestRepository;
     private final TermConfigService termConfigService;
 
     @Transactional
@@ -137,5 +147,122 @@ public class GroupService {
 
         response.setMembers(memberResponses);
         return response;
+    }
+
+    // ========== COORDINATOR BYPASS METHODS ==========
+
+    @Transactional(readOnly = true)
+    public List<GroupDetailResponse> getGroupsForActiveTerm() {
+        String termId = termConfigService.getActiveTermId();
+        List<ProjectGroup> groups = projectGroupRepository.findByTermId(termId);
+        return groups.stream()
+            .map(group -> toGroupDetailResponse(group, null))
+            .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public GroupDetailResponse getGroupDetail(UUID groupId) {
+        ProjectGroup group = projectGroupRepository.findById(groupId)
+            .orElseThrow(() -> new GroupNotFoundException("Group not found"));
+        return toGroupDetailResponse(group, null);
+    }
+
+    @Transactional
+    public GroupDetailResponse coordinatorAddStudent(UUID groupId, String studentId) {
+        // 1. Find group
+        ProjectGroup group = projectGroupRepository.findById(groupId)
+            .orElseThrow(() -> new GroupNotFoundException("Group not found"));
+
+        // 2. Find student by studentId
+        Student student = studentRepository.findByStudentId(studentId)
+            .orElseThrow(() -> new StudentNotFoundException(String.format("Student '%s' not found", studentId)));
+
+        // 3. Check if student is already in a group
+        if (groupMembershipRepository.existsByStudentId(student.getId())) {
+            throw new BusinessRuleException(String.format("Student '%s' is already a member of a group", studentId));
+        }
+
+        // 4. Check max team size (current members + pending outbound invitations)
+        long currentMembers = groupMembershipRepository.countByGroupId(groupId);
+        long pendingInvitations = groupInvitationRepository.countByGroupIdAndStatus(
+            groupId, 
+            com.senior.spm.entity.GroupInvitation.InvitationStatus.PENDING
+        );
+        long totalCount = currentMembers + pendingInvitations;
+        
+        int maxTeamSize = termConfigService.getMaxTeamSize();
+        if (totalCount >= maxTeamSize) {
+            throw new BusinessRuleException("Group has reached maximum team size");
+        }
+
+        // 5. Create membership (atomically in same transaction)
+        GroupMembership membership = new GroupMembership();
+        membership.setStudent(student);
+        membership.setGroup(group);
+        membership.setRole(MemberRole.MEMBER);
+        membership.setJoinedAt(LocalDateTime.now(ZoneId.of("UTC")));
+        groupMembershipRepository.save(membership);
+
+        // 6. Auto-deny all PENDING invitations for this student (excluding this group if any existed)
+        groupInvitationRepository.autoDenyOtherPendingInvitations(student.getId(), groupId);
+
+        return toGroupDetailResponse(group, null);
+    }
+
+    @Transactional
+    public GroupDetailResponse coordinatorRemoveStudent(UUID groupId, String studentId) {
+        // 1. Find group
+        ProjectGroup group = projectGroupRepository.findById(groupId)
+            .orElseThrow(() -> new GroupNotFoundException("Group not found"));
+
+        // 2. Find student by studentId
+        Student student = studentRepository.findByStudentId(studentId)
+            .orElseThrow(() -> new StudentNotFoundException(String.format("Student '%s' not found", studentId)));
+
+        // 3. Find membership
+        GroupMembership membership = groupMembershipRepository.findByGroupIdAndStudentId(groupId, student.getId())
+            .orElseThrow(() -> new GroupNotFoundException(String.format("Student '%s' is not a member of this group", studentId)));
+
+        // 4. Block removal of TEAM_LEADER
+        if (membership.getRole() == MemberRole.TEAM_LEADER) {
+            throw new ForbiddenException("Cannot remove Team Leader; transfer leadership first");
+        }
+
+        // 5. Delete membership
+        groupMembershipRepository.delete(membership);
+
+        return toGroupDetailResponse(group, null);
+    }
+
+    @Transactional
+    public GroupDetailResponse disbandGroup(UUID groupId) {
+        // 1. Find group
+        ProjectGroup group = projectGroupRepository.findById(groupId)
+            .orElseThrow(() -> new GroupNotFoundException("Group not found"));
+
+        // 2. Check if already disbanded
+        if (group.getStatus() == GroupStatus.DISBANDED) {
+            throw new BusinessRuleException("Group is already disbanded");
+        }
+
+        // 3. Update group status to DISBANDED
+        group.setStatus(GroupStatus.DISBANDED);
+        projectGroupRepository.save(group);
+
+        // 4. Hard-delete all membership rows to free students
+        groupMembershipRepository.deleteByGroupId(groupId);
+
+        // 5. Auto-deny all PENDING outbound invitations from this group (P2 requirement)
+        groupInvitationRepository.autoDenyAllPendingByGroupId(groupId);
+
+        // 6. Auto-reject all PENDING advisor requests for this group (P3 requirement)
+        // Note: This is part of the P3 cleanup step per p3_issues.md line 111
+        // When P3 is implemented, this will handle advisor request cascade cleanup
+        advisorRequestRepository.bulkUpdateStatusByGroupId(
+            RequestStatus.AUTO_REJECTED,
+            groupId
+        );
+
+        return toGroupDetailResponse(group, null);
     }
 }

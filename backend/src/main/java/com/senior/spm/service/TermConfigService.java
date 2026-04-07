@@ -17,4 +17,16 @@ public class TermConfigService {
         // For now, return a placeholder
         return "PLACEHOLDER-TERM";
     }
+
+    /**
+     * Get maximum team size for group formation
+     * Used for validation during group creation and coordinator force-add
+     * 
+     * @return maximum number of members allowed per group
+     */
+    public int getMaxTeamSize() {
+        // Default: 5 members per group
+        // TODO: Implement by fetching from system_config table if configurable
+        return 5;
+    }
 }
