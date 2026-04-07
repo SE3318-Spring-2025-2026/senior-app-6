@@ -1,6 +1,6 @@
 <script setup lang="ts">
 	import { z } from "zod";
-	import { AlertCircle, KeyRound, Loader2, Lock, ShieldCheck } from "lucide-vue-next";
+	import { AlertCircle, ArrowLeft, KeyRound, Loader2, Lock, ShieldCheck } from "lucide-vue-next";
 
 	const router = useRouter();
 	const route = useRoute();
@@ -8,15 +8,34 @@
 
 	const token = computed(() => (route.query.token as string) || null);
 
+	const passwordSchema = z
+		.string()
+		.min(8, "Password must be at least 8 characters long.")
+		.regex(/[a-z]/, "Password must contain at least one lowercase letter.")
+		.regex(/[A-Z]/, "Password must contain at least one uppercase letter.")
+		.regex(/[0-9]/, "Password must contain at least one digit.")
+		.regex(/[^a-zA-Z0-9]/, "Password must contain at least one special character.");
+
 	const resetPasswordSchema = z
 		.object({
-			newPassword: z.string().min(8, "Password must be at least 8 characters long."),
+			newPassword: passwordSchema,
 			confirmPassword: z.string().min(1, "Please confirm your password."),
 		})
 		.refine((values) => values.newPassword === values.confirmPassword, {
 			message: "Passwords do not match.",
 			path: ["confirmPassword"],
 		});
+
+	const passwordRequirements = computed(() => {
+		const pw = newPassword.value;
+		return [
+			{ label: "At least 8 characters", met: pw.length >= 8 },
+			{ label: "One lowercase letter (a-z)", met: /[a-z]/.test(pw) },
+			{ label: "One uppercase letter (A-Z)", met: /[A-Z]/.test(pw) },
+			{ label: "One digit (0-9)", met: /[0-9]/.test(pw) },
+			{ label: "One special character (!@#$...)", met: /[^a-zA-Z0-9]/.test(pw) },
+		];
+	});
 
 	type TokenValidationState = "loading" | "invalid" | "valid";
 
@@ -129,6 +148,22 @@
         </header>
 
         <form @submit.prevent="handleSubmit" class="space-y-4" novalidate>
+          <!-- Password Requirements Checklist -->
+          <div v-if="newPassword.length > 0" class="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50">
+            <p class="mb-2 text-xs font-medium text-slate-600 dark:text-slate-400">Password requirements:</p>
+            <ul class="space-y-1">
+              <li
+                v-for="req in passwordRequirements"
+                :key="req.label"
+                class="flex items-center gap-2 text-xs"
+                :class="req.met ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'"
+              >
+                <span v-if="req.met">&#10003;</span>
+                <span v-else class="text-slate-400 dark:text-slate-500">&#9675;</span>
+                {{ req.label }}
+              </li>
+            </ul>
+          </div>
           <label class="block space-y-1.5">
             <span class="text-sm font-medium text-slate-700 dark:text-slate-300">New Password</span>
             <div class="relative">
@@ -190,6 +225,14 @@
           >
             {{ submitting ? "Saving password..." : "Set Password" }}
           </button>
+
+          <NuxtLink
+            to="/auth/login"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+          >
+            <ArrowLeft class="h-4 w-4" />
+            Back to Login
+          </NuxtLink>
         </form>
       </div>
     </section>

@@ -258,6 +258,10 @@ export function useApiClient() {
     return apiCall<void>("/coordinator/publish", "POST", undefined, token);
   }
 
+  async function registerProfessor(mail: string, token?: string): Promise<{ resetToken: string }> {
+    return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", { mail }, token);
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -276,5 +280,6 @@ export function useApiClient() {
     createRubric,
     createSprintDeliverableMapping,
     publishConfig,
+    registerProfessor,
   };
 }
