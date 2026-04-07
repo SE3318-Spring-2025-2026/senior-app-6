@@ -153,7 +153,7 @@ class GroupServiceTest {
 
     @Test
     void createGroup_windowExpired_throwsScheduleWindowClosedException() {
-        openWindow.setClosesAt(LocalDateTime.now().minusHours(1)); // already closed
+        openWindow.setClosesAt(LocalDateTime.now(java.time.ZoneOffset.UTC).minusHours(1)); // already closed in UTC
 
         when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(scheduleWindowRepository.findByTermIdAndType(TERM_ID, WindowType.GROUP_CREATION))
