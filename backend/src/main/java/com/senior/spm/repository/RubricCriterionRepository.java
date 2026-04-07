@@ -1,5 +1,6 @@
 package com.senior.spm.repository;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,4 +10,6 @@ import com.senior.spm.entity.RubricCriterion;
 
 @Repository
 public interface RubricCriterionRepository extends JpaRepository<RubricCriterion, UUID> {
+
+    List<RubricCriterion> findAllByDeliverableId(UUID deliverableId);
 }

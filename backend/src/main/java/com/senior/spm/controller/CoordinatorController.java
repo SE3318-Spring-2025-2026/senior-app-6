@@ -29,7 +29,6 @@ import com.senior.spm.service.StudentService;
 import com.senior.spm.service.SystemStateService;
 
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/coordinator")
@@ -95,6 +94,8 @@ public class CoordinatorController {
             return ResponseEntity.status(HttpStatus.CREATED).body(rubricCriterion);
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
         }
     }
 

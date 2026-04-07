@@ -67,11 +67,23 @@ public class DeliverableService {
         var deliverable = deliverableRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Deliverable not found with ID: " + id));
 
+        var existingCriteria = rubricCriterionRepository.findAllByDeliverableId(id);
+
+        var existingTotalWeight = existingCriteria.stream()
+                .map(RubricCriterion::getWeight)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        var newTotalWeight = existingTotalWeight.add(request.getWeight());
+
+        if (newTotalWeight.compareTo(new BigDecimal("100.00")) > 0) {
+            throw new IllegalArgumentException("Total weight percentage exceeds 100%. Remaining capacity: "
+                    + (new BigDecimal("100.00").subtract(existingTotalWeight)) + "%");
+        }
+
         var rubricCriterion = new RubricCriterion();
         rubricCriterion.setDeliverable(deliverable);
         rubricCriterion.setCriterionName(request.getCriterionName());
         rubricCriterion.setGradingType(request.getGradingType());
-        rubricCriterion.setWeight(request.getWeightPercentage());
+        rubricCriterion.setWeight(request.getWeight());
 
         return rubricCriterionRepository.save(rubricCriterion);
     }

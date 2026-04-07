@@ -237,7 +237,13 @@ export function useApiClient() {
   }
 
   async function createRubric(data: CreateRubricRequest, token?: string): Promise<void> {
-    return apiCall<void>(`/coordinator/deliverables/${encodeURIComponent(data.deliverableId)}/rubric`, "POST", { criteria: data.criteria }, token);
+		for (const criterion of data.criteria) {
+				return apiCall<void>(
+					`/coordinator/deliverables/${encodeURIComponent(data.deliverableId)}/rubric`, "POST",
+					criterion,
+					token);
+		}
+
   }
 
   async function createSprintDeliverableMapping(
