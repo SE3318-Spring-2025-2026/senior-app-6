@@ -46,6 +46,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/api/coordinator/**").hasRole("COORDINATOR")
+                                .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
                                 .anyRequest().authenticated())
                 .exceptionHandling(
                         ex -> ex.accessDeniedHandler(
@@ -61,6 +62,13 @@ public class SecurityConfig {
                                     response.getWriter().write(
                                             objectMapper.writeValueAsString(
                                                     new ErrorMessage(message + "Exception: " + exception.getMessage())
+                                            ));
+                                }).authenticationEntryPoint((request, response, exception) -> {
+                                    response.setStatus(401);
+                                    response.setContentType("application/json");
+                                    response.getWriter().write(
+                                            objectMapper.writeValueAsString(
+                                                    new ErrorMessage("Unauthorized: " + exception.getMessage())
                                             ));
                                 }))
                 .build();

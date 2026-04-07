@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.exception.ExternalToolValidationException;
+import com.senior.spm.exception.RepositoryException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -47,5 +48,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ExternalToolValidationException.class)
     public ResponseEntity<ErrorMessage> handleExternalToolValidation(ExternalToolValidationException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(RepositoryException.class)
+    public ResponseEntity<ErrorMessage> handleRepositoryException(RepositoryException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ErrorMessage("An unexpected error occurred: " + ex.getMessage()));
     }
 }
