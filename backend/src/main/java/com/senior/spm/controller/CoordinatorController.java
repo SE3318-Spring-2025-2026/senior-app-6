@@ -1,13 +1,17 @@
 package com.senior.spm.controller;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -130,6 +134,43 @@ public class CoordinatorController {
         rubricCriterionRepository.save(rubricCriterion);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(rubricCriterion);
+    }
+
+    @GetMapping("/deliverables/{id}/rubric")
+    public ResponseEntity<?> getRubricForDeliverable(@PathVariable UUID id) {
+        var deliverable = deliverableRepository.findById(id);
+        if (deliverable.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorMessage("Deliverable not found with ID: " + id));
+        }
+
+        List<RubricCriterion> criteria = rubricCriterionRepository.findByDeliverableId(id);
+        return ResponseEntity.ok(criteria);
+    }
+
+    @PutMapping("/deliverables/{id}/rubric")
+    @Transactional
+    public ResponseEntity<?> updateRubricForDeliverable(@PathVariable UUID id,
+            @Valid @RequestBody List<AddRubricRequest> requests) {
+        var deliverable = deliverableRepository.findById(id);
+        if (deliverable.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorMessage("Deliverable not found with ID: " + id));
+        }
+
+        // Delete existing criteria and replace with new ones
+        rubricCriterionRepository.deleteByDeliverableId(id);
+
+        var savedCriteria = requests.stream().map(request -> {
+            var rubricCriterion = new RubricCriterion();
+            rubricCriterion.setDeliverable(deliverable.get());
+            rubricCriterion.setCriterionName(request.getCriterionName());
+            rubricCriterion.setGradingType(request.getGradingType());
+            rubricCriterion.setWeight(request.getWeightPercentage());
+            return rubricCriterionRepository.save(rubricCriterion);
+        }).toList();
+
+        return ResponseEntity.ok(savedCriteria);
     }
 
     @PostMapping("/sprints/{id}/deliverable-mapping")
