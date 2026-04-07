@@ -39,7 +39,7 @@ public class GroupService {
     @Transactional
     public GroupDetailResponse createGroup(String groupName, UUID studentUUID) {
         // 1. Get active term ID
-        UUID termId = termConfigService.getActiveTermId();
+        String termId = termConfigService.getActiveTermId();
 
         // 2. Check if schedule window is open
         ScheduleWindow window = scheduleWindowRepository
@@ -114,7 +114,7 @@ public class GroupService {
         GroupDetailResponse response = new GroupDetailResponse();
         response.setId(group.getId());
         response.setGroupName(group.getGroupName());
-        response.setTermId(group.getTermId().toString());
+        response.setTermId(group.getTermId());
         response.setStatus(group.getStatus().toString());
         response.setCreatedAt(group.getCreatedAt());
         response.setJiraSpaceUrl(group.getJiraSpaceUrl());
