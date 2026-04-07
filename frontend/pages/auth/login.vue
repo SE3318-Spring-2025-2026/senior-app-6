@@ -3,6 +3,7 @@
 	import { useAuthStore } from "~/stores/auth";
 	import {
 		AlertCircle,
+		ArrowLeft,
 		GraduationCap,
 		LayoutDashboard,
 		LogIn,
@@ -298,6 +299,17 @@
           {{ studentSubmitting ? "Redirecting to GitHub..." : "Sign in with GitHub" }}
         </button>
       </form>
+
+      <!-- Back to home -->
+      <div class="mt-4 text-center">
+        <NuxtLink
+          to="/"
+          class="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+        >
+          <ArrowLeft class="h-3.5 w-3.5" />
+          Back to Home
+        </NuxtLink>
+      </div>
     </section>
   </main>
 </template>

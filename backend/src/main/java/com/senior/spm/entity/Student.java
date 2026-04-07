@@ -3,7 +3,10 @@ package com.senior.spm.entity;
 import java.util.List;
 import java.util.UUID;
 
+import com.senior.spm.converter.AccessTokenEncryptionConverter;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -38,4 +41,8 @@ public class Student {
 
     @OneToMany(mappedBy = "invitee")
     private List<GroupInvitation> invitations;
+
+    @Column(nullable = true, unique = true)
+    @Convert(converter = AccessTokenEncryptionConverter.class)
+    private String accessToken;
 }

@@ -4,8 +4,11 @@ import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.TestPropertySource;
 
 import com.senior.spm.entity.AdvisorRequest;
+import com.senior.spm.service.SymmetricEncryptionService;
 import com.senior.spm.entity.GroupInvitation;
 import com.senior.spm.entity.GroupMembership;
 import com.senior.spm.entity.ProjectGroup;
@@ -17,7 +20,14 @@ import com.senior.spm.entity.Student;
  * Shared factory methods for building test entities.
  * All data is in-memory (H2); each test rolls back after completion.
  */
+// Provides encryption.secret so AccessTokenEncryptionConverter can initialize in @DataJpaTest context
+@TestPropertySource(properties = "encryption.secret=dGVzdC1BRVMta2V5LWZvci11bml0LXRlc3RzLW9ubHk=")
 abstract class RepositoryTestBase {
+
+    // AccessTokenEncryptionConverter (on Student.accessToken) depends on this service.
+    // @DataJpaTest doesn't load @Service beans, so we mock it to satisfy the dependency.
+    @MockBean
+    SymmetricEncryptionService symmetricEncryptionService;
 
     @Autowired
     TestEntityManager em;
