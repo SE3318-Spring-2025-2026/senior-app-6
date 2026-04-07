@@ -1,10 +1,10 @@
 package com.senior.spm.controller;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,263 +21,141 @@ import com.senior.spm.controller.request.UpdateDeliverableRequest;
 import com.senior.spm.controller.request.UpdateDeliverableWeightRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.controller.response.ErrorMessage;
-import com.senior.spm.entity.Deliverable;
-import com.senior.spm.entity.RubricCriterion;
-import com.senior.spm.entity.Sprint;
-import com.senior.spm.entity.SprintDeliverableMapping;
-import com.senior.spm.entity.Student;
-import com.senior.spm.entity.SystemState;
-import com.senior.spm.repository.DeliverableRepository;
-import com.senior.spm.repository.RubricCriterionRepository;
-import com.senior.spm.repository.SprintDeliverableMappingRepository;
-import com.senior.spm.repository.SprintRepository;
-import com.senior.spm.repository.StudentRepository;
-import com.senior.spm.repository.SystemStateRepository;
+import com.senior.spm.exception.AlreadyExistsException;
+import com.senior.spm.exception.NotFoundException;
+import com.senior.spm.service.DeliverableService;
+import com.senior.spm.service.SprintService;
+import com.senior.spm.service.StudentService;
+import com.senior.spm.service.SystemStateService;
 
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/coordinator")
 public class CoordinatorController {
 
-    private final SprintRepository sprintRepository;
-    private final DeliverableRepository deliverableRepository;
-    private final StudentRepository studentRepository;
-    private final SystemStateRepository systemStateRepository;
-    private final RubricCriterionRepository rubricCriterionRepository;
-    private final SprintDeliverableMappingRepository sprintDeliverableMappingRepository;
+    private final SprintService sprintService;
+    private final DeliverableService deliverableService;
+    private final StudentService studentService;
+    private final SystemStateService systemStateService;
 
-    public CoordinatorController(SprintRepository sprintRepository,
-            DeliverableRepository deliverableRepository,
-            StudentRepository studentRepository,
-            SystemStateRepository systemStateRepository,
-            RubricCriterionRepository rubricCriterionRepository,
-            SprintDeliverableMappingRepository sprintDeliverableMappingRepository) {
-        this.sprintRepository = sprintRepository;
-        this.deliverableRepository = deliverableRepository;
-        this.studentRepository = studentRepository;
-        this.systemStateRepository = systemStateRepository;
-        this.rubricCriterionRepository = rubricCriterionRepository;
-        this.sprintDeliverableMappingRepository = sprintDeliverableMappingRepository;
+    public CoordinatorController(SprintService sprintService,
+            DeliverableService deliverableService,
+            StudentService studentService,
+            SystemStateService systemStateService) {
+        this.sprintService = sprintService;
+        this.deliverableService = deliverableService;
+        this.studentService = studentService;
+        this.systemStateService = systemStateService;
     }
 
     @PostMapping("/sprints")
     public ResponseEntity<?> createSprints(@Valid @RequestBody SprintRequest request) {
-        // Validate that endDate is not before startDate
-        if (request.getEndDate().isBefore(request.getStartDate())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("End date cannot be before start date"));
+        try {
+            var savedSprint = sprintService.createSprint(request.getStartDate(), request.getEndDate());
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedSprint);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
         }
-
-        // Create and save the sprint
-        Sprint sprint = new Sprint();
-        sprint.setStartDate(request.getStartDate());
-        sprint.setEndDate(request.getEndDate());
-
-        Sprint savedSprint = sprintRepository.save(sprint);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedSprint);
     }
 
     @PostMapping("/deliverables")
     public ResponseEntity<?> createDeliverable(@Valid @RequestBody CreateDeliverableRequest request) {
-        // Validate that reviewDeadline is not before submissionDeadline
-        if (request.getReviewDeadline().isBefore(request.getSubmissionDeadline())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Review deadline cannot be before submission deadline"));
+        try {
+            var savedDeliverable = deliverableService.createDeliverable(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedDeliverable);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
         }
+    }
 
-        // Create and save the deliverable
-        Deliverable deliverable = new Deliverable();
-        deliverable.setName(request.getName());
-        deliverable.setType(request.getType());
-        deliverable.setSubmissionDeadline(request.getSubmissionDeadline());
-        deliverable.setReviewDeadline(request.getReviewDeadline());
-
-        Deliverable savedDeliverable = deliverableRepository.save(deliverable);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedDeliverable);
+    @GetMapping("/deliverables")
+    public ResponseEntity<?> getAllDeliverables() {
+        var deliverables = deliverableService.getAllDeliverables();
+        return ResponseEntity.status(HttpStatus.OK).body(deliverables);
     }
 
     @PatchMapping("/deliverables/{id}/weight")
     public ResponseEntity<?> updateDeliverableWeight(@PathVariable UUID id,
             @Valid @RequestBody UpdateDeliverableWeightRequest request) {
-        var deliverable = deliverableRepository.findById(id);
-        if (deliverable.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage("Deliverable not found with ID: " + id));
+        try {
+            var updatedDeliverable = deliverableService.updateDeliverableWeight(id, request.getWeightPercentage());
+            return ResponseEntity.status(HttpStatus.OK).body(updatedDeliverable);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         }
-
-        Deliverable existingDeliverable = deliverable.get();
-        existingDeliverable.setWeight(request.getWeightPercentage());
-        Deliverable updatedDeliverable = deliverableRepository.save(existingDeliverable);
-
-        return ResponseEntity.status(HttpStatus.OK).body(updatedDeliverable);
     }
 
     @PostMapping("/deliverables/{id}/rubric")
     public ResponseEntity<?> addRubricToDeliverable(@PathVariable UUID id,
             @Valid @RequestBody AddRubricRequest request) {
-        var deliverable = deliverableRepository.findById(id);
-        if (deliverable.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorMessage("Deliverable not found with ID: " + id));
+        try {
+            var rubricCriterion = deliverableService.addRubricToDeliverable(id, request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(rubricCriterion);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         }
-
-        var rubricCriterion = new RubricCriterion();
-        rubricCriterion.setDeliverable(deliverable.get());
-        rubricCriterion.setCriterionName(request.getCriterionName());
-        rubricCriterion.setGradingType(request.getGradingType());
-        rubricCriterion.setWeight(request.getWeightPercentage());
-        rubricCriterion.setDeliverable(deliverable.get());
-        rubricCriterionRepository.save(rubricCriterion);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(rubricCriterion);
     }
 
     @PostMapping("/sprints/{id}/deliverable-mapping")
     public ResponseEntity<?> mapDeliverablesToSprint(@PathVariable UUID id,
             @RequestBody MapDeliverablesRequest request) {
-        var sprint = sprintRepository.findById(id);
-        if (sprint.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorMessage("Sprint not found with ID: " + id));
+        try {
+            deliverableService.mapDeliverablesToSprint(id, request);
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         }
-
-        var deliverable = deliverableRepository.findById(request.getDeliverableId());
-        if (deliverable.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorMessage("Deliverable not found with ID: " + request.getDeliverableId()));
-        }
-
-        var existingMappingOpt = sprintDeliverableMappingRepository.findBySprintIdAndDeliverableId(id, request.getDeliverableId());
-        var existingMappings = sprintDeliverableMappingRepository.findAllByDeliverableId(request.getDeliverableId());
-
-        BigDecimal otherMappingsTotal = existingMappings.stream()
-                .filter(m -> !m.getSprint().getId().equals(id))
-                .map(SprintDeliverableMapping::getContributionPercentage)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal newTotal = otherMappingsTotal.add(request.getContributionPercentage());
-
-        if (newTotal.compareTo(new BigDecimal("100.00")) > 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorMessage("Total contribution exceeds 100%. Remaining capacity: "
-                            + (new BigDecimal("100.00").subtract(otherMappingsTotal)) + "%"));
-        }
-
-        SprintDeliverableMapping mappingToSave = existingMappingOpt.orElseGet(() -> {
-            var newMapping = new SprintDeliverableMapping();
-            newMapping.setSprint(sprint.get());
-            newMapping.setDeliverable(deliverable.get());
-            return newMapping;
-        });
-
-        mappingToSave.setContributionPercentage(request.getContributionPercentage());
-        sprintDeliverableMappingRepository.save(mappingToSave);
-
-        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
     @PatchMapping("/sprints/{id}/target")
     public ResponseEntity<ErrorMessage> updateSprintTarget(@PathVariable UUID id,
             @Valid @RequestBody UpdateSprintTargetRequest request) {
-        var sprint = sprintRepository.findById(id);
-        if (sprint.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage("Sprint not found with ID: " + id));
+        try {
+            sprintService.updateSprintTarget(id, request.getStoryPointTarget());
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         }
+    }
 
-        return ResponseEntity.status(HttpStatus.OK).build();
+    @GetMapping("/sprints")
+    public ResponseEntity<?> getAllSprints() {
+        var sprints = sprintService.getAllSprints();
+        return ResponseEntity.status(HttpStatus.OK).body(sprints);
     }
 
     @PostMapping("/students/upload")
     public ResponseEntity<ErrorMessage> uploadStudentData(@Valid @RequestBody StudentUploadRequest request) {
-        if (request.getStudentIds().size() != request.getStudentIds().stream().distinct().count()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Duplicate student IDs found in the request"));
+        try {
+            studentService.uploadStudentData(request);
+            return ResponseEntity.status(HttpStatus.CREATED).build();
+        } catch (IllegalArgumentException | AlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
         }
-
-        for (String studentId : request.getStudentIds()) {
-            if (studentRepository.existsByStudentId(studentId)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(new ErrorMessage("Id " + studentId + " already exists in the database"));
-            }
-        }
-
-        var students = request.getStudentIds().stream().map(id -> {
-            Student student = new Student();
-            student.setStudentId(id);
-            return student;
-        }).toList();
-
-        if (students.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("No valid student IDs provided"));
-        }
-
-        studentRepository.saveAll(students);
-
-        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PatchMapping("/deliverables/{id}")
     public ResponseEntity<?> updateDeliverable(@PathVariable UUID id,
             @RequestBody UpdateDeliverableRequest request) {
-        // Check if deliverable exists
-        var deliverable = deliverableRepository.findById(id);
-        if (deliverable.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage("Deliverable not found with ID: " + id));
+        try {
+            var updatedDeliverable = deliverableService.updateDeliverable(id, request);
+            return ResponseEntity.status(HttpStatus.OK).body(updatedDeliverable);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         }
-
-        // Update non-null fields
-        Deliverable existingDeliverable = deliverable.get();
-        if (request.getName() != null) {
-            existingDeliverable.setName(request.getName());
-        }
-        if (request.getType() != null) {
-            existingDeliverable.setType(request.getType());
-        }
-        if (request.getSubmissionDeadline() != null) {
-            existingDeliverable.setSubmissionDeadline(request.getSubmissionDeadline());
-        }
-        if (request.getReviewDeadline() != null) {
-            existingDeliverable.setReviewDeadline(request.getReviewDeadline());
-        }
-        if (request.getWeight() != null) {
-            existingDeliverable.setWeight(request.getWeight());
-        }
-
-        // Save and return the updated deliverable
-        Deliverable updatedDeliverable = deliverableRepository.save(existingDeliverable);
-        return ResponseEntity.status(HttpStatus.OK).body(updatedDeliverable);
     }
 
     @PostMapping("/publish")
     public ResponseEntity<?> publishSystem() {
-        // Validate that students exist
-        if (studentRepository.count() == 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Incomplete configuration: Missing students"));
+        try {
+            systemStateService.publishSystem();
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
         }
-
-        // Validate that sprints exist
-        if (sprintRepository.count() == 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Incomplete configuration: Missing sprints"));
-        }
-
-        // Validate that deliverables exist
-        if (deliverableRepository.count() == 0) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage("Incomplete configuration: Missing deliverables"));
-        }
-
-        // Get or create the system state
-        SystemState systemState;
-        if (systemStateRepository.count() == 0) {
-            systemState = new SystemState();
-            systemState.setStatus(SystemState.Status.ACTIVE);
-        } else {
-            systemState = systemStateRepository.findAll().get(0);
-            systemState.setStatus(SystemState.Status.ACTIVE);
-        }
-
-        // Save the updated system state
-        systemStateRepository.save(systemState);
-
-        return ResponseEntity.status(HttpStatus.OK).build();
-
     }
 }
