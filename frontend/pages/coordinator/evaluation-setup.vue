@@ -65,7 +65,7 @@
 				isEditMode.value = true;
 				criteria.value = existingCriteria.map(c => ({
 					criterionName: c.criterionName,
-					weight: c.weight,
+					weight: c.weightPercentage,
 					gradingType: c.gradingType,
 				}));
 			} else {
@@ -87,7 +87,7 @@
 			.array(
 				z.object({
 					criterionName: z.string().trim().min(1, "Criterion name is required."),
-					weight: z.number().min(1, "Weight must be at least 1.").max(100, "Weight cannot exceed 100."),
+					weightPercentage: z.number().min(1, "Weight must be at least 1.").max(100, "Weight cannot exceed 100."),
 					gradingType: z.enum(gradingTypes),
 				})
 			)

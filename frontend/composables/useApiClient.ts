@@ -48,7 +48,7 @@ export interface CreateSprintRequest {
 
 export interface GradingCriterion {
   criterionName: string;
-  weight: number;
+  weightPercentage: number;
   gradingType: "Binary" | "Soft";
 }
 
@@ -61,7 +61,7 @@ export interface RubricCriterionResponse {
   id: string;
   criterionName: string;
   gradingType: "Binary" | "Soft";
-  weight: number;
+  weightPercentage: number;
 }
 
 export interface GithubLoginRequest {
@@ -244,13 +244,7 @@ export function useApiClient() {
   }
 
   async function createRubric(data: CreateRubricRequest, token?: string): Promise<void> {
-		for (const criterion of data.criteria) {
-				return apiCall<void>(
-					`/coordinator/deliverables/${encodeURIComponent(data.deliverableId)}/rubric`, "POST",
-					criterion,
-					token);
-		}
-
+    return apiCall<void>(`/coordinator/deliverables/${encodeURIComponent(data.deliverableId)}/rubric`, "POST", data.criteria, token);
   }
 
   async function fetchRubric(deliverableId: string, token?: string): Promise<RubricCriterionResponse[]> {
@@ -258,12 +252,7 @@ export function useApiClient() {
   }
 
   async function updateRubric(deliverableId: string, criteria: GradingCriterion[], token?: string): Promise<RubricCriterionResponse[]> {
-    const payload = criteria.map(c => ({
-      criterionName: c.criterionName,
-      gradingType: c.gradingType,
-      weightPercentage: c.weight,
-    }));
-    return apiCall<RubricCriterionResponse[]>(`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`, "PUT", payload, token);
+    return apiCall<RubricCriterionResponse[]>(`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`, "PUT", criteria, token);
   }
 
   async function createSprintDeliverableMapping(

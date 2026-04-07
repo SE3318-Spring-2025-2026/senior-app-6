@@ -1,6 +1,7 @@
 package com.senior.spm.controller.request;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.hibernate.validator.constraints.Range;
 
@@ -17,16 +18,24 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AddRubricRequest {
+public class RubricRequest {
 
     @NotBlank
-    private String criterionName;
+    List<Criterion> criteria;
 
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    private RubricCriterion.GradingType gradingType;
+    @Data
+    @AllArgsConstructor
+    public class Criterion {
 
-    @NotNull
-    @Range(min = 0, max = 100, message = "Weight percentage must be between 0 and 100")
-    private BigDecimal weight;
+        @NotBlank
+        private String criterionName;
+
+        @NotNull
+        @Enumerated(EnumType.STRING)
+        private RubricCriterion.GradingType gradingType;
+
+        @NotNull
+        @Range(min = 0, max = 100, message = "Weight percentage must be between 0 and 100")
+        private BigDecimal weightPercentage;
+    }
 }
