@@ -20,6 +20,7 @@ import com.senior.spm.controller.request.ResetPasswordRequest;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.controller.response.GithubLoginResponse;
 import com.senior.spm.controller.response.LoginResponse;
+import com.senior.spm.entity.Student;
 import com.senior.spm.exception.RepositoryException;
 import com.senior.spm.repository.PasswordResetTokenRepository;
 import com.senior.spm.repository.StaffUserRepository;
