@@ -1,20 +1,26 @@
 package com.senior.spm.service;
 
+import com.senior.spm.entity.SystemConfig;
+import com.senior.spm.exception.TermConfigNotFoundException;
+import com.senior.spm.repository.SystemConfigRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class TermConfigService {
 
-    /**
-     * Get active term ID for the current semester
-     * This should be fetched from system_config table or similar
-     * Returns term as String (e.g., "2024-FALL", "2025-SPRING")
-     * 
-     * @return String identifier of the active term
-     */
+    private final SystemConfigRepository systemConfigRepository;
+
     public String getActiveTermId() {
-        // TODO: Implement by fetching from system_config table
-        // For now, return a placeholder
-        return "PLACEHOLDER-TERM";
+        SystemConfig config = systemConfigRepository.findByConfigKey("active_term_id")
+                .orElseThrow(() -> new TermConfigNotFoundException("active_term_id not found in system_config"));
+        return config.getConfigValue();
+    }
+
+    public Integer getMaxTeamSize() {
+        SystemConfig config = systemConfigRepository.findByConfigKey("max_team_size")
+                .orElseThrow(() -> new TermConfigNotFoundException("max_team_size not found in system_config"));
+        return Integer.parseInt(config.getConfigValue());
     }
 }
