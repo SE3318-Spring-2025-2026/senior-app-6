@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.senior.spm.entity.StaffUser;
 import com.senior.spm.entity.Student;
 import com.senior.spm.repository.StaffUserRepository;
+import com.senior.spm.repository.StudentRepository;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -31,6 +32,7 @@ public class JWTService {
     private long EXPIRATION_TIME;
 
     private final StaffUserRepository staffUserRepository;
+    private final StudentRepository studentRepository;
 
     @PostConstruct
     @SuppressWarnings("unused")
@@ -45,8 +47,9 @@ public class JWTService {
         }
     }
 
-    public JWTService(StaffUserRepository staffUserRepository) {
+    public JWTService(StaffUserRepository staffUserRepository, StudentRepository studentRepository) {
         this.staffUserRepository = staffUserRepository;
+        this.studentRepository = studentRepository;
     }
 
     public String issueToken(StaffUser staffUser) {
@@ -81,13 +84,19 @@ public class JWTService {
         try {
             var claims = getClaims(token);
             var subject = claims.getSubject();
-            if (StaffUser.class.getSimpleName().equals(subject)) {
-                var idString = claims.get("id", String.class);
-                if (idString == null) {
-                    return false;
-                }
-                var id = UUID.fromString(idString);
-				return !staffUserRepository.findById(id).isEmpty();
+            var id = claims.get("id", String.class);
+            if (id == null) {
+                return false;
+            }
+            var uuid = UUID.fromString(id);
+            if (subject == null || uuid == null) {
+                return false;
+            }
+            if (subject.equals(StaffUser.class.getSimpleName())) {
+                return staffUserRepository.existsById(uuid);
+            }
+            if (subject.equals(Student.class.getSimpleName())) {
+                return studentRepository.existsById(uuid);
             }
             return false;
         } catch (JwtException | IllegalArgumentException e) {

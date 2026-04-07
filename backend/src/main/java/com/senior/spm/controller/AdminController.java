@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,8 +20,11 @@ import com.senior.spm.controller.request.RegisterProfessorRequest;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.entity.PasswordResetToken;
 import com.senior.spm.entity.StaffUser;
+import com.senior.spm.exception.RepositoryException;
 import com.senior.spm.repository.PasswordResetTokenRepository;
 import com.senior.spm.repository.StaffUserRepository;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -40,7 +42,7 @@ public class AdminController {
 
     @PostMapping("/register-professor")
     @Transactional
-    public ResponseEntity<?> registerProfessor(@Validated @RequestBody RegisterProfessorRequest request) {
+    public ResponseEntity<?> registerProfessor(@Valid @RequestBody RegisterProfessorRequest request) {
         var mail = request.getMail();
         if (staffUserRepository.findByMail(mail).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage("Professor with same mail already exists"));
@@ -66,7 +68,7 @@ public class AdminController {
             resetToken.setStaff(staffUser);
             passwordResetTokenRepository.save(resetToken);
         } catch (IllegalArgumentException | OptimisticEntityLockException e) {
-            throw new RuntimeException("Server error while creating professor: " + e.getMessage(), e);
+            throw new RepositoryException("Server error while creating professor: " + e.getMessage(), e);
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("resetToken", token));

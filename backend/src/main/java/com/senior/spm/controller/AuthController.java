@@ -20,6 +20,7 @@ import com.senior.spm.controller.request.ResetPasswordRequest;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.controller.response.GithubLoginResponse;
 import com.senior.spm.controller.response.LoginResponse;
+import com.senior.spm.exception.RepositoryException;
 import com.senior.spm.repository.PasswordResetTokenRepository;
 import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.repository.StudentRepository;
@@ -92,7 +93,7 @@ public class AuthController {
             staffUserRepository.save(staffUser);
             passwordResetTokenRepository.delete(resetToken.get());
         } catch (IllegalArgumentException | OptimisticEntityLockException e) {
-            throw new RuntimeException("Server error while resetting password: " + e.getMessage(), e);
+            throw new RepositoryException("Server error while resetting password: " + e.getMessage(), e);
         }
 
         return ResponseEntity.status(HttpStatus.OK).build();

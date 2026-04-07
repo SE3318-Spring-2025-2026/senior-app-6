@@ -30,12 +30,20 @@ public class SprintDeliverableMapping {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "sprintId", nullable = false, foreignKey = @ForeignKey(name = "fk_sdm_sprint"))
+    @ManyToOne()
+    @JoinColumn(
+            name = "sprintId",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_sdm_sprint")
+    )
     private Sprint sprint;
 
-    @ManyToOne
-    @JoinColumn(name = "deliverableId", nullable = false, foreignKey = @ForeignKey(name = "fk_sdm_deliverable"))
+    @ManyToOne()
+    @JoinColumn(
+            name = "deliverableId",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_sdm_deliverable")
+    )
     private Deliverable deliverable;
 
     @Column(nullable = false, precision = 5, scale = 2)
