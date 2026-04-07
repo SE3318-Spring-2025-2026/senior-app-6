@@ -40,7 +40,7 @@ public class ProjectGroup {
     private GroupStatus status;
 
     @Column(nullable = false)
-    private UUID termId;
+    private String termId;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -51,23 +51,23 @@ public class ProjectGroup {
     @Column(length = 100, nullable = true)
     private String jiraProjectKey;
 
-    @Column(columnDefinition = "LONGTEXT", nullable = true)
+    @Column(length = 1024, nullable = true)
     private String encryptedJiraToken;
 
     @Column(length = 100, nullable = true)
     private String githubOrgName;
 
-    @Column(columnDefinition = "LONGTEXT", nullable = true)
+    @Column(length = 1024, nullable = true)
     private String encryptedGithubPat;
 
     @ManyToOne
     @JoinColumn(name = "advisor_id", nullable = true, foreignKey = @ForeignKey(name = "fk_project_group_advisor"))
     private StaffUser advisor;
 
-    @OneToMany(mappedBy = "groupId")
+    @OneToMany(mappedBy = "group")
     private List<GroupMembership> members;
 
-    @OneToMany(mappedBy = "groupId")
+    @OneToMany(mappedBy = "group")
     private List<GroupInvitation> invitations;
 
     @Version

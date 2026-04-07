@@ -21,7 +21,8 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "group_membership", uniqueConstraints = {
-    @UniqueConstraint(name = "uq_gm_student", columnNames = {"group_id", "student_id"})
+    @UniqueConstraint(name = "uq_gm_group_student", columnNames = {"group_id", "student_id"}),
+    @UniqueConstraint(name = "uq_gm_student", columnNames = {"student_id"})
 })
 @Getter
 @Setter

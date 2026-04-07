@@ -34,8 +34,8 @@ public class GroupInvitation {
     private ProjectGroup group;
 
     @ManyToOne
-    @JoinColumn(name = "target_student_id", nullable = false, foreignKey = @ForeignKey(name = "fk_group_invitation_student"))
-    private Student targetStudent;
+    @JoinColumn(name = "invitee_student_id", nullable = false, foreignKey = @ForeignKey(name = "fk_group_invitation_student"))
+    private Student invitee;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -14,7 +14,7 @@ import com.senior.spm.entity.ScheduleWindow.WindowType;
 @Repository
 public interface ScheduleWindowRepository extends JpaRepository<ScheduleWindow, UUID> {
 
-    Optional<ScheduleWindow> findByTermIdAndType(UUID termId, WindowType type);
+    Optional<ScheduleWindow> findByTermIdAndType(String termId, WindowType type);
 
     List<ScheduleWindow> findByTypeAndClosesAtLessThan(WindowType type, LocalDateTime dateTime);
 }

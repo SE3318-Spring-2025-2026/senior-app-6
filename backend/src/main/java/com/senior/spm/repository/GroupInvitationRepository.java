@@ -16,13 +16,19 @@ public interface GroupInvitationRepository extends JpaRepository<GroupInvitation
 
     List<GroupInvitation> findByGroupId(UUID groupId);
 
-    List<GroupInvitation> findByTargetStudentId(UUID targetStudentId);
+    List<GroupInvitation> findByInviteeId(UUID inviteeId);
 
-    List<GroupInvitation> findByTargetStudentIdAndStatus(UUID targetStudentId, InvitationStatus status);
+    List<GroupInvitation> findByInviteeIdAndStatus(UUID inviteeId, InvitationStatus status);
 
-    boolean existsByGroupIdAndTargetStudentIdAndStatus(UUID groupId, UUID targetStudentId, InvitationStatus status);
+    boolean existsByGroupIdAndInviteeIdAndStatus(UUID groupId, UUID inviteeId, InvitationStatus status);
+
+    long countByGroupIdAndStatus(UUID groupId, InvitationStatus status);
 
     @Modifying
-    @Query("UPDATE GroupInvitation gi SET gi.status = 'AUTO_DENIED' WHERE gi.status = 'PENDING' AND gi.targetStudent.id = ?1 AND gi.group.id != ?2")
+    @Query("UPDATE GroupInvitation gi SET gi.status = 'AUTO_DENIED' WHERE gi.status = 'PENDING' AND gi.invitee.id = ?1 AND gi.group.id != ?2")
     void autoDenyOtherPendingInvitations(UUID studentId, UUID acceptedGroupId);
+
+    @Modifying
+    @Query("UPDATE GroupInvitation gi SET gi.status = 'AUTO_DENIED' WHERE gi.status = 'PENDING' AND gi.group.id = ?1")
+    void autoDenyAllPendingByGroupId(UUID groupId);
 }

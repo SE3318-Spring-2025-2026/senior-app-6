@@ -23,9 +23,15 @@ public interface AdvisorRequestRepository extends JpaRepository<AdvisorRequest, 
 
     Optional<AdvisorRequest> findByGroupIdAndStatus(UUID groupId, RequestStatus status);
 
+    Optional<AdvisorRequest> findTopByGroupIdOrderBySentAtDesc(UUID groupId);
+
     long countByAdvisorIdAndStatus(UUID advisorId, RequestStatus status);
 
     @Modifying
     @Query("UPDATE AdvisorRequest ar SET ar.status = ?1 WHERE ar.status = 'PENDING' AND ar.group.id = ?2 AND ar.id != ?3")
     void bulkUpdateStatusForGroup(RequestStatus status, UUID groupId, UUID excludeId);
+
+    @Modifying
+    @Query("UPDATE AdvisorRequest ar SET ar.status = :status WHERE ar.status = 'PENDING' AND ar.group.id = :groupId")
+    void bulkUpdateStatusByGroupId(@org.springframework.data.repository.query.Param("status") RequestStatus status, @org.springframework.data.repository.query.Param("groupId") UUID groupId);
 }

@@ -36,6 +36,6 @@ public class Student {
     @OneToMany(mappedBy = "student")
     private List<GroupMembership> memberships;
 
-    @OneToMany(mappedBy = "targetStudent")
+    @OneToMany(mappedBy = "invitee")
     private List<GroupInvitation> invitations;
 }

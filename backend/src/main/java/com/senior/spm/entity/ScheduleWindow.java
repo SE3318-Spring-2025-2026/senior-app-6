@@ -27,7 +27,7 @@ public class ScheduleWindow {
     private UUID id;
 
     @Column(nullable = false)
-    private UUID termId;
+    private String termId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

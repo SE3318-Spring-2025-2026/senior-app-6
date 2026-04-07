@@ -13,13 +13,15 @@ import com.senior.spm.entity.ProjectGroup.GroupStatus;
 @Repository
 public interface ProjectGroupRepository extends JpaRepository<ProjectGroup, UUID> {
 
-    boolean existsByGroupNameAndTermId(String groupName, UUID termId);
+    boolean existsByGroupNameAndTermId(String groupName, String termId);
 
     Optional<ProjectGroup> findByIdAndStatus(UUID id, GroupStatus status);
 
-    List<ProjectGroup> findByTermId(UUID termId);
+    List<ProjectGroup> findByTermId(String termId);
 
-    List<ProjectGroup> findByTermIdAndStatus(UUID termId, GroupStatus status);
+    List<ProjectGroup> findByTermIdAndStatus(String termId, GroupStatus status);
 
-    long countByAdvisorIdAndTermId(UUID advisorId, UUID termId);
+    long countByAdvisorIdAndTermIdAndStatusNot(UUID advisorId, String termId, GroupStatus status);
+
+    List<ProjectGroup> findByTermIdAndStatusNotAndAdvisorIsNull(String termId, GroupStatus status);
 }
