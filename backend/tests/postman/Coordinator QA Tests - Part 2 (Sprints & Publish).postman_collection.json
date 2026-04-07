@@ -1,10 +1,10 @@
 {
   "info": {
-    "_postman_id": "99b11afc-9b9a-478a-8c5f-f6b42b8dc225",
-    "name": "Coordinator QA Tests",
+    "_postman_id": "70c3628d-6dd7-4288-9ec5-6da1366c6a48",
+    "name": "Coordinator QA Tests - Part 2 (Sprints & Publish)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "52978385",
-    "_collection_link": "https://go.postman.co/collection/52978385-99b11afc-9b9a-478a-8c5f-f6b42b8dc225?source=collection_link"
+    "_collection_link": "https://go.postman.co/collection/52978385-70c3628d-6dd7-4288-9ec5-6da1366c6a48?source=collection_link"
   },
   "item": [
     {
@@ -61,13 +61,13 @@
       "response": []
     },
     {
-      "name": "Student Upload - Unauthenticated (401)",
+      "name": "Create Sprint - Unauthorized (403)",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Unauthorized request should return 403\", function () {\r",
+              "pm.test(\"Unauthorized sprint creation should return 403\", function () {\r",
               "    pm.response.to.have.status(403);\r",
               "});"
             ],
@@ -82,7 +82,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"studentIds\": [\"12345678901\", \"12345678902\"]\r\n}",
+          "raw": "{\r\n  \"startDate\": \"2026-05-01\",\r\n  \"endDate\": \"2026-05-14\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -90,7 +90,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/api/coordinator/students/upload",
+          "raw": "http://localhost:8080/api/coordinator/sprints",
           "protocol": "http",
           "host": [
             "localhost"
@@ -99,79 +99,25 @@
           "path": [
             "api",
             "coordinator",
-            "students",
-            "upload"
+            "sprints"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "Student Upload - Forbidden (403)",
+      "name": "Create Sprint - Success (201)",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Authenticated but unauthorized request should return 403\", function () {\r",
-              "    pm.response.to.have.status(403);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"studentIds\": [\"22070000001\", \"22070000002\"]\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/students/upload",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "students",
-            "upload"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Student Upload - Success (201)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Authorized coordinator request should return 201\", function () {\r",
+              "pm.test(\"Status code is 201\", function () {\r",
               "    pm.response.to.have.status(201);\r",
-              "});"
+              "});\r",
+              "\r",
+              "const jsonData = pm.response.json();\r",
+              "pm.collectionVariables.set(\"sprintId\", jsonData.id);"
             ],
             "type": "text/javascript",
             "packages": {},
@@ -194,7 +140,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"studentIds\": [\"12345678905\", \"12345678906\"]\r\n}",
+          "raw": "{\r\n  \"startDate\": \"2026-05-01\",\r\n  \"endDate\": \"2026-05-14\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -202,7 +148,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/api/coordinator/students/upload",
+          "raw": "http://localhost:8080/api/coordinator/sprints",
           "protocol": "http",
           "host": [
             "localhost"
@@ -211,21 +157,20 @@
           "path": [
             "api",
             "coordinator",
-            "students",
-            "upload"
+            "sprints"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "Student Upload - Duplicate IDs (400)",
+      "name": "Create Sprint - End Before Start (400)",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Duplicate IDs should return 400\", function () {\r",
+              "pm.test(\"Sprint end date before start date should return 400\", function () {\r",
               "    pm.response.to.have.status(400);\r",
               "});"
             ],
@@ -250,7 +195,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"studentIds\": [\"12345678905\", \"12345678905\"]\r\n}",
+          "raw": "{\r\n  \"startDate\": \"2026-05-14\",\r\n  \"endDate\": \"2026-05-01\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -258,7 +203,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/api/coordinator/students/upload",
+          "raw": "http://localhost:8080/api/coordinator/sprints",
           "protocol": "http",
           "host": [
             "localhost"
@@ -267,228 +212,14 @@
           "path": [
             "api",
             "coordinator",
-            "students",
-            "upload"
+            "sprints"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "Student Upload - Invalid Format (400)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Invalid student ID format should return 400\", function () {\r",
-              "    pm.response.to.have.status(400);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"studentIds\": [\"123\"]\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/students/upload",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "students",
-            "upload"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Student Upload - Empty List (400)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Empty student list should return 400\", function () {\r",
-              "    pm.response.to.have.status(400);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"studentIds\": []\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/students/upload",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "students",
-            "upload"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Student Upload - Existing ID (400)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Existing student ID should return 400\", function () {\r",
-              "    pm.response.to.have.status(400);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"studentIds\": [\"23070006018\"]\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/students/upload",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "students",
-            "upload"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Create Deliverable - Unauthorized (403)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Unauthorized deliverable creation should return 403\", function () {\r",
-              "    pm.response.to.have.status(403);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"name\": \"Unauthorized Deliverable\",\r\n  \"type\": \"Proposal\",\r\n  \"submissionDeadline\": \"2026-05-01T10:00:00\",\r\n  \"reviewDeadline\": \"2026-05-02T10:00:00\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/deliverables",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "deliverables"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Create Deliverable - Success (201)",
+      "name": "Create Deliverable - For Mapping (201)",
       "event": [
         {
           "listen": "test",
@@ -519,10 +250,16 @@
           ]
         },
         "method": "POST",
-        "header": [],
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"name\": \"Test Deliverable 1\",\r\n  \"type\": \"Proposal\",\r\n  \"submissionDeadline\": \"2026-05-01T10:00:00\",\r\n  \"reviewDeadline\": \"2026-05-02T10:00:00\"\r\n}",
+          "raw": "{\r\n  \"name\": \"Proposal Mapping Test\",\r\n  \"type\": \"Proposal\",\r\n  \"submissionDeadline\": \"2026-04-15T10:00:00\",\r\n  \"reviewDeadline\": \"2026-04-18T10:00:00\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -546,123 +283,13 @@
       "response": []
     },
     {
-      "name": "Create Deliverable - Reversed Deadlines (400)",
+      "name": "Sprint Mapping - Unauthorized (403)",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Reversed deadlines should return 400\", function () {\r",
-              "    pm.response.to.have.status(400);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"name\": \"Invalid Deliverable\",\r\n  \"type\": \"Proposal\",\r\n  \"submissionDeadline\": \"2026-05-03T10:00:00\",\r\n  \"reviewDeadline\": \"2026-05-01T10:00:00\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/deliverables",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "deliverables"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Create Deliverable - Missing Field (400)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Missing required field should return 400\", function () {\r",
-              "    pm.response.to.have.status(400);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"type\": \"Proposal\",\r\n  \"submissionDeadline\": \"2026-05-01T10:00:00\",\r\n  \"reviewDeadline\": \"2026-05-02T10:00:00\"\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/deliverables",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "deliverables"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Deliverable Weight - Unauthorized (403)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 403\", function () {\r",
+              "pm.test(\"Unauthorized sprint mapping should return 403\", function () {\r",
               "    pm.response.to.have.status(403);\r",
               "});"
             ],
@@ -673,17 +300,11 @@
         }
       ],
       "request": {
-        "method": "PATCH",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
+        "method": "POST",
+        "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"weightPercentage\": 40\r\n}",
+          "raw": "{\r\n  \"deliverableId\": \"{{deliverableId1}}\",\r\n  \"contributionPercentage\": 40\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -691,7 +312,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/api/coordinator/deliverables/11111111-1111-1111-1111-111111111111/weight",
+          "raw": "http://localhost:8080/api/coordinator/sprints/{{sprintId1}}/deliverable-mapping",
           "protocol": "http",
           "host": [
             "localhost"
@@ -700,16 +321,16 @@
           "path": [
             "api",
             "coordinator",
-            "deliverables",
-            "11111111-1111-1111-1111-111111111111",
-            "weight"
+            "sprints",
+            "{{sprintId1}}",
+            "deliverable-mapping"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "Deliverable Weight - Success (200)",
+      "name": "Sprint Mapping - Success (201)",
       "event": [
         {
           "listen": "test",
@@ -717,12 +338,6 @@
             "exec": [
               "pm.test(\"Status code is 200\", function () {\r",
               "    pm.response.to.have.status(200);\r",
-              "});\r",
-              "\r",
-              "const jsonData = pm.response.json();\r",
-              "\r",
-              "pm.test(\"Weight updated correctly\", function () {\r",
-              "    pm.expect(Number(jsonData.weight)).to.eql(40);\r",
               "});"
             ],
             "type": "text/javascript",
@@ -742,122 +357,6 @@
             }
           ]
         },
-        "method": "PATCH",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"weightPercentage\": 40\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/deliverables/{{deliverableId}}/weight",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "deliverables",
-            "{{deliverableId}}",
-            "weight"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Deliverable Weight - Invalid ID (404)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 404\", function () {\r",
-              "    pm.response.to.have.status(404);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "PATCH",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"weightPercentage\": 40\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/deliverables/11111111-1111-1111-1111-111111111111/weight",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "deliverables",
-            "11111111-1111-1111-1111-111111111111",
-            "weight"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Add Rubric - Unauthorized (403)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Status code is 403\", function () {\r",
-              "    pm.response.to.have.status(403);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
         "method": "POST",
         "header": [
           {
@@ -868,7 +367,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"criterionName\": \"Completeness\",\r\n  \"gradingType\": \"Binary\",\r\n  \"weightPercentage\": 20\r\n}",
+          "raw": "{\r\n  \"deliverableId\": \"{{deliverableId}}\",\r\n  \"contributionPercentage\": 50\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -876,7 +375,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/api/coordinator/deliverables/{{deliverableId}}/rubric",
+          "raw": "http://localhost:8080/api/coordinator/sprints/{{sprintId}}/deliverable-mapping",
           "protocol": "http",
           "host": [
             "localhost"
@@ -885,16 +384,16 @@
           "path": [
             "api",
             "coordinator",
-            "deliverables",
-            "{{deliverableId}}",
-            "rubric"
+            "sprints",
+            "{{sprintId}}",
+            "deliverable-mapping"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "Add Rubric - Success (201)",
+      "name": "Create Second Sprint - Success (201)",
       "event": [
         {
           "listen": "test",
@@ -905,12 +404,7 @@
               "});\r",
               "\r",
               "const jsonData = pm.response.json();\r",
-              "\r",
-              "pm.test(\"Rubric criterion saved correctly\", function () {\r",
-              "    pm.expect(jsonData.criterionName).to.eql(\"Completeness\");\r",
-              "    pm.expect(jsonData.gradingType).to.eql(\"Binary\");\r",
-              "    pm.expect(Number(jsonData.weight)).to.eql(20);\r",
-              "});"
+              "pm.collectionVariables.set(\"secondSprintId\", jsonData.id);"
             ],
             "type": "text/javascript",
             "packages": {},
@@ -930,16 +424,10 @@
           ]
         },
         "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
+        "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"criterionName\": \"Completeness\",\r\n  \"gradingType\": \"Binary\",\r\n  \"weightPercentage\": 20\r\n}",
+          "raw": "{\r\n  \"startDate\": \"2026-04-21\",\r\n  \"endDate\": \"2026-04-30\"\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -947,7 +435,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/api/coordinator/deliverables/{{deliverableId}}/rubric",
+          "raw": "http://localhost:8080/api/coordinator/sprints",
           "protocol": "http",
           "host": [
             "localhost"
@@ -956,158 +444,79 @@
           "path": [
             "api",
             "coordinator",
-            "deliverables",
-            "{{deliverableId}}",
-            "rubric"
+            "sprints"
           ]
         }
       },
       "response": []
     },
     {
-      "name": "Add Rubric - Invalid Deliverable ID (404)",
+      "name": "Sprint Mapping - Exceeds 100% (400)",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 404\", function () {\r",
-              "    pm.response.to.have.status(404);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"criterionName\": \"Completeness\",\r\n  \"gradingType\": \"Soft\",\r\n  \"weightPercentage\": 20\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/deliverables/11111111-1111-1111-1111-111111111111/rubric",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "deliverables",
-            "11111111-1111-1111-1111-111111111111",
-            "rubric"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Add Rubric - Invalid Grading Type",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Invalid grading type should return 401\", function () {\r",
-              "    pm.response.to.have.status(401);\r",
-              "});"
-            ],
-            "type": "text/javascript",
-            "packages": {},
-            "requests": {}
-          }
-        }
-      ],
-      "request": {
-        "auth": {
-          "type": "bearer",
-          "bearer": [
-            {
-              "key": "token",
-              "value": "{{token}}",
-              "type": "string"
-            }
-          ]
-        },
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\r\n  \"criterionName\": \"Code Quality\",\r\n  \"gradingType\": \"InvalidType\",\r\n  \"weightPercentage\": 20\r\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
-        "url": {
-          "raw": "http://localhost:8080/api/coordinator/deliverables/{{deliverableId}}/rubric",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "8080",
-          "path": [
-            "api",
-            "coordinator",
-            "deliverables",
-            "{{deliverableId}}",
-            "rubric"
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Login-Admin",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Login should return 200\", function () {\r",
+              "pm.test(\"Backend currently allows contribution total above 100%\", function () {\r",
               "    pm.response.to.have.status(200);\r",
-              "});\r",
-              "\r",
-              "const jsonData = pm.response.json();\r",
-              "\r",
-              "pm.test(\"Token should exist\", function () {\r",
-              "    pm.expect(jsonData.token).to.exist;\r",
-              "});\r",
-              "\r",
-              "pm.collectionVariables.set(\"token\", jsonData.token);"
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"deliverableId\": \"{{deliverableId}}\",\r\n  \"contributionPercentage\": 50\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/coordinator/sprints/{{sprintId2}}/deliverable-mapping",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "coordinator",
+            "sprints",
+            "{{sprintId2}}",
+            "deliverable-mapping"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Publish - Unauthorized (403)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 403\", function () {\r",
+              "    pm.response.to.have.status(403);\r",
+              "});"
             ],
             "type": "text/javascript",
             "packages": {},
@@ -1120,7 +529,7 @@
         "header": [],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"mail\": \"test@test.com\",\r\n  \"password\": \"test\"\r\n}",
+          "raw": "",
           "options": {
             "raw": {
               "language": "json"
@@ -1128,7 +537,7 @@
           }
         },
         "url": {
-          "raw": "http://localhost:8080/api/auth/login",
+          "raw": "http://localhost:8080/api/coordinator/publish",
           "protocol": "http",
           "host": [
             "localhost"
@@ -1136,8 +545,390 @@
           "port": "8080",
           "path": [
             "api",
-            "auth",
-            "login"
+            "coordinator",
+            "publish"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Publish - Incomplete Config (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              "\r",
+              "const jsonData = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Error message indicates missing students\", function () {\r",
+              "    pm.expect(jsonData.message).to.eql(\"Incomplete configuration: Missing students\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/coordinator/publish",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "coordinator",
+            "publish"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Student Upload - Setup for Publish (201)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"studentIds\": [\r\n    \"22345678901\",\r\n    \"22345678902\",\r\n    \"22345678903\"\r\n  ]\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/coordinator/students/upload",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "coordinator",
+            "students",
+            "upload"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Deliverable - Setup for Publish (201)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Deliverable for sprint mapping should return 201\", function () {\r",
+              "    pm.response.to.have.status(201);\r",
+              "});\r",
+              "\r",
+              "const jsonData = pm.response.json();\r",
+              "pm.collectionVariables.set(\"deliverableId1\", jsonData.id);"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"name\": \"Sprint Mapping Deliverable\",\r\n  \"type\": \"Proposal\",\r\n  \"submissionDeadline\": \"2026-06-01T10:00:00\",\r\n  \"reviewDeadline\": \"2026-06-02T10:00:00\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/coordinator/deliverables",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "coordinator",
+            "deliverables"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Publish - Incomplete Config - Missing Sprints (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              "\r",
+              "const jsonData = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Error message indicates missing sprints\", function () {\r",
+              "    pm.expect(jsonData.message).to.eql(\"Incomplete configuration: Missing sprints\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/coordinator/publish",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "coordinator",
+            "publish"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Publish - Incomplete Config - Missing Deliverables (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              "\r",
+              "const jsonData = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Error message indicates missing deliverables\", function () {\r",
+              "    pm.expect(jsonData.message).to.eql(\"Incomplete configuration: Missing deliverables\");\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/coordinator/publish",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "coordinator",
+            "publish"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Publish - Success (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Publish with complete config should return 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/coordinator/publish",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "coordinator",
+            "publish"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Publish - Incomplete Config - Missing Students (400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
+              "});\r",
+              "\r",
+              "if (pm.response.text()) {\r",
+              "    const jsonData = pm.response.json();\r",
+              "\r",
+              "    pm.test(\"Error message indicates missing students\", function () {\r",
+              "        pm.expect(jsonData.message).to.eql(\"Incomplete configuration: Missing students\");\r",
+              "    });\r",
+              "}"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8080/api/coordinator/publish",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "coordinator",
+            "publish"
           ]
         }
       },
@@ -1150,7 +941,27 @@
       "value": ""
     },
     {
+      "key": "sprintId1",
+      "value": ""
+    },
+    {
+      "key": "sprintId2",
+      "value": ""
+    },
+    {
+      "key": "deliverableId1",
+      "value": ""
+    },
+    {
       "key": "deliverableId",
+      "value": ""
+    },
+    {
+      "key": "sprintId",
+      "value": ""
+    },
+    {
+      "key": "secondSprintId",
       "value": ""
     }
   ]
