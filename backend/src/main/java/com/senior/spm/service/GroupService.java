@@ -18,6 +18,7 @@ import com.senior.spm.entity.ScheduleWindow;
 import com.senior.spm.entity.Student;
 import com.senior.spm.exception.AlreadyInGroupException;
 import com.senior.spm.exception.DuplicateGroupNameException;
+import com.senior.spm.exception.NotInGroupException;
 import com.senior.spm.exception.ScheduleWindowClosedException;
 import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
@@ -48,8 +49,9 @@ public class GroupService {
                 "Group creation window is not currently active"
             ));
 
-        // Verify window is still open (closesAt > now)
-        if (window.getClosesAt().isBefore(LocalDateTime.now(ZoneId.of("UTC")))) {
+        // Verify window is currently active: opensAt <= now <= closesAt
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+        if (window.getOpensAt().isAfter(now) || window.getClosesAt().isBefore(now)) {
             throw new ScheduleWindowClosedException(
                 "Group creation window is not currently active"
             );
@@ -99,7 +101,7 @@ public class GroupService {
     public GroupDetailResponse getMyGroup(UUID studentUUID) {
         // Find group membership for this student
         GroupMembership membership = groupMembershipRepository.findByStudentId(studentUUID)
-            .orElseThrow(() -> new RuntimeException(
+            .orElseThrow(() -> new NotInGroupException(
                 "You are not a member of any group"
             ));
 
@@ -128,7 +130,7 @@ public class GroupService {
         List<GroupDetailResponse.MemberResponse> memberResponses = members.stream()
             .map(m -> {
                 GroupDetailResponse.MemberResponse mr = new GroupDetailResponse.MemberResponse();
-                mr.setStudentId(m.getStudent().getId());
+                mr.setStudentId(m.getStudent().getStudentId());
                 mr.setRole(m.getRole().toString());
                 mr.setJoinedAt(m.getJoinedAt());
                 return mr;
