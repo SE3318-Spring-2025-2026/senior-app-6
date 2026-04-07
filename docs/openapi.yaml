@@ -167,11 +167,9 @@ paths:
           application/json:
             schema:
               type: object
-              required: [accessToken, username, studentId]
+              required: [code, studentId]
               properties:
-                accessToken:
-                  type: string
-                username:
+                code:
                   type: string
                 studentId:
                   type: string
