@@ -50,3 +50,48 @@ VALUES
 		'$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq',
 		'PROFESSOR'
 	);
+
+INSERT IGNORE INTO password_reset_token (
+    id,
+    staff_id,
+    token,
+    created_at,
+    expires_at
+)
+VALUES (
+    UUID_TO_BIN('11111111-1111-1111-1111-111111111111'),
+    UUID_TO_BIN('00000000-0000-0000-0000-000000000004'),
+    'TEST_RESET_TOKEN_123',
+    NOW(),
+    DATE_ADD(NOW(), INTERVAL 1 DAY)
+);
+
+INSERT IGNORE INTO password_reset_token (
+    id,
+    staff_id,
+    token,
+    created_at,
+    expires_at
+)
+VALUES (
+    UUID_TO_BIN('22222222-2222-2222-2222-222222222222'),
+    UUID_TO_BIN('00000000-0000-0000-0000-000000000004'),
+    'gercek_expired_token',
+    DATE_SUB(NOW(), INTERVAL 2 DAY),
+    DATE_SUB(NOW(), INTERVAL 1 DAY)
+);
+
+INSERT IGNORE INTO password_reset_token (
+    id,
+    staff_id,
+    token,
+    created_at,
+    expires_at
+)
+VALUES (
+    UUID_TO_BIN('33333333-3333-3333-3333-333333333333'),
+    UUID_TO_BIN('00000000-0000-0000-0000-000000000004'),
+    'USED_TOKEN_123',
+    NOW(),
+    DATE_ADD(NOW(), INTERVAL 1 DAY)
+);
