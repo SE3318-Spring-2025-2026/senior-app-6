@@ -204,6 +204,18 @@ public class CoordinatorController {
 
     // ========== GROUP MANAGEMENT ENDPOINTS ==========
 
+    /**
+     * Lists all project groups for the active term.
+     * <p>
+     * REST Endpoint: {@code GET /api/coordinator/groups}
+     * <p>
+     * Retrieves a complete list of all project groups in the currently active term with full details.
+     * Requires coordinator authentication (Staff JWT with COORDINATOR role enforced by SecurityConfig).
+     *
+     * @return HTTP 200 with List&lt;{@link GroupDetailResponse}&gt; containing all groups for active term
+     *         HTTP 500 if internal server error occurs
+     * @throws Exception caught and returns HTTP 500 status if group retrieval fails
+     */
     @GetMapping("/groups")
     public ResponseEntity<List<GroupDetailResponse>> listGroups() {
         try {
@@ -214,6 +226,21 @@ public class CoordinatorController {
         }
     }
 
+    /**
+     * Retrieves detailed information for a specific project group.
+     * <p>
+     * REST Endpoint: {@code GET /api/coordinator/groups/{groupId}}
+     * <p>
+     * Fetches complete details for a single project group including all members and tool bindings.
+     * Requires coordinator authentication (Staff JWT with COORDINATOR role enforced by SecurityConfig).
+     *
+     * @param groupId the UUID path variable identifying the group to retrieve
+     * @return HTTP 200 with {@link GroupDetailResponse} containing complete group information
+     *         HTTP 404 with {@link ErrorMessage} if group not found
+     *         HTTP 500 if internal server error occurs
+     * @throws GroupNotFoundException caught and returns HTTP 404 status if group does not exist
+     * @throws Exception caught and returns HTTP 500 status for other unexpected errors
+     */
     @GetMapping("/groups/{groupId}")
     public ResponseEntity<?> getGroupDetail(@PathVariable UUID groupId) {
         try {
@@ -226,6 +253,37 @@ public class CoordinatorController {
         }
     }
 
+    /**
+     * Adds or removes a student from a project group (force operation by coordinator).
+     * <p>
+     * REST Endpoint: {@code PATCH /api/coordinator/groups/{groupId}/members}
+     * <p>
+     * Allows coordinators to manually add or remove students from groups, bypassing normal group
+     * formation workflow. Request validation:
+     * <ul>
+     *   <li>Validates action is either "ADD" or "REMOVE" (returns 400 if invalid)</li>
+     *   <li>For ADD: enforces max team size check, auto-denies competing invitations</li>
+     *   <li>For REMOVE: prevents removal of TEAM_LEADER role (returns 400)</li>
+     * </ul>
+     * <p>
+     * Requires coordinator authentication (Staff JWT with COORDINATOR role enforced by SecurityConfig).
+     *
+     * @param groupId the UUID path variable identifying the target group
+     * @param request the {@link CoordinatorMemberRequest} containing studentId and action (ADD|REMOVE)
+     * @return HTTP 200 with {@link GroupDetailResponse} on successful add/remove
+     *         HTTP 400 with {@link ErrorMessage} if:
+     *         - action is invalid (not ADD or REMOVE)
+     *         - student already in group or at capacity (for ADD)
+     *         - student is TEAM_LEADER (for REMOVE)
+     *         - other business rule violations
+     *         HTTP 404 with {@link ErrorMessage} if group or student not found
+     *         HTTP 500 if internal server error occurs
+     * @throws GroupNotFoundException caught and returns HTTP 404 if group or membership not found
+     * @throws StudentNotFoundException caught and returns HTTP 404 if student not found
+     * @throws ForbiddenException caught and returns HTTP 400 if TEAM_LEADER removal attempted
+     * @throws BusinessRuleException caught and returns HTTP 400 for business rule violations
+     * @throws Exception caught and returns HTTP 500 for other unexpected errors
+     */
     @PatchMapping("/groups/{groupId}/members")
     public ResponseEntity<?> updateGroupMembers(
             @PathVariable UUID groupId,
@@ -258,6 +316,31 @@ public class CoordinatorController {
         }
     }
 
+    /**
+     * Disbands a project group with full cascade cleanup.
+     * <p>
+     * REST Endpoint: {@code PATCH /api/coordinator/groups/{groupId}/disband}
+     * <p>
+     * Permanently closes a project group and triggers comprehensive cascade operations:
+     * <ul>
+     *   <li>Sets group status to DISBANDED</li>
+     *   <li>Hard-deletes all group memberships to free students</li>
+     *   <li>Auto-denies all pending group invitations (P2)</li>
+     *   <li>Auto-rejects all pending advisor requests (P3 preparation)</li>
+     * </ul>
+     * <p>
+     * All cascade operations execute atomically within a single transaction (all-or-nothing semantics).
+     * Requires coordinator authentication (Staff JWT with COORDINATOR role enforced by SecurityConfig).
+     *
+     * @param groupId the UUID path variable identifying the group to disband
+     * @return HTTP 200 with {@link GroupDetailResponse} showing disbanded group
+     *         HTTP 400 with {@link ErrorMessage} if group is already disbanded
+     *         HTTP 404 with {@link ErrorMessage} if group not found
+     *         HTTP 500 if internal server error occurs
+     * @throws GroupNotFoundException caught and returns HTTP 404 if group not found
+     * @throws BusinessRuleException caught and returns HTTP 400 if group already disbanded
+     * @throws Exception caught and returns HTTP 500 for other unexpected errors
+     */
     @PatchMapping("/groups/{groupId}/disband")
     public ResponseEntity<?> disbandGroup(@PathVariable UUID groupId) {
         try {

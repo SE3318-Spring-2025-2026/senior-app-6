@@ -151,6 +151,16 @@ public class GroupService {
 
     // ========== COORDINATOR BYPASS METHODS ==========
 
+    /**
+     * Retrieves all project groups for the active term.
+     * <p>
+     * This coordinator method provides a read-only view of all groups in the currently active term,
+     * bypassing any student-specific filtering or access restrictions.
+     *
+     * @return a list of {@link GroupDetailResponse} containing all groups in the active term.
+     *         If no active term or groups exist, returns an empty list.
+     * @throws RuntimeException if the active term cannot be determined
+     */
     @Transactional(readOnly = true)
     public List<GroupDetailResponse> getGroupsForActiveTerm() {
         String termId = termConfigService.getActiveTermId();
@@ -160,6 +170,16 @@ public class GroupService {
             .collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves detailed information for a specific project group.
+     * <p>
+     * This coordinator method provides full access to group details without any access restrictions,
+     * including all members, binding status, and configuration information.
+     *
+     * @param groupId the UUID of the group to retrieve
+     * @return a {@link GroupDetailResponse} containing complete group information
+     * @throws GroupNotFoundException if no group exists with the specified ID
+     */
     @Transactional(readOnly = true)
     public GroupDetailResponse getGroupDetail(UUID groupId) {
         ProjectGroup group = projectGroupRepository.findById(groupId)
@@ -167,6 +187,31 @@ public class GroupService {
         return toGroupDetailResponse(group, null);
     }
 
+    /**
+     * Force-adds a student to a project group by coordinator override.
+     * <p>
+     * This coordinator method bypasses normal group formation rules and directly adds a student
+     * to a group without requiring their invitation or consent. Performs comprehensive validation:
+     * <ul>
+     *   <li>Verifies group exists</li>
+     *   <li>Verifies student exists by studentId</li>
+     *   <li>Checks student is not already in another group</li>
+     *   <li>Validates group has not reached maximum team size (current members + pending invitations)</li>
+     *   <li>Creates membership atomically as MEMBER role</li>
+     *   <li>Auto-denies all other PENDING invitations for this student</li>
+     * </ul>
+     * <p>
+     * All operations are executed within a single @Transactional block to ensure atomicity.
+     *
+     * @param groupId the UUID of the target group
+     * @param studentId the student ID (as String) of the student to add
+     * @return a {@link GroupDetailResponse} containing updated group information
+     * @throws GroupNotFoundException if no group exists with the specified ID
+     * @throws StudentNotFoundException if no student exists with the specified studentId
+     * @throws BusinessRuleException if:
+     *         - student is already a member of another group
+     *         - group has reached maximum team size (currentMembers + pendingInvitations >= maxTeamSize)
+     */
     @Transactional
     public GroupDetailResponse coordinatorAddStudent(UUID groupId, String studentId) {
         // 1. Find group
@@ -209,6 +254,30 @@ public class GroupService {
         return toGroupDetailResponse(group, null);
     }
 
+    /**
+     * Force-removes a student from a project group by coordinator override.
+     * <p>
+     * This coordinator method bypasses normal group formation rules and directly removes a student
+     * from a group. Includes a critical security check to prevent accidental removal of team leadership:
+     * <ul>
+     *   <li>Verifies group exists</li>
+     *   <li>Verifies student exists by studentId</li>
+     *   <li>Finds the membership relationship</li>
+     *   <li>Blocks removal if student holds TEAM_LEADER role (security protection)</li>
+     *   <li>Deletes membership atomically</li>
+     * </ul>
+     * <p>
+     * All operations are executed within a single @Transactional block to ensure atomicity.
+     *
+     * @param groupId the UUID of the group from which to remove the student
+     * @param studentId the student ID (as String) of the student to remove
+     * @return a {@link GroupDetailResponse} containing updated group information
+     * @throws GroupNotFoundException if:
+     *         - no group exists with the specified ID, or
+     *         - student is not a member of the specified group
+     * @throws StudentNotFoundException if no student exists with the specified studentId
+     * @throws ForbiddenException if the student holds TEAM_LEADER role (leadership transfer required first)
+     */
     @Transactional
     public GroupDetailResponse coordinatorRemoveStudent(UUID groupId, String studentId) {
         // 1. Find group
@@ -234,6 +303,32 @@ public class GroupService {
         return toGroupDetailResponse(group, null);
     }
 
+    /**
+     * Disbands a project group with full cascade cleanup.
+     * <p>
+     * This coordinator method permanently closes a group and performs comprehensive cascade operations
+     * to ensure referential consistency:
+     * <ul>
+     *   <li>Verifies group exists</li>
+     *   <li>Prevents disbanding already-disbanded groups (idempotency check)</li>
+     *   <li>Updates group status to DISBANDED</li>
+     *   <li>Hard-deletes all GroupMembership rows to free students for reassignment</li>
+     *   <li>Auto-denies all PENDING GroupInvitations outbound from this group (P2 requirement)</li>
+     *   <li>Auto-rejects all PENDING AdvisorRequests for this group (P3 requirement, future amendment)</li>
+     * </ul>
+     * <p>
+     * All operations are executed within a single @Transactional block to ensure atomicity.
+     * If any step fails, the entire transaction rolls back to maintain consistency.
+     * <p>
+     * <strong>P3 Integration Note:</strong> This method is prepared for P3 integration as specified
+     * in p3_issues.md line 111. The AdvisorRequest auto-reject step will be activated when P3 advisor
+     * workflow is implemented.
+     *
+     * @param groupId the UUID of the group to disband
+     * @return a {@link GroupDetailResponse} containing the disbanded group information
+     * @throws GroupNotFoundException if no group exists with the specified ID
+     * @throws BusinessRuleException if the group is already in DISBANDED status
+     */
     @Transactional
     public GroupDetailResponse disbandGroup(UUID groupId) {
         // 1. Find group
