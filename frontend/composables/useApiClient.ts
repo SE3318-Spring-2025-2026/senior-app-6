@@ -48,13 +48,20 @@ export interface CreateSprintRequest {
 
 export interface GradingCriterion {
   criterionName: string;
-  weight: number;
+  weightPercentage: number;
   gradingType: "Binary" | "Soft";
 }
 
 export interface CreateRubricRequest {
   deliverableId: string;
   criteria: GradingCriterion[];
+}
+
+export interface RubricCriterionResponse {
+  id: string;
+  criterionName: string;
+  gradingType: "Binary" | "Soft";
+  weight: number;
 }
 
 export interface GithubLoginRequest {
@@ -236,14 +243,17 @@ export function useApiClient() {
     return apiCall<Sprint[]>("/coordinator/sprints", "GET", undefined, token);
   }
 
-  async function createRubric(data: CreateRubricRequest, token?: string): Promise<void> {
-		for (const criterion of data.criteria) {
-				return apiCall<void>(
-					`/coordinator/deliverables/${encodeURIComponent(data.deliverableId)}/rubric`, "POST",
-					criterion,
-					token);
-		}
+  async function fetchRubric(deliverableId: string, token?: string): Promise<RubricCriterionResponse[]> {
+    return apiCall<RubricCriterionResponse[]>(`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`, "GET", undefined, token);
+  }
 
+  async function updateRubric(deliverableId: string, criteria: GradingCriterion[], token?: string): Promise<RubricCriterionResponse[]> {
+    return apiCall<RubricCriterionResponse[]>(
+			`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`,
+			"POST",
+			{ criteria: criteria },
+			token
+		);
   }
 
   async function createSprintDeliverableMapping(
@@ -283,7 +293,8 @@ export function useApiClient() {
     resetPassword,
     fetchDeliverables,
     fetchSprints,
-    createRubric,
+    fetchRubric,
+    updateRubric,
     createSprintDeliverableMapping,
     publishConfig,
     registerProfessor,

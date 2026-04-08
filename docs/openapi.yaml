@@ -584,8 +584,40 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
 
   /coordinator/deliverables/{id}/rubric:
+    get:
+      summary: Get the rubric criteria for a deliverable
+      tags: [Coordinator]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rubric criteria returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Criterion'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Deliverable not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
     post:
-      summary: Define the evaluation rubric criteria for a deliverable
+      summary: Replace the evaluation rubric criteria for a deliverable
       tags: [Coordinator]
       parameters:
         - name: id
@@ -607,16 +639,28 @@ paths:
                   items:
                     $ref: '#/components/schemas/Criterion'
       responses:
-        '201':
-          description: Rubric criteria saved
+        '200':
+          description: Rubric criteria updated
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Criterion'
         '400':
-          description: gradingType is not 'Binary' or 'Soft'
+          description: Invalid criteria (e.g. empty list, weights don't sum to 100, invalid gradingType)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
         '403':
           description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Deliverable not found
           content:
             application/json:
               schema:
