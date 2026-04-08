@@ -23,7 +23,7 @@ public class GroupDetailResponse {
 
     @Data
     public static class MemberResponse {
-        private UUID studentId;
+        private String studentId;
         private String role;
         private LocalDateTime joinedAt;
     }
