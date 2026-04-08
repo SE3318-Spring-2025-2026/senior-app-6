@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue"
 import type { GroupMember } from "@/types/group"
 
 const props = withDefaults(
@@ -18,6 +19,15 @@ const emit = defineEmits<{
 function handleRemove(member: GroupMember) {
   emit("remove", member)
 }
+
+const normalizedMembers = computed(() =>
+  props.members.map((member, index) => ({
+    ...member,
+    key: member.id ?? member.studentId ?? `${member.role}-${index}`,
+    displayName: member.fullName?.trim() || (member.studentId ? `Student ${member.studentId}` : "Unnamed member"),
+    secondaryText: member.studentId ?? "Student ID unavailable",
+  }))
+)
 </script>
 
 <template>
@@ -28,14 +38,17 @@ function handleRemove(member: GroupMember) {
       </h3>
     </div>
 
-    <div v-if="!members || members.length === 0" class="px-4 py-6 text-sm text-gray-500 dark:text-gray-400">
+    <div
+      v-if="!members || members.length === 0"
+      class="px-4 py-6 text-sm text-gray-500 dark:text-gray-400"
+    >
       No members have been added yet.
     </div>
 
     <ul v-else class="divide-y divide-gray-200 dark:divide-gray-800">
       <li
-        v-for="member in members"
-        :key="member.id"
+        v-for="member in normalizedMembers"
+        :key="member.key"
         class="flex items-center justify-between px-4 py-3"
       >
         <div class="flex items-center gap-3">
@@ -58,10 +71,10 @@ function handleRemove(member: GroupMember) {
 
           <div>
             <p class="text-sm font-medium text-gray-900 dark:text-gray-100">
-              {{ member.fullName }}
+              {{ member.displayName }}
             </p>
             <p class="text-xs text-gray-500 dark:text-gray-400">
-              {{ member.studentId ?? "No student ID" }}
+              {{ member.secondaryText }}
             </p>
           </div>
         </div>
