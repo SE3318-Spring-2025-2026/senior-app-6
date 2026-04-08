@@ -288,9 +288,9 @@ public class GroupService {
         response.setCreatedAt(group.getCreatedAt());
         response.setJiraSpaceUrl(group.getJiraSpaceUrl());
         response.setJiraProjectKey(group.getJiraProjectKey());
-        response.setJiraBound(group.getJiraSpaceUrl() != null && group.getJiraProjectKey() != null);
+        response.setJiraBound(group.getEncryptedJiraToken() != null);
         response.setGithubOrgName(group.getGithubOrgName());
-        response.setGithubBound(group.getGithubOrgName() != null);
+        response.setGithubBound(group.getEncryptedGithubPat() != null);
 
         // Get all members of this group
         List<GroupMembership> members = groupMembershipRepository.findByGroupId(group.getId());
