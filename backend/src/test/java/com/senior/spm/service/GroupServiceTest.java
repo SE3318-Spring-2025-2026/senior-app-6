@@ -301,7 +301,6 @@ class GroupServiceTest {
                 .hasMessageContaining("not a member");
     }
 
-<<<<<<< HEAD
     // ── getGroupsForActiveTerm ─────────────────────────────────────────────────
 
     @Nested
