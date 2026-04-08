@@ -5,7 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
+import com.senior.spm.exception.AdvisorAtCapacityException;
+import com.senior.spm.exception.AlreadyInGroupException;
+import com.senior.spm.exception.BusinessRuleException;
+import com.senior.spm.exception.DuplicateGroupNameException;
+import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GitHubValidationException;
+import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.JiraValidationException;
 
 /**
@@ -72,5 +78,119 @@ class GlobalExceptionHandlerTest {
                 .isNotEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(handler.handleExternalToolValidation(githubEx).getStatusCode())
                 .isNotEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    // ── P2 exceptions ────────────────────────────────────────────────────
+
+    @Test
+    void scheduleWindowClosedException_mapsTo400() {
+        var ex = new ScheduleWindowClosedException("Group creation window is not currently active");
+        var response = handler.handleScheduleWindowClosed(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void alreadyInGroupException_mapsTo400() {
+        var ex = new AlreadyInGroupException("You are already a member of a group");
+        var response = handler.handleAlreadyInGroup(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void duplicateGroupNameException_mapsTo409() {
+        var ex = new DuplicateGroupNameException("A group named 'TeamAlpha' already exists for this term");
+        var response = handler.handleDuplicateGroupName(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void notInGroupException_mapsTo404() {
+        var ex = new NotInGroupException("You are not a member of any group");
+        var response = handler.handleNotInGroup(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    // ── P3 exceptions ────────────────────────────────────────────────────
+
+    @Test
+    void advisorAtCapacityException_mapsTo400() {
+        var ex = new AdvisorAtCapacityException("You have reached your maximum group capacity for this term");
+        var response = handler.handleAdvisorAtCapacity(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void forbiddenException_mapsTo403() {
+        var ex = new ForbiddenException("This request is not addressed to you");
+        var response = handler.handleForbidden(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void requestNotFoundException_mapsTo404() {
+        var ex = new RequestNotFoundException("Request not found");
+        var response = handler.handleRequestNotFound(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void requestNotPendingException_mapsTo400() {
+        var ex = new RequestNotPendingException("Request is no longer pending");
+        var response = handler.handleRequestNotPending(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    // ── PR #85 — bind tool exceptions ────────────────────────────────────────
+
+    @Test
+    void businessRuleException_mapsTo400() {
+        var ex = new BusinessRuleException("This group has been disbanded");
+        var response = handler.handleBusinessRule(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void businessRuleException_preservesMessage() {
+        var message = "This group has been disbanded";
+        var response = handler.handleBusinessRule(new BusinessRuleException(message));
+
+        assertThat(response.getBody().getMessage()).isEqualTo(message);
+    }
+
+    @Test
+    void groupNotFoundException_mapsTo404() {
+        var ex = new GroupNotFoundException("Group not found");
+        var response = handler.handleGroupNotFound(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void unsupportedOperationException_mapsTo501() {
+        // Stub endpoints (Issue #45, #59, #62) throw UnsupportedOperationException.
+        // Handler must return 501 Not Implemented — NOT 500 Internal Server Error.
+        var ex = new UnsupportedOperationException("Not implemented yet");
+        var response = handler.handleUnsupportedOperation(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_IMPLEMENTED);
     }
 }
