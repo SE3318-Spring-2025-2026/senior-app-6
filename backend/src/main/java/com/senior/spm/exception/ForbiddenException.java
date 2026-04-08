@@ -1,10 +1,14 @@
 package com.senior.spm.exception;
 
 /**
- * Exception thrown when a forbidden operation is attempted.
- * Primary use: preventing removal of TEAM_LEADER role from groups.
+ * Thrown when the authenticated user does not have the required role or
+ * ownership to perform an action (e.g., a non-TEAM_LEADER attempting to bind
+ * tool integrations).
+ *
+ * Maps to HTTP 403 Forbidden via GlobalExceptionHandler.
  */
 public class ForbiddenException extends RuntimeException {
+
     public ForbiddenException(String message) {
         super(message);
     }

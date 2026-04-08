@@ -23,6 +23,7 @@ import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.DuplicateGroupNameException;
 import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GroupNotFoundException;
+import com.senior.spm.exception.NotInGroupException;
 import com.senior.spm.exception.ScheduleWindowClosedException;
 import com.senior.spm.exception.StudentNotFoundException;
 import com.senior.spm.repository.AdvisorRequestRepository;

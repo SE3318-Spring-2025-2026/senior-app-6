@@ -1,10 +1,13 @@
 package com.senior.spm.exception;
 
 /**
- * Exception thrown when a business rule validation fails.
- * Covers: student already in group, max team size exceeded, group already disbanded, etc.
+ * Thrown when a request violates a domain business rule (e.g., attempting to
+ * bind tools on a DISBANDED group, or locking a roster that is already locked).
+ *
+ * Maps to HTTP 400 Bad Request via GlobalExceptionHandler.
  */
 public class BusinessRuleException extends RuntimeException {
+
     public BusinessRuleException(String message) {
         super(message);
     }
