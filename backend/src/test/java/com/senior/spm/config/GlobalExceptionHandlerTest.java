@@ -5,8 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
+import com.senior.spm.exception.AlreadyInGroupException;
+import com.senior.spm.exception.DuplicateGroupNameException;
 import com.senior.spm.exception.GitHubValidationException;
 import com.senior.spm.exception.JiraValidationException;
+import com.senior.spm.exception.NotInGroupException;
+import com.senior.spm.exception.ScheduleWindowClosedException;
 
 /**
  * Verifies that GlobalExceptionHandler maps both JiraValidationException and
@@ -59,6 +63,44 @@ class GlobalExceptionHandlerTest {
 
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getMessage()).isEqualTo(message);
+    }
+
+    // ── P2 exceptions (added in PR #83) ──────────────────────────────────
+
+    @Test
+    void scheduleWindowClosedException_mapsTo400() {
+        var ex = new ScheduleWindowClosedException("Group creation window is not currently active");
+        var response = handler.handleScheduleWindowClosed(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void alreadyInGroupException_mapsTo400() {
+        var ex = new AlreadyInGroupException("You are already a member of a group");
+        var response = handler.handleAlreadyInGroup(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void duplicateGroupNameException_mapsTo409() {
+        var ex = new DuplicateGroupNameException("A group named 'TeamAlpha' already exists for this term");
+        var response = handler.handleDuplicateGroupName(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void notInGroupException_mapsTo404() {
+        var ex = new NotInGroupException("You are not a member of any group");
+        var response = handler.handleNotInGroup(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
     }
 
     // ── Never returns a different status ─────────────────────────────────
