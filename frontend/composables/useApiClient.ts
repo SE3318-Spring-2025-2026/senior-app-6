@@ -48,7 +48,7 @@ export interface CreateSprintRequest {
 
 export interface GradingCriterion {
   criterionName: string;
-  weight: number;
+  weightPercentage: number;
   gradingType: "Binary" | "Soft";
 }
 
