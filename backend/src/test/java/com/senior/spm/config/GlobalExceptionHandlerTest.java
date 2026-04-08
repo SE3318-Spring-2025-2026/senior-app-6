@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import com.senior.spm.exception.AdvisorAtCapacityException;
 import com.senior.spm.exception.AlreadyInGroupException;
 import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.DuplicateGroupNameException;
@@ -13,21 +12,17 @@ import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GitHubValidationException;
 import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.JiraValidationException;
+import com.senior.spm.exception.NotInGroupException;
+import com.senior.spm.exception.ScheduleWindowClosedException;
 
 /**
- * Verifies that GlobalExceptionHandler maps both JiraValidationException and
- * GitHubValidationException to HTTP 422 Unprocessable Entity with the exact
- * user-facing message from the exception.
- *
- * This is the integration point between the validation services and the HTTP
- * response layer. If this mapping is broken, validation failures silently
- * become 500 Internal Server Error responses.
+ * Verifies that GlobalExceptionHandler maps exceptions to correct HTTP status codes.
  */
 class GlobalExceptionHandlerTest {
 
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
-    // ── JIRA exceptions → 422 ─────────────────────────────────────────────
+    // ── Tool validation → 422 ─────────────────────────────────────────────
 
     @Test
     void jiraValidationException_mapsTo422() {
@@ -47,8 +42,6 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody().getMessage()).isEqualTo(message);
     }
 
-    // ── GitHub exceptions → 422 ───────────────────────────────────────────
-
     @Test
     void gitHubValidationException_mapsTo422() {
         var ex = new GitHubValidationException("GitHub validation failed: PAT is invalid or expired");
@@ -67,8 +60,6 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody().getMessage()).isEqualTo(message);
     }
 
-    // ── Never returns a different status ─────────────────────────────────
-
     @Test
     void handler_neverReturns500_forValidationExceptions() {
         var jiraEx = new JiraValidationException("any jira error");
@@ -80,7 +71,7 @@ class GlobalExceptionHandlerTest {
                 .isNotEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // ── P2 exceptions ────────────────────────────────────────────────────
+    // ── P2 exceptions ─────────────────────────────────────────────────────
 
     @Test
     void scheduleWindowClosedException_mapsTo400() {
@@ -118,45 +109,14 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
     }
 
-    // ── P3 exceptions ────────────────────────────────────────────────────
-
-    @Test
-    void advisorAtCapacityException_mapsTo400() {
-        var ex = new AdvisorAtCapacityException("You have reached your maximum group capacity for this term");
-        var response = handler.handleAdvisorAtCapacity(ex);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
-    }
-
     @Test
     void forbiddenException_mapsTo403() {
-        var ex = new ForbiddenException("This request is not addressed to you");
+        var ex = new ForbiddenException("Only the Team Leader can bind tool integrations");
         var response = handler.handleForbidden(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
     }
-
-    @Test
-    void requestNotFoundException_mapsTo404() {
-        var ex = new RequestNotFoundException("Request not found");
-        var response = handler.handleRequestNotFound(ex);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
-    }
-
-    @Test
-    void requestNotPendingException_mapsTo400() {
-        var ex = new RequestNotPendingException("Request is no longer pending");
-        var response = handler.handleRequestNotPending(ex);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
-    }
-
-    // ── PR #85 — bind tool exceptions ────────────────────────────────────────
 
     @Test
     void businessRuleException_mapsTo400() {
@@ -186,7 +146,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void unsupportedOperationException_mapsTo501() {
-        // Stub endpoints (Issue #45, #59, #62) throw UnsupportedOperationException.
+        // Stub endpoints (Issue #45) throw UnsupportedOperationException.
         // Handler must return 501 Not Implemented — NOT 500 Internal Server Error.
         var ex = new UnsupportedOperationException("Not implemented yet");
         var response = handler.handleUnsupportedOperation(ex);

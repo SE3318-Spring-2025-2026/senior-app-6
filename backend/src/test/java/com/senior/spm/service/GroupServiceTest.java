@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -74,8 +75,8 @@ class GroupServiceTest {
         openWindow.setId(UUID.randomUUID());
         openWindow.setType(WindowType.GROUP_CREATION);
         openWindow.setTermId(TERM_ID);
-        openWindow.setOpensAt(LocalDateTime.now().minusDays(1));
-        openWindow.setClosesAt(LocalDateTime.now().plusDays(1));
+        openWindow.setOpensAt(LocalDateTime.now(ZoneId.of("UTC")).minusDays(1));
+        openWindow.setClosesAt(LocalDateTime.now(ZoneId.of("UTC")).plusDays(1));
 
         student = new Student();
         student.setId(STUDENT_ID);
@@ -85,7 +86,7 @@ class GroupServiceTest {
         savedGroup.setGroupName(GROUP_NAME);
         savedGroup.setTermId(TERM_ID);
         savedGroup.setStatus(GroupStatus.FORMING);
-        savedGroup.setCreatedAt(LocalDateTime.now());
+        savedGroup.setCreatedAt(LocalDateTime.now(ZoneId.of("UTC")));
     }
 
     // ── createGroup ────────────────────────────────────────────────────────────
@@ -165,7 +166,7 @@ class GroupServiceTest {
 
     @Test
     void createGroup_windowExpired_throwsScheduleWindowClosedException() {
-        openWindow.setClosesAt(LocalDateTime.now().minusHours(1)); // already closed
+        openWindow.setClosesAt(LocalDateTime.now(ZoneId.of("UTC")).minusHours(1)); // already closed
 
         when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(scheduleWindowRepository.findByTermIdAndType(TERM_ID, WindowType.GROUP_CREATION))
