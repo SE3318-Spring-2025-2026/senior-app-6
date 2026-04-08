@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
+import com.senior.spm.exception.AdvisorAtCapacityException;
 import com.senior.spm.exception.AlreadyInGroupException;
 import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.DuplicateGroupNameException;
@@ -13,6 +14,8 @@ import com.senior.spm.exception.GitHubValidationException;
 import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.JiraValidationException;
 import com.senior.spm.exception.NotInGroupException;
+import com.senior.spm.exception.RequestNotFoundException;
+import com.senior.spm.exception.RequestNotPendingException;
 import com.senior.spm.exception.ScheduleWindowClosedException;
 
 /**
@@ -152,5 +155,34 @@ class GlobalExceptionHandlerTest {
         var response = handler.handleUnsupportedOperation(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_IMPLEMENTED);
+    }
+
+    // ── P3 exceptions ────────────────────────────────────────────────────
+
+    @Test
+    void advisorAtCapacityException_mapsTo400() {
+        var ex = new AdvisorAtCapacityException("You have reached your maximum group capacity for this term");
+        var response = handler.handleAdvisorAtCapacity(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void requestNotFoundException_mapsTo404() {
+        var ex = new RequestNotFoundException("Request not found");
+        var response = handler.handleRequestNotFound(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void requestNotPendingException_mapsTo400() {
+        var ex = new RequestNotPendingException("Request is no longer pending");
+        var response = handler.handleRequestNotPending(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
     }
 }

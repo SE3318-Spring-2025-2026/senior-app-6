@@ -205,9 +205,9 @@ public class GroupController {
      */
     private UUID extractStudentUUIDFromJWT() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // JwtAuthenticationFilter sets the principal to claims.get("id", String.class),
+        // which JWTService writes as student.getId() (the internal UUID PK).
         String principal = (String) authentication.getPrincipal();
-        // Principal should contain the student UUID
-        // TODO: Parse the JWT properly to extract the student UUID
         return UUID.fromString(principal);
     }
 }

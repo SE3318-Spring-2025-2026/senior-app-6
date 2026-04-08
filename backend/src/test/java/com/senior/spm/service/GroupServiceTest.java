@@ -152,6 +152,56 @@ class GroupServiceTest {
     }
 
     @Test
+    void createGroup_termIdAlwaysFromTermConfigService_neverFromClient() {
+        // Architecture rule (CLAUDE.md): termId is NEVER from the request body.
+        // Verify TermConfigService is called and its value stamps the saved group.
+        when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
+        when(scheduleWindowRepository.findByTermIdAndType(TERM_ID, WindowType.GROUP_CREATION))
+                .thenReturn(Optional.of(openWindow));
+        when(groupMembershipRepository.existsByStudentId(STUDENT_ID)).thenReturn(false);
+        when(projectGroupRepository.existsByGroupNameAndTermId(GROUP_NAME, TERM_ID)).thenReturn(false);
+        when(projectGroupRepository.save(any())).thenReturn(savedGroup);
+        when(studentRepository.findById(STUDENT_ID)).thenReturn(Optional.of(student));
+        when(groupMembershipRepository.save(any())).thenReturn(new GroupMembership());
+        when(groupMembershipRepository.findByGroupId(any())).thenReturn(List.of());
+
+        groupService.createGroup(GROUP_NAME, STUDENT_ID);
+
+        verify(termConfigService).getActiveTermId();
+        ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
+        verify(projectGroupRepository).save(captor.capture());
+        assertThat(captor.getValue().getTermId()).isEqualTo(TERM_ID);
+    }
+
+    @Test
+    void createGroup_responseIncludesTeamLeaderInMembers() {
+        // Sequence 2.1: response must include members:[{studentId, role:"TEAM_LEADER"}]
+        student.setStudentId("23070006036");
+
+        GroupMembership savedMembership = new GroupMembership();
+        savedMembership.setStudent(student);
+        savedMembership.setRole(MemberRole.TEAM_LEADER);
+        savedMembership.setJoinedAt(LocalDateTime.now());
+        savedMembership.setGroup(savedGroup);
+
+        when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
+        when(scheduleWindowRepository.findByTermIdAndType(TERM_ID, WindowType.GROUP_CREATION))
+                .thenReturn(Optional.of(openWindow));
+        when(groupMembershipRepository.existsByStudentId(STUDENT_ID)).thenReturn(false);
+        when(projectGroupRepository.existsByGroupNameAndTermId(GROUP_NAME, TERM_ID)).thenReturn(false);
+        when(projectGroupRepository.save(any())).thenReturn(savedGroup);
+        when(studentRepository.findById(STUDENT_ID)).thenReturn(Optional.of(student));
+        when(groupMembershipRepository.save(any())).thenReturn(savedMembership);
+        when(groupMembershipRepository.findByGroupId(savedGroup.getId())).thenReturn(List.of(savedMembership));
+
+        GroupDetailResponse response = groupService.createGroup(GROUP_NAME, STUDENT_ID);
+
+        assertThat(response.getMembers()).hasSize(1);
+        assertThat(response.getMembers().get(0).getRole()).isEqualTo("TEAM_LEADER");
+        assertThat(response.getMembers().get(0).getStudentId()).isEqualTo("23070006036");
+    }
+
+    @Test
     void createGroup_windowNotFound_throwsScheduleWindowClosedException() {
         when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(scheduleWindowRepository.findByTermIdAndType(TERM_ID, WindowType.GROUP_CREATION))
@@ -233,13 +283,12 @@ class GroupServiceTest {
     }
 
     @Test
-    void getMyGroup_noMembership_throwsRuntimeException() {
+    void getMyGroup_noMembership_throwsNotInGroupException() {
         when(groupMembershipRepository.findByStudentId(STUDENT_ID))
                 .thenReturn(Optional.empty());
 
-        // Currently throws RuntimeException — should be GroupNotFoundException (follow-up fix)
         assertThatThrownBy(() -> groupService.getMyGroup(STUDENT_ID))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(NotInGroupException.class)
                 .hasMessageContaining("not a member");
     }
 
