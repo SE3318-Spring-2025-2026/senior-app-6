@@ -50,3 +50,7 @@ VALUES
 		'$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq',
 		'PROFESSOR'
 	);
+
+-- Issue 55: Red Team system_config seed data
+INSERT IGNORE INTO system_config (config_key, config_value) VALUES ('active_term_id', '2026-SPRING');
+INSERT IGNORE INTO system_config (config_key, config_value) VALUES ('max_team_size', '4');
