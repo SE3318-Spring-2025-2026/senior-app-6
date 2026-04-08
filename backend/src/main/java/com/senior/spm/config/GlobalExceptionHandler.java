@@ -14,9 +14,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.exception.AdvisorAtCapacityException;
 import com.senior.spm.exception.AlreadyInGroupException;
+import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.DuplicateGroupNameException;
 import com.senior.spm.exception.ExternalToolValidationException;
 import com.senior.spm.exception.ForbiddenException;
+import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.NotInGroupException;
 import com.senior.spm.exception.RequestNotFoundException;
 import com.senior.spm.exception.RequestNotPendingException;
@@ -77,23 +79,50 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(new ErrorMessage(ex.getMessage()));
     }
 
-    @ExceptionHandler(AdvisorAtCapacityException.class)
-    public ResponseEntity<ErrorMessage> handleAdvisorAtCapacity(AdvisorAtCapacityException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
-    }
-
+    // Thrown when the authenticated user does not hold the required role or ownership
+    // (e.g., a non-TEAM_LEADER attempting to bind tool integrations or send invitations).
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorMessage> handleForbidden(ForbiddenException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorMessage(ex.getMessage()));
     }
 
+    // Thrown when a request violates a domain business rule (e.g., binding tools on a
+    // DISBANDED group, or responding to a locked roster). Distinct from validation
+    // errors (400 from @Valid) — these are semantic, not structural, rejections.
+    @ExceptionHandler(BusinessRuleException.class)
+    public ResponseEntity<ErrorMessage> handleBusinessRule(BusinessRuleException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    // Thrown when a group with the given UUID does not exist.
+    @ExceptionHandler(GroupNotFoundException.class)
+    public ResponseEntity<ErrorMessage> handleGroupNotFound(GroupNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    // Thrown when an advisor has reached their maximum group capacity.
+    @ExceptionHandler(AdvisorAtCapacityException.class)
+    public ResponseEntity<ErrorMessage> handleAdvisorAtCapacity(AdvisorAtCapacityException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    // Thrown when an advisor request with the given ID does not exist.
     @ExceptionHandler(RequestNotFoundException.class)
     public ResponseEntity<ErrorMessage> handleRequestNotFound(RequestNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
     }
 
+    // Thrown when attempting to cancel/respond to an advisor request that is no longer PENDING.
     @ExceptionHandler(RequestNotPendingException.class)
     public ResponseEntity<ErrorMessage> handleRequestNotPending(RequestNotPendingException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    // Thrown by stub endpoints (Issue #45) that are not yet implemented.
+    // Prevents UnsupportedOperationException from falling through to the 500 catch-all.
+    @ExceptionHandler(UnsupportedOperationException.class)
+    public ResponseEntity<ErrorMessage> handleUnsupportedOperation(UnsupportedOperationException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
+                .body(new ErrorMessage("This endpoint is not yet implemented"));
     }
 }

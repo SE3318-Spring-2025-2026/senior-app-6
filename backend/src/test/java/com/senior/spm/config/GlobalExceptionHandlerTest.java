@@ -7,9 +7,11 @@ import org.springframework.http.HttpStatus;
 
 import com.senior.spm.exception.AdvisorAtCapacityException;
 import com.senior.spm.exception.AlreadyInGroupException;
+import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.DuplicateGroupNameException;
 import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GitHubValidationException;
+import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.JiraValidationException;
 import com.senior.spm.exception.NotInGroupException;
 import com.senior.spm.exception.RequestNotFoundException;
@@ -72,7 +74,7 @@ class GlobalExceptionHandlerTest {
                 .isNotEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // ── P2 exceptions ────────────────────────────────────────────────────
+    // ── P2 exceptions ─────────────────────────────────────────────────────
 
     @Test
     void scheduleWindowClosedException_mapsTo400() {
@@ -110,6 +112,51 @@ class GlobalExceptionHandlerTest {
         assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
     }
 
+    @Test
+    void forbiddenException_mapsTo403() {
+        var ex = new ForbiddenException("Only the Team Leader can bind tool integrations");
+        var response = handler.handleForbidden(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void businessRuleException_mapsTo400() {
+        var ex = new BusinessRuleException("This group has been disbanded");
+        var response = handler.handleBusinessRule(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void businessRuleException_preservesMessage() {
+        var message = "This group has been disbanded";
+        var response = handler.handleBusinessRule(new BusinessRuleException(message));
+
+        assertThat(response.getBody().getMessage()).isEqualTo(message);
+    }
+
+    @Test
+    void groupNotFoundException_mapsTo404() {
+        var ex = new GroupNotFoundException("Group not found");
+        var response = handler.handleGroupNotFound(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    @Test
+    void unsupportedOperationException_mapsTo501() {
+        // Stub endpoints (Issue #45) throw UnsupportedOperationException.
+        // Handler must return 501 Not Implemented — NOT 500 Internal Server Error.
+        var ex = new UnsupportedOperationException("Not implemented yet");
+        var response = handler.handleUnsupportedOperation(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_IMPLEMENTED);
+    }
+
     // ── P3 exceptions ────────────────────────────────────────────────────
 
     @Test
@@ -118,15 +165,6 @@ class GlobalExceptionHandlerTest {
         var response = handler.handleAdvisorAtCapacity(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
-    }
-
-    @Test
-    void forbiddenException_mapsTo403() {
-        var ex = new ForbiddenException("This request is not addressed to you");
-        var response = handler.handleForbidden(ex);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
         assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
     }
 
