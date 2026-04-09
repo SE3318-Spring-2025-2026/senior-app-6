@@ -301,23 +301,25 @@ class GroupServiceTest {
                 .hasMessageContaining("not a member");
     }
 
-    // ── getGroupsForActiveTerm ─────────────────────────────────────────────────
+    // ── getGroupSummariesForActiveTerm ────────────────────────────────────────
 
     @Nested
-    class GetGroupsForActiveTerm {
+    class GetGroupSummariesForActiveTerm {
 
         @Test
-        void returnsGroupDetailResponseListForActiveTerm() {
+        void returnsSummaryListForActiveTerm() {
             when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
             when(projectGroupRepository.findByTermId(TERM_ID)).thenReturn(List.of(savedGroup));
-            when(groupMembershipRepository.findByGroupId(savedGroup.getId())).thenReturn(List.of());
+            when(groupMembershipRepository.countByGroupId(savedGroup.getId())).thenReturn(2L);
 
-            List<GroupDetailResponse> result = groupService.getGroupsForActiveTerm();
+            List<com.senior.spm.controller.response.GroupSummaryResponse> result =
+                    groupService.getGroupSummariesForActiveTerm();
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getId()).isEqualTo(savedGroup.getId());
             assertThat(result.get(0).getGroupName()).isEqualTo(GROUP_NAME);
             assertThat(result.get(0).getTermId()).isEqualTo(TERM_ID);
+            assertThat(result.get(0).getMemberCount()).isEqualTo(2);
         }
 
         @Test
@@ -325,7 +327,8 @@ class GroupServiceTest {
             when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
             when(projectGroupRepository.findByTermId(TERM_ID)).thenReturn(List.of());
 
-            List<GroupDetailResponse> result = groupService.getGroupsForActiveTerm();
+            List<com.senior.spm.controller.response.GroupSummaryResponse> result =
+                    groupService.getGroupSummariesForActiveTerm();
 
             assertThat(result).isEmpty();
         }
@@ -414,6 +417,18 @@ class GroupServiceTest {
 
             assertThatThrownBy(() -> groupService.coordinatorAddStudent(groupId, STUDENT_ID_STR))
                     .isInstanceOf(GroupNotFoundException.class);
+
+            verify(groupMembershipRepository, never()).save(any());
+        }
+
+        @Test
+        void throwsBusinessRuleExceptionWhenGroupIsDisbanded() {
+            group.setStatus(GroupStatus.DISBANDED);
+            when(projectGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
+
+            assertThatThrownBy(() -> groupService.coordinatorAddStudent(groupId, STUDENT_ID_STR))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("disbanded");
 
             verify(groupMembershipRepository, never()).save(any());
         }

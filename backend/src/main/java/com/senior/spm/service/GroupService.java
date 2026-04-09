@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.senior.spm.controller.dto.BindToolResponse;
 import com.senior.spm.controller.dto.GroupDetailResponse;
+import com.senior.spm.controller.response.GroupSummaryResponse;
 import com.senior.spm.entity.AdvisorRequest;
 import com.senior.spm.entity.AdvisorRequest.RequestStatus;
 import com.senior.spm.entity.GroupMembership;
@@ -318,26 +319,6 @@ public class GroupService {
     // ========== COORDINATOR BYPASS METHODS ==========
 
     /**
-     * Retrieves all project groups for the active term.
-     * <p>
-     * This coordinator method provides a read-only view of all groups in the currently active term,
-     * bypassing any student-specific filtering or access restrictions.
-     *
-     * @return a list of {@link GroupDetailResponse} containing all groups in the active term.
-     *         If no active term or groups exist, returns an empty list.
-     * @throws RuntimeException if the active term cannot be determined
-     */
-    @Transactional(readOnly = true)
-    public List<GroupDetailResponse> getGroupsForActiveTerm() {
-        String termId = termConfigService.getActiveTermId();
-        List<ProjectGroup> groups = projectGroupRepository.findByTermId(termId);
-        return groups.stream()
-            .map(group -> toGroupDetailResponse(group, null))
-            .collect(Collectors.toList());
-    }
-
-
-    /**
      * Retrieves detailed information for a specific project group.
      * <p>
      * This coordinator method provides full access to group details without any access restrictions,
@@ -409,6 +390,11 @@ public class GroupService {
         // 1. Find group
         ProjectGroup group = projectGroupRepository.findById(groupId)
             .orElseThrow(() -> new GroupNotFoundException("Group not found"));
+
+        // 1a. DISBANDED freeze — cannot add members to a disbanded group
+        if (group.getStatus() == GroupStatus.DISBANDED) {
+            throw new BusinessRuleException("Cannot add a student to a disbanded group");
+        }
 
         // 2. Find student by studentId
         Student student = studentRepository.findByStudentId(studentId)

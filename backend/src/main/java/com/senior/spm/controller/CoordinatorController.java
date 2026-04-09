@@ -17,7 +17,7 @@ import com.senior.spm.controller.dto.GroupDetailResponse;
 import com.senior.spm.controller.request.CoordinatorMemberRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.SprintRequest;
-import com.senior.spm.controller.response.GroupSummaryResponse; 
+import com.senior.spm.controller.response.GroupSummaryResponse;
 import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
