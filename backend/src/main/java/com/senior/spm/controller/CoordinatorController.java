@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.senior.spm.controller.request.AddRubricRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.MapDeliverablesRequest;
+import com.senior.spm.controller.request.RubricRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
@@ -86,12 +86,22 @@ public class CoordinatorController {
         }
     }
 
-    @PostMapping("/deliverables/{id}/rubric")
-    public ResponseEntity<?> addRubricToDeliverable(@PathVariable UUID id,
-            @Valid @RequestBody AddRubricRequest request) {
+    @GetMapping("/deliverables/{id}/rubric")
+    public ResponseEntity<?> getRubricsForDeliverable(@PathVariable UUID id) {
         try {
-            var rubricCriterion = deliverableService.addRubricToDeliverable(id, request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(rubricCriterion);
+            var criteria = deliverableService.getRubricsForDeliverable(id);
+            return ResponseEntity.status(HttpStatus.OK).body(criteria);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/deliverables/{id}/rubric")
+    public ResponseEntity<?> updateRubricsForDeliverable(@PathVariable UUID id,
+            @Valid @RequestBody RubricRequest request) {
+        try {
+            var updatedCriteria = deliverableService.updateRubricsForDeliverable(id, request.getCriteria());
+            return ResponseEntity.status(HttpStatus.OK).body(updatedCriteria);
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         } catch (IllegalArgumentException e) {

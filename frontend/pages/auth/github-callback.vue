@@ -62,6 +62,7 @@
 				id: response.userInfo.id,
 				studentId,
 				githubUsername: response.userInfo.githubUsername,
+				role: "Student"
 			} as StudentUser);
 
 			status.value = "success";

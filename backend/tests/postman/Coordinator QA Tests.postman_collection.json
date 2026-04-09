@@ -841,7 +841,7 @@
       "response": []
     },
     {
-      "name": "Add Rubric - Unauthorized (403)",
+      "name": "Update Rubric - Unauthorized (403)",
       "event": [
         {
           "listen": "test",
@@ -868,7 +868,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"criterionName\": \"Completeness\",\r\n  \"gradingType\": \"Binary\",\r\n  \"weightPercentage\": 20\r\n}",
+          "raw": "{\r\n  \"criteria\": [\r\n    {\r\n      \"criterionName\": \"Completeness\",\r\n      \"gradingType\": \"Binary\",\r\n      \"weight\": 100\r\n    }\r\n  ]\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -894,22 +894,27 @@
       "response": []
     },
     {
-      "name": "Add Rubric - Success (201)",
+      "name": "Update Rubric - Success (200)",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status code is 201\", function () {\r",
-              "    pm.response.to.have.status(201);\r",
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
               "});\r",
               "\r",
               "const jsonData = pm.response.json();\r",
               "\r",
-              "pm.test(\"Rubric criterion saved correctly\", function () {\r",
-              "    pm.expect(jsonData.criterionName).to.eql(\"Completeness\");\r",
-              "    pm.expect(jsonData.gradingType).to.eql(\"Binary\");\r",
-              "    pm.expect(Number(jsonData.weight)).to.eql(20);\r",
+              "pm.test(\"Response is an array of criteria\", function () {\r",
+              "    pm.expect(jsonData).to.be.an('array');\r",
+              "    pm.expect(jsonData.length).to.eql(2);\r",
+              "    pm.expect(jsonData[0].criterionName).to.eql(\"Completeness\");\r",
+              "    pm.expect(jsonData[0].gradingType).to.eql(\"Binary\");\r",
+              "    pm.expect(Number(jsonData[0].weight)).to.eql(60);\r",
+              "    pm.expect(jsonData[1].criterionName).to.eql(\"Code Quality\");\r",
+              "    pm.expect(jsonData[1].gradingType).to.eql(\"Soft\");\r",
+              "    pm.expect(Number(jsonData[1].weight)).to.eql(40);\r",
               "});"
             ],
             "type": "text/javascript",
@@ -939,7 +944,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"criterionName\": \"Completeness\",\r\n  \"gradingType\": \"Binary\",\r\n  \"weightPercentage\": 20\r\n}",
+          "raw": "{\r\n  \"criteria\": [\r\n    {\r\n      \"criterionName\": \"Completeness\",\r\n      \"gradingType\": \"Binary\",\r\n      \"weight\": 60\r\n    },\r\n    {\r\n      \"criterionName\": \"Code Quality\",\r\n      \"gradingType\": \"Soft\",\r\n      \"weight\": 40\r\n    }\r\n  ]\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -965,7 +970,110 @@
       "response": []
     },
     {
-      "name": "Add Rubric - Invalid Deliverable ID (404)",
+      "name": "Get Rubric - Success (200)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {\r",
+              "    pm.response.to.have.status(200);\r",
+              "});\r",
+              "\r",
+              "const jsonData = pm.response.json();\r",
+              "\r",
+              "pm.test(\"Response is an array of criteria\", function () {\r",
+              "    pm.expect(jsonData).to.be.an('array');\r",
+              "    pm.expect(jsonData.length).to.be.above(0);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/coordinator/deliverables/{{deliverableId}}/rubric",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "coordinator",
+            "deliverables",
+            "{{deliverableId}}",
+            "rubric"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Rubric - Invalid Deliverable ID (404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 404\", function () {\r",
+              "    pm.response.to.have.status(404);\r",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/coordinator/deliverables/11111111-1111-1111-1111-111111111111/rubric",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "coordinator",
+            "deliverables",
+            "11111111-1111-1111-1111-111111111111",
+            "rubric"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Rubric - Invalid Deliverable ID (404)",
       "event": [
         {
           "listen": "test",
@@ -1002,7 +1110,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"criterionName\": \"Completeness\",\r\n  \"gradingType\": \"Soft\",\r\n  \"weightPercentage\": 20\r\n}",
+          "raw": "{\r\n  \"criteria\": [\r\n    {\r\n      \"criterionName\": \"Completeness\",\r\n      \"gradingType\": \"Soft\",\r\n      \"weight\": 100\r\n    }\r\n  ]\r\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1028,14 +1136,14 @@
       "response": []
     },
     {
-      "name": "Add Rubric - Invalid Grading Type",
+      "name": "Update Rubric - Invalid Grading Type (400)",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Invalid grading type should return 401\", function () {\r",
-              "    pm.response.to.have.status(401);\r",
+              "pm.test(\"Invalid grading type should return 400\", function () {\r",
+              "    pm.response.to.have.status(400);\r",
               "});"
             ],
             "type": "text/javascript",
@@ -1065,7 +1173,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\r\n  \"criterionName\": \"Code Quality\",\r\n  \"gradingType\": \"InvalidType\",\r\n  \"weightPercentage\": 20\r\n}",
+          "raw": "{\r\n  \"criteria\": [\r\n    {\r\n      \"criterionName\": \"Code Quality\",\r\n      \"gradingType\": \"InvalidType\",\r\n      \"weight\": 100\r\n    }\r\n  ]\r\n}",
           "options": {
             "raw": {
               "language": "json"

@@ -7,10 +7,11 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.senior.spm.controller.request.AddRubricRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.MapDeliverablesRequest;
+import com.senior.spm.controller.request.RubricRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
+import com.senior.spm.controller.response.CriterionResponse;
 import com.senior.spm.entity.Deliverable;
 import com.senior.spm.entity.RubricCriterion;
 import com.senior.spm.entity.SprintDeliverableMapping;
@@ -62,30 +63,45 @@ public class DeliverableService {
         return deliverableRepository.save(deliverable);
     }
 
+    public List<CriterionResponse> getRubricsForDeliverable(UUID deliverableId) {
+        if (!deliverableRepository.existsById(deliverableId)) {
+            throw new NotFoundException("Deliverable not found with ID: " + deliverableId);
+        }
+
+        var criteria = rubricCriterionRepository.findAllByDeliverableId(deliverableId);
+        return criteria.stream()
+                .map(c -> new CriterionResponse(c.getCriterionName(), c.getGradingType(), c.getWeight()))
+                .toList();
+    }
+
     @Transactional
-    public RubricCriterion addRubricToDeliverable(UUID id, AddRubricRequest request) {
+    public List<RubricCriterion> updateRubricsForDeliverable(UUID id, List<RubricRequest.Criterion> criteria) {
+        if (criteria.isEmpty()) {
+            throw new IllegalArgumentException("At least one rubric criterion must be provided");
+        }
+        var totalWeight = criteria.stream()
+                .map(RubricRequest.Criterion::getWeight)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        if (totalWeight.compareTo(new BigDecimal("100.00")) != 0) {
+            throw new IllegalArgumentException("Total weight of all criteria must equal 100%. Current total: " + totalWeight + "%");
+        }
+
         var deliverable = deliverableRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Deliverable not found with ID: " + id));
 
-        var existingCriteria = rubricCriterionRepository.findAllByDeliverableId(id);
+        rubricCriterionRepository.deleteByDeliverableId(id);
 
-        var existingTotalWeight = existingCriteria.stream()
-                .map(RubricCriterion::getWeight)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        var newTotalWeight = existingTotalWeight.add(request.getWeight());
+        var rubricCriteria = criteria.stream().map(c -> {
+            var criterion = new RubricCriterion();
+            criterion.setDeliverable(deliverable);
+            criterion.setCriterionName(c.getCriterionName());
+            criterion.setGradingType(c.getGradingType());
+            criterion.setWeight(c.getWeight());
+            return criterion;
+        }).toList();
 
-        if (newTotalWeight.compareTo(new BigDecimal("100.00")) > 0) {
-            throw new IllegalArgumentException("Total weight percentage exceeds 100%. Remaining capacity: "
-                    + (new BigDecimal("100.00").subtract(existingTotalWeight)) + "%");
-        }
-
-        var rubricCriterion = new RubricCriterion();
-        rubricCriterion.setDeliverable(deliverable);
-        rubricCriterion.setCriterionName(request.getCriterionName());
-        rubricCriterion.setGradingType(request.getGradingType());
-        rubricCriterion.setWeight(request.getWeight());
-
-        return rubricCriterionRepository.save(rubricCriterion);
+        rubricCriterionRepository.saveAll(rubricCriteria);
+        return rubricCriteria;
     }
 
     @Transactional
