@@ -2,12 +2,7 @@ export type GroupStatus =
   | "FORMING"
   | "TOOLS_PENDING"
   | "ADVISOR_ASSIGNED"
-  // Legacy aliases kept to avoid breaking in-progress frontend usage.
-  | "UNADVISED"
-  | "ADVISOR_PENDING"
-  | "ADVISED"
   | "TOOLS_BOUND"
-  | "COMMITTEE_ASSIGNED"
   | "DISBANDED"
 
 export type GroupMemberRole = "TEAM_LEADER" | "MEMBER"
