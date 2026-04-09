@@ -1,5 +1,6 @@
 package com.senior.spm.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -8,13 +9,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.senior.spm.controller.dto.BindGithubRequest;
+import com.senior.spm.controller.dto.BindJiraRequest;
+import com.senior.spm.controller.dto.BindToolResponse;
 import com.senior.spm.controller.dto.CreateGroupRequest;
 import com.senior.spm.controller.dto.GroupDetailResponse;
+import com.senior.spm.controller.dto.InvitationResponse;
+import com.senior.spm.controller.dto.SendInvitationRequest;
 import com.senior.spm.service.GroupService;
 
 import jakarta.validation.Valid;
@@ -90,15 +97,117 @@ public class GroupController {
         return ResponseEntity.ok(response);
     }
 
+    // TODO: Issue #45 — [Backend] Invitation Lifecycle Services & Controller
+    /**
+     * Send a group invitation to a target student.
+     * Auth: Student JWT (must be TEAM_LEADER of groupId)
+     * POST /api/groups/{groupId}/invitations
+     */
+    @PostMapping("/{groupId}/invitations")
+    public ResponseEntity<InvitationResponse> sendInvitation(
+        @PathVariable UUID groupId,
+        @Valid @RequestBody SendInvitationRequest request
+    ) {
+        // TODO: Issue #45 — wire to InvitationService.sendInvitation(groupId, extractStudentUUIDFromJWT(), request.getTargetStudentId())
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    /**
+     * List all invitations sent by the group.
+     * Auth: Student JWT (must be TEAM_LEADER of groupId)
+     * GET /api/groups/{groupId}/invitations
+     */
+    @GetMapping("/{groupId}/invitations")
+    public ResponseEntity<List<InvitationResponse>> getGroupInvitations(
+        @PathVariable UUID groupId
+    ) {
+        // TODO: Issue #45 — wire to InvitationService.getGroupInvitations(groupId, extractStudentUUIDFromJWT())
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    /**
+     * Bind a JIRA workspace to the group.
+     *
+     * <p>Validates the JIRA credentials with a live API call before persisting anything.
+     * The API token is encrypted (AES-256-GCM) before storage — it never appears in the
+     * response or database in plaintext.
+     *
+     * <p>Auth: Student JWT — requester must be {@code TEAM_LEADER} of {@code groupId}.
+     *
+     * @param groupId UUID of the group to bind
+     * @param request {@link BindJiraRequest} containing {@code jiraSpaceUrl},
+     *                {@code jiraProjectKey}, and {@code jiraApiToken} (all required)
+     * @return 200 with {@link BindToolResponse} containing non-sensitive JIRA metadata
+     *         and updated group status
+     *
+     *         Error responses:
+     *         - 400: group is DISBANDED or DTO validation fails
+     *         - 403: requester is not TEAM_LEADER
+     *         - 404: group not found
+     *         - 422: JIRA live validation failed (invalid token, unknown project key, unreachable URL)
+     */
+    @PostMapping("/{groupId}/jira")
+    public ResponseEntity<BindToolResponse> bindJira(
+        @PathVariable UUID groupId,
+        @Valid @RequestBody BindJiraRequest request
+    ) {
+        UUID requesterUUID = extractStudentUUIDFromJWT();
+        BindToolResponse response = groupService.bindJira(
+            groupId,
+            request.getJiraSpaceUrl(),
+            request.getJiraProjectKey(),
+            request.getJiraApiToken(),
+            requesterUUID
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Bind a GitHub organization to the group.
+     *
+     * <p>Validates the GitHub PAT with two sequential live API calls (org existence +
+     * {@code repo} scope check) before persisting anything. The PAT is encrypted
+     * (AES-256-GCM) before storage — it never appears in the response or database
+     * in plaintext.
+     *
+     * <p>Auth: Student JWT — requester must be {@code TEAM_LEADER} of {@code groupId}.
+     *
+     * @param groupId UUID of the group to bind
+     * @param request {@link BindGithubRequest} containing {@code githubOrgName}
+     *                and {@code githubPat} (both required)
+     * @return 200 with {@link BindToolResponse} containing non-sensitive GitHub metadata
+     *         and updated group status
+     *
+     *         Error responses:
+     *         - 400: group is DISBANDED or DTO validation fails
+     *         - 403: requester is not TEAM_LEADER
+     *         - 404: group not found
+     *         - 422: GitHub live validation failed (invalid PAT, org not found, missing repo scope)
+     */
+    @PostMapping("/{groupId}/github")
+    public ResponseEntity<BindToolResponse> bindGithub(
+        @PathVariable UUID groupId,
+        @Valid @RequestBody BindGithubRequest request
+    ) {
+        UUID requesterUUID = extractStudentUUIDFromJWT();
+        BindToolResponse response = groupService.bindGitHub(
+            groupId,
+            request.getGithubOrgName(),
+            request.getGithubPat(),
+            requesterUUID
+        );
+        return ResponseEntity.ok(response);
+    }
+
     /**
      * Extract student UUID from SecurityContext
      * Assumes the principal is a String containing the UUID
      */
     private UUID extractStudentUUIDFromJWT() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        // JwtAuthenticationFilter sets the principal to claims.get("id", String.class),
+        // which JWTService writes as student.getId() (the internal UUID PK).
         String principal = (String) authentication.getPrincipal();
-        // Principal should contain the student UUID
-        // TODO: Parse the JWT properly to extract the student UUID
         return UUID.fromString(principal);
     }
 }
