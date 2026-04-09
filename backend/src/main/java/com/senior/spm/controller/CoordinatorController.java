@@ -17,6 +17,7 @@ import com.senior.spm.controller.dto.GroupDetailResponse;
 import com.senior.spm.controller.request.CoordinatorMemberRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.SprintRequest;
+import com.senior.spm.controller.response.GroupSummaryResponse; 
 import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
@@ -217,9 +218,10 @@ public class CoordinatorController {
      * @throws Exception caught and returns HTTP 500 status if group retrieval fails
      */
     @GetMapping("/groups")
-    public ResponseEntity<List<GroupDetailResponse>> listGroups() {
+    public ResponseEntity<List<GroupSummaryResponse>> listGroups() {
         try {
-            List<GroupDetailResponse> groups = groupService.getGroupsForActiveTerm();
+            // Updated to call the new summary method per DFD 2.6 requirements
+            List<GroupSummaryResponse> groups = groupService.getGroupSummariesForActiveTerm();
             return ResponseEntity.status(HttpStatus.OK).body(groups);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

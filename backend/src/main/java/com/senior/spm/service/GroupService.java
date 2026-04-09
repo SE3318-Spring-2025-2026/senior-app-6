@@ -336,6 +336,7 @@ public class GroupService {
             .collect(Collectors.toList());
     }
 
+
     /**
      * Retrieves detailed information for a specific project group.
      * <p>
@@ -351,6 +352,31 @@ public class GroupService {
         ProjectGroup group = projectGroupRepository.findById(groupId)
             .orElseThrow(() -> new GroupNotFoundException("Group not found"));
         return toGroupDetailResponse(group, null);
+    }
+
+
+    // New method implemented to satisfy PR #84 / DFD 2.6 requirements
+    @Transactional(readOnly = true)
+    public List<GroupSummaryResponse> getGroupSummariesForActiveTerm() {
+        String termId = termConfigService.getActiveTermId();
+        List<ProjectGroup> groups = projectGroupRepository.findByTermId(termId);
+        return groups.stream()
+            .map(this::toGroupSummaryResponse)
+            .collect(Collectors.toList());
+    }
+
+    //  Helper method with safe long-to-int conversion
+    private GroupSummaryResponse toGroupSummaryResponse(ProjectGroup group) {
+        GroupSummaryResponse response = new GroupSummaryResponse();
+        response.setId(group.getId());
+        response.setGroupName(group.getGroupName());
+        response.setTermId(group.getTermId());
+        response.setStatus(group.getStatus().toString());
+        // Safely cast the long result from the repository to an int
+        response.setMemberCount(Math.toIntExact(groupMembershipRepository.countByGroupId(group.getId())));
+        response.setJiraBound(group.getEncryptedJiraToken() != null);
+        response.setGithubBound(group.getEncryptedGithubPat() != null);
+        return response;
     }
 
     /**

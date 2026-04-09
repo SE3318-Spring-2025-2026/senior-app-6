@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import jakarta.validation.constraints.NotBlank;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -14,6 +16,7 @@ public class CoordinatorMemberRequest {
      * The student ID (as String, not UUID) of the student to add or remove.
      * Lookup is performed by this studentId field rather than UUID.
      */
+    @NotBlank(message = "studentId must not be blank")
     private String studentId;
 
     /**
@@ -24,5 +27,6 @@ public class CoordinatorMemberRequest {
      * </ul>
      * Must be uppercase. Invalid values return HTTP 400 Bad Request.
      */
+    @NotBlank(message = "action must not be blank")
     private String action;
 }
