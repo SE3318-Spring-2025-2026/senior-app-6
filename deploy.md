@@ -56,7 +56,7 @@
 
 1. Navigate to the `backend/` folder
 
-2. Copy `src/main/resources/application.properties.example` to `src/main/resources/application.properties` and fill in your values — refer to the example file for all required keys
+2. Create `application.properties` file inside of `src/main/resources` and fill in your values — refer to the example file `src/main/resources/application.properties.example` for all required keys.
 
 3. Run the backend:
 
@@ -91,7 +91,10 @@ npm install
 bun install
 ```
 
-3. To run the frontend:
+3. Fill nuxt.config.ts file with your GITHUB_CLIENT_ID:
+You need to fill GITHUB_CLIENT_ID inside of `nuxt.config.ts` placed in `\frontend\nuxt.config.ts`
+
+4. To run the frontend:
 
 **npm:**
 ```bash
@@ -110,11 +113,13 @@ Frontend runs on `http://localhost:3000`
 
 ---
 
-## Notes
+## IMPROTANT Notes
 
 - Make sure MySQL is running before starting the backend
 - Backend must be running before the frontend can fetch data
-- `application.properties` is gitignored — never commit it
-- Dont forget to create `application.properties` inside `src/main/resources/application.properties` and fill it with your credentials
+- !! Dont forget to create `application.properties` inside `src/main/resources/application.properties` and fill it with your credentials
+- You need to fill `backend\src\main\resources\application.properties` and `\frontend\nuxt.config.ts`
+- `application.properties.example` and `nuxt.config.tse` is gitignored — never commit it
+- If you get error related to to java run `java -version` and `./mvnw --version` codes inisde of backend folder terminal, be sure both of them use java 21
 - jwt.token needs a base64 encoded string which is generated from a string that is at least 32 characters long
 - for testing purposes the password of the adminn is `test`
