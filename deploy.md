@@ -78,48 +78,35 @@ Backend runs on `http://localhost:8080`
 
 1. Navigate to the `frontend/` folder
 
-2. To install dependencies:
+2. Install dependencies:
 
-**npm:**
-```bash
-npm install
-```
-
-//(Alternative) Bun is faster than npm 
-**Bun:**
 ```bash
 bun install
 ```
 
-3. Fill nuxt.config.ts file with your GITHUB_CLIENT_ID:
-You need to fill GITHUB_CLIENT_ID inside of `nuxt.config.ts` placed in `\frontend\nuxt.config.ts`
+> (Alternative) You can also use `npm install` if you don't have Bun
 
-4. To run the frontend:
+3. Create a `.env` file from `env.example` and fill in your values.
 
-**npm:**
-```bash
-npm run dev
-```
+4. Run the frontend:
 
-//(Alternative) Bun is faster than npm 
-**Bun:**
 ```bash
 bun run dev
 ```
 
-
+> (Alternative) You can also use `npm run dev`
 
 Frontend runs on `http://localhost:3000`
 
 ---
 
-## IMPROTANT Notes
+## IMPORTANT Notes
 
 - Make sure MySQL is running before starting the backend
 - Backend must be running before the frontend can fetch data
-- !! Dont forget to create `application.properties` inside `src/main/resources/application.properties` and fill it with your credentials
-- You need to fill `backend\src\main\resources\application.properties` and `\frontend\nuxt.config.ts`
-- `application.properties.example` and `nuxt.config.tse` is gitignored — never commit it
-- If you get error related to to java run `java -version` and `./mvnw --version` codes inisde of backend folder terminal, be sure both of them use java 21
+- !! Dont forget to create `application.properties` inside `src/main/resources/` and fill it with your credentials
+- You need to fill `backend\src\main\resources\application.properties` and `frontend\.env`
+- `application.properties` and `.env` are gitignored — never commit them
+- If you get error related to java run `java -version` and `./mvnw --version` codes inside of backend folder in terminal, be sure both of them use java 21
 - jwt.token needs a base64 encoded string which is generated from a string that is at least 32 characters long
-- for testing purposes the password of the adminn is `test`
+- for testing purposes the passwords of the admin, coordinator and professor are `test`, dev only
