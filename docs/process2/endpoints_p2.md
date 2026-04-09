@@ -406,8 +406,10 @@ Overrides the normal invitation flow. Removing the `TEAM_LEADER` is blocked.
 
 **Errors:**
 ```
+400  { "error": "Cannot add a student to a disbanded group" }
 400  { "error": "Cannot remove Team Leader; transfer leadership first" }
 400  { "error": "Student '{id}' is already a member of a group" }
+400  { "error": "Group has reached maximum team size" }
 404  { "error": "Group not found" }
 404  { "error": "Student '{id}' not found" }
 ```
@@ -421,11 +423,21 @@ Sets group `status` to `DISBANDED`. All `GroupMembership` rows for the group are
 
 **Request:** _(no body)_
 
-**Response 200:**
+**Response 200:** Full `GroupDetailResponse` (same shape as `GET /api/coordinator/groups/{groupId}`). Members array will be empty — all memberships are hard-deleted as part of the cascade.
+
 ```json
 {
-  "groupId": "uuid",
-  "status": "DISBANDED"
+  "id": "uuid",
+  "groupName": "string",
+  "termId": "string",
+  "status": "DISBANDED",
+  "createdAt": "ISO-8601",
+  "jiraSpaceUrl": "string | null",
+  "jiraProjectKey": "string | null",
+  "jiraBound": true,
+  "githubOrgName": "string | null",
+  "githubBound": true,
+  "members": []
 }
 ```
 
