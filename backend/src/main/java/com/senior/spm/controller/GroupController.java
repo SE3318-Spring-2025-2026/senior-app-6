@@ -23,6 +23,7 @@ import com.senior.spm.controller.dto.GroupDetailResponse;
 import com.senior.spm.controller.dto.InvitationResponse;
 import com.senior.spm.controller.dto.SendInvitationRequest;
 import com.senior.spm.service.GroupService;
+import com.senior.spm.service.InvitationService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 public class GroupController {
 
     private final GroupService groupService;
+    private final InvitationService invitationService;
 
     /**
      * Create a new group for the authenticated student.
@@ -102,27 +104,48 @@ public class GroupController {
      * Send a group invitation to a target student.
      * Auth: Student JWT (must be TEAM_LEADER of groupId)
      * POST /api/groups/{groupId}/invitations
+     *
+     * @param groupId UUID of the inviting group
+     * @param request request body containing the target student's public student id
+     * @return {@link ResponseEntity} with status 201 and the created invitation summary
+     * @throws com.senior.spm.exception.GroupNotFoundException if the group does not exist
+     * @throws com.senior.spm.exception.ForbiddenException if the caller is not the team leader
+     * @throws com.senior.spm.exception.BusinessRuleException if the group cannot send invitations
+     * @throws com.senior.spm.exception.AlreadyInGroupException if the target student is already grouped
+     * @throws com.senior.spm.exception.DuplicateInvitationException if a pending invitation already exists
      */
     @PostMapping("/{groupId}/invitations")
     public ResponseEntity<InvitationResponse> sendInvitation(
         @PathVariable UUID groupId,
         @Valid @RequestBody SendInvitationRequest request
     ) {
-        // TODO: Issue #45 — wire to InvitationService.sendInvitation(groupId, extractStudentUUIDFromJWT(), request.getTargetStudentId())
-        throw new UnsupportedOperationException("Not implemented yet");
+        InvitationResponse response = invitationService.sendInvitation(
+            groupId,
+            extractStudentUUIDFromJWT(),
+            request.getTargetStudentId()
+        );
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
      * List all invitations sent by the group.
      * Auth: Student JWT (must be TEAM_LEADER of groupId)
      * GET /api/groups/{groupId}/invitations
+     *
+     * @param groupId UUID of the group whose invitation history will be listed
+     * @return {@link ResponseEntity} with status 200 and invitation summaries for the group
+     * @throws com.senior.spm.exception.GroupNotFoundException if the group does not exist
+     * @throws com.senior.spm.exception.ForbiddenException if the caller is not the team leader
      */
     @GetMapping("/{groupId}/invitations")
     public ResponseEntity<List<InvitationResponse>> getGroupInvitations(
         @PathVariable UUID groupId
     ) {
-        // TODO: Issue #45 — wire to InvitationService.getGroupInvitations(groupId, extractStudentUUIDFromJWT())
-        throw new UnsupportedOperationException("Not implemented yet");
+        List<InvitationResponse> response = invitationService.getGroupInvitations(
+            groupId,
+            extractStudentUUIDFromJWT()
+        );
+        return ResponseEntity.ok(response);
     }
 
     /**
