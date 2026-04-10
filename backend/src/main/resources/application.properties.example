@@ -13,3 +13,7 @@ jwt.expiration=604800000
 # Generate a key with: openssl rand -base64 32
 encryption.key=
 encryption.secret=
+
+# --- Swagger / springdoc ---
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
