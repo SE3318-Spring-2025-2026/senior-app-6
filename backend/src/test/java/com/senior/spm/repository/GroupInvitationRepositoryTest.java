@@ -223,4 +223,51 @@ class GroupInvitationRepositoryTest extends RepositoryTestBase {
         assertThat(repo.existsByGroupIdAndInviteeIdAndStatus(
                 group.getId(), student.getId(), InvitationStatus.PENDING)).isFalse();
     }
+
+    @Test
+    void autoDenyOtherPendingInvitationsExcept_keepsAcceptedInvitationUntouched() {
+        Student student = makeStudent("23070000130");
+        ProjectGroup accepted = makeGroup("Accepted Group", "2024-FALL", ProjectGroup.GroupStatus.FORMING);
+        ProjectGroup other = makeGroup("Other Group", "2024-FALL", ProjectGroup.GroupStatus.FORMING);
+
+        GroupInvitation acceptedInv = makeInvitation(accepted, student, InvitationStatus.ACCEPTED);
+        GroupInvitation pendingInv = makeInvitation(other, student, InvitationStatus.PENDING);
+
+        repo.autoDenyOtherPendingInvitationsExcept(student.getId(), acceptedInv.getId());
+        clearCache();
+
+        assertThat(repo.findById(acceptedInv.getId()).get().getStatus()).isEqualTo(InvitationStatus.ACCEPTED);
+        assertThat(repo.findById(pendingInv.getId()).get().getStatus()).isEqualTo(InvitationStatus.AUTO_DENIED);
+    }
+
+    @Test
+    void autoDenyOtherPendingInvitationsExcept_doesNotTouchNonPendingInvitations() {
+        Student student = makeStudent("23070000131");
+        ProjectGroup accepted = makeGroup("Accepted Group", "2024-FALL", ProjectGroup.GroupStatus.FORMING);
+        ProjectGroup other = makeGroup("Other Group", "2024-FALL", ProjectGroup.GroupStatus.FORMING);
+
+        GroupInvitation acceptedInv = makeInvitation(accepted, student, InvitationStatus.ACCEPTED);
+        GroupInvitation declinedInv = makeInvitation(other, student, InvitationStatus.DECLINED);
+
+        repo.autoDenyOtherPendingInvitationsExcept(student.getId(), acceptedInv.getId());
+        clearCache();
+
+        assertThat(repo.findById(declinedInv.getId()).get().getStatus()).isEqualTo(InvitationStatus.DECLINED);
+    }
+
+    @Test
+    void autoDenyOtherPendingInvitationsExcept_doesNotAffectOtherStudents() {
+        Student student = makeStudent("23070000132");
+        Student otherStudent = makeStudent("23070000133");
+        ProjectGroup accepted = makeGroup("Accepted Group", "2024-FALL", ProjectGroup.GroupStatus.FORMING);
+        ProjectGroup other = makeGroup("Other Group", "2024-FALL", ProjectGroup.GroupStatus.FORMING);
+
+        GroupInvitation acceptedInv = makeInvitation(accepted, student, InvitationStatus.ACCEPTED);
+        GroupInvitation otherStudentPending = makeInvitation(other, otherStudent, InvitationStatus.PENDING);
+
+        repo.autoDenyOtherPendingInvitationsExcept(student.getId(), acceptedInv.getId());
+        clearCache();
+
+        assertThat(repo.findById(otherStudentPending.getId()).get().getStatus()).isEqualTo(InvitationStatus.PENDING);
+    }
 }
