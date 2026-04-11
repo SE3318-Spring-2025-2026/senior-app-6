@@ -1,5 +1,6 @@
 package com.senior.spm.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -12,18 +13,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.senior.spm.controller.request.AddRubricRequest;
+import com.senior.spm.controller.dto.GroupDetailResponse;
+import com.senior.spm.controller.request.CoordinatorMemberRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.MapDeliverablesRequest;
+import com.senior.spm.controller.request.RubricRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
 import com.senior.spm.controller.request.UpdateDeliverableWeightRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.controller.response.ErrorMessage;
+import com.senior.spm.controller.response.GroupSummaryResponse;
 import com.senior.spm.exception.AlreadyExistsException;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.service.DeliverableService;
+import com.senior.spm.service.GroupService;
 import com.senior.spm.service.SprintService;
 import com.senior.spm.service.StudentService;
 import com.senior.spm.service.SystemStateService;
@@ -38,15 +43,18 @@ public class CoordinatorController {
     private final DeliverableService deliverableService;
     private final StudentService studentService;
     private final SystemStateService systemStateService;
+    private final GroupService groupService;
 
     public CoordinatorController(SprintService sprintService,
             DeliverableService deliverableService,
             StudentService studentService,
-            SystemStateService systemStateService) {
+            SystemStateService systemStateService,
+            GroupService groupService) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
         this.studentService = studentService;
         this.systemStateService = systemStateService;
+        this.groupService = groupService;
     }
 
     @PostMapping("/sprints")
@@ -86,12 +94,22 @@ public class CoordinatorController {
         }
     }
 
-    @PostMapping("/deliverables/{id}/rubric")
-    public ResponseEntity<?> addRubricToDeliverable(@PathVariable UUID id,
-            @Valid @RequestBody AddRubricRequest request) {
+    @GetMapping("/deliverables/{id}/rubric")
+    public ResponseEntity<?> getRubricsForDeliverable(@PathVariable UUID id) {
         try {
-            var rubricCriterion = deliverableService.addRubricToDeliverable(id, request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(rubricCriterion);
+            var criteria = deliverableService.getRubricsForDeliverable(id);
+            return ResponseEntity.status(HttpStatus.OK).body(criteria);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        }
+    }
+
+    @PostMapping("/deliverables/{id}/rubric")
+    public ResponseEntity<?> updateRubricsForDeliverable(@PathVariable UUID id,
+            @Valid @RequestBody RubricRequest request) {
+        try {
+            var updatedCriteria = deliverableService.updateRubricsForDeliverable(id, request.getCriteria());
+            return ResponseEntity.status(HttpStatus.OK).body(updatedCriteria);
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         } catch (IllegalArgumentException e) {
@@ -157,6 +175,91 @@ public class CoordinatorController {
             return ResponseEntity.status(HttpStatus.OK).build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
+        }
+    }
+
+    // ========== GROUP MANAGEMENT ENDPOINTS (P2) ==========
+
+    /**
+     * Lists all project groups for the active term.
+     * REST Endpoint: {@code GET /api/coordinator/groups}
+     */
+    @GetMapping("/groups")
+    public ResponseEntity<List<GroupSummaryResponse>> listGroups() {
+        try {
+            List<GroupSummaryResponse> groups = groupService.getGroupSummariesForActiveTerm();
+            return ResponseEntity.status(HttpStatus.OK).body(groups);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Retrieves detailed information for a specific project group.
+     * REST Endpoint: {@code GET /api/coordinator/groups/{groupId}}
+     */
+    @GetMapping("/groups/{groupId}")
+    public ResponseEntity<?> getGroupDetail(@PathVariable UUID groupId) {
+        try {
+            GroupDetailResponse group = groupService.getGroupDetail(groupId);
+            return ResponseEntity.status(HttpStatus.OK).body(group);
+        } catch (com.senior.spm.exception.GroupNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Adds or removes a student from a project group (coordinator force operation).
+     * REST Endpoint: {@code PATCH /api/coordinator/groups/{groupId}/members}
+     */
+    @PatchMapping("/groups/{groupId}/members")
+    public ResponseEntity<?> updateGroupMembers(
+            @PathVariable UUID groupId,
+            @Valid @RequestBody CoordinatorMemberRequest request) {
+        try {
+            if (!request.getAction().equals("ADD") && !request.getAction().equals("REMOVE")) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorMessage("action must be ADD or REMOVE"));
+            }
+
+            GroupDetailResponse result;
+            if (request.getAction().equals("ADD")) {
+                result = groupService.coordinatorAddStudent(groupId, request.getStudentId());
+            } else {
+                result = groupService.coordinatorRemoveStudent(groupId, request.getStudentId());
+            }
+
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        } catch (com.senior.spm.exception.GroupNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (com.senior.spm.exception.StudentNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (com.senior.spm.exception.ForbiddenException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
+        } catch (com.senior.spm.exception.BusinessRuleException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Disbands a project group with full cascade cleanup.
+     * REST Endpoint: {@code PATCH /api/coordinator/groups/{groupId}/disband}
+     */
+    @PatchMapping("/groups/{groupId}/disband")
+    public ResponseEntity<?> disbandGroup(@PathVariable UUID groupId) {
+        try {
+            GroupDetailResponse result = groupService.disbandGroup(groupId);
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        } catch (com.senior.spm.exception.GroupNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (com.senior.spm.exception.BusinessRuleException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

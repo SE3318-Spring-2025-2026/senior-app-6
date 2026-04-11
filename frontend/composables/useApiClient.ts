@@ -261,14 +261,6 @@ export function useApiClient() {
 		);
   }
 
-  async function createGroup(data: CreateGroupRequest, token?: string): Promise<GroupDetailResponse> {
-    return apiCall<GroupDetailResponse>("/groups", "POST", data, token);
-  }
-
-  async function fetchMyGroup(token?: string): Promise<GroupDetailResponse> {
-    return apiCall<GroupDetailResponse>("/groups/my", "GET", undefined, token);
-  }
-
   async function createSprintDeliverableMapping(
     sprintId: string,
     deliverableId: string,
@@ -308,8 +300,6 @@ export function useApiClient() {
     fetchSprints,
     fetchRubric,
     updateRubric,
-    createGroup,
-    fetchMyGroup,
     createSprintDeliverableMapping,
     publishConfig,
     registerProfessor,
