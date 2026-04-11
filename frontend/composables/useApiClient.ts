@@ -49,7 +49,7 @@ export interface CreateSprintRequest {
 
 export interface GradingCriterion {
   criterionName: string;
-  weight: number;
+  weightPercentage: number;
   gradingType: "Binary" | "Soft";
 }
 
@@ -253,7 +253,12 @@ export function useApiClient() {
   }
 
   async function updateRubric(deliverableId: string, criteria: GradingCriterion[], token?: string): Promise<RubricCriterionResponse[]> {
-    return apiCall<RubricCriterionResponse[]>(`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`, "POST", { criteria }, token);
+    return apiCall<RubricCriterionResponse[]>(
+			`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`,
+			"POST",
+			{ criteria: criteria },
+			token
+		);
   }
 
   async function createGroup(data: CreateGroupRequest, token?: string): Promise<GroupDetailResponse> {
