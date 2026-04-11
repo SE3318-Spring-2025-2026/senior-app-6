@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { LogOut, GitBranch, FileCheck } from "lucide-vue-next";
+	import { LogOut, GitBranch, FileCheck, Users } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
 
 	definePageMeta({
@@ -41,7 +41,7 @@
       </header>
 
       <!-- Overview -->
-      <div class="grid gap-4 md:grid-cols-2">
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <GitBranch class="h-8 w-8 text-blue-600 dark:text-blue-400" />
           <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Current Sprint</h3>
@@ -57,6 +57,17 @@
             View upcoming deliverable deadlines.
           </p>
         </div>
+
+        <NuxtLink
+          to="/student/group"
+          class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-violet-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-violet-600"
+        >
+          <Users class="h-8 w-8 text-violet-600 dark:text-violet-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Group Hub</h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Open your group page to create a team, review members, and check your current group state.
+          </p>
+        </NuxtLink>
       </div>
     </div>
   </main>

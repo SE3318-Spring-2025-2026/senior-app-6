@@ -1,14 +1,12 @@
 <script setup lang="ts">
 	import { z } from "zod";
 	import { ArrowLeft, CheckCircle, Copy, Mail, UserPlus } from "lucide-vue-next";
-	import { useAuthStore } from "~/stores/auth";
 
 	definePageMeta({
 		middleware: "auth",
 		roles: ["Admin"],
 	});
 
-	const authStore = useAuthStore();
 	const { registerProfessor, getAuthToken } = useApiClient();
 
 	const emailSchema = z.object({

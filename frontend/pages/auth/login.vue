@@ -6,7 +6,6 @@
 		ArrowLeft,
 		GraduationCap,
 		LayoutDashboard,
-		LogIn,
 		Mail,
 		Shield,
 		Lock
@@ -20,7 +19,7 @@
 	const { loginFaculty, initiateGithubOAuth } = useApiClient();
 
 	function getDashboardPath(role: string): string {
-		const roles: Set<String> = new Set(["Admin", "Professor", "Coordinator", "Student"]);
+		const roles: Set<string> = new Set(["Admin", "Professor", "Coordinator", "Student"]);
 		if (roles.has(role)) {
 			return `/${role.toLowerCase()}/dashboard`;
 		}

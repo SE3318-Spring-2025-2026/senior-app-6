@@ -4,6 +4,7 @@
  */
 
 import { useAuthStore } from '~/stores/auth';
+import type { GroupDetailResponse } from '~/types/group';
 
 export interface ApiError {
   status: number;
@@ -76,6 +77,10 @@ export interface GithubLoginResponse {
     githubUsername: string;
     role: string;
   };
+}
+
+export interface CreateGroupRequest {
+  groupName: string;
 }
 
 async function apiCall<T>(
