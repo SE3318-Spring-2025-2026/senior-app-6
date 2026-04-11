@@ -1,3 +1,5 @@
+import type { GroupDetailResponse, GroupStatus } from './group';
+
 export interface AdvisorRequestItem {
   requestId: string;
   groupId: string;
@@ -7,23 +9,9 @@ export interface AdvisorRequestItem {
   sentAt: string;
 }
 
-export interface AdvisorRequestMember {
-  studentId: string;
-  role: "TEAM_LEADER" | "MEMBER";
-  joinedAt: string;
-}
-
-export interface AdvisorRequestGroup {
-  id: string;
-  groupName: string;
-  termId: string;
-  status: string;
-  members: AdvisorRequestMember[];
-}
-
 export interface AdvisorRequestDetail {
   requestId: string;
-  group: AdvisorRequestGroup;
+  group: GroupDetailResponse;
   sentAt: string;
 }
 
@@ -34,6 +22,8 @@ export interface AdvisorRespondRequest {
 export interface AdvisorRespondResponse {
   requestId: string;
   status: "ACCEPTED" | "REJECTED";
-  groupId?: string;
-  groupStatus?: string;
+  groupId: string;
+  groupStatus: GroupStatus;
 }
+
+
