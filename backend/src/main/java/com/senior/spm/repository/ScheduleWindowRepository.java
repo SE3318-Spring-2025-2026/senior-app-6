@@ -17,4 +17,6 @@ public interface ScheduleWindowRepository extends JpaRepository<ScheduleWindow, 
     Optional<ScheduleWindow> findByTermIdAndType(String termId, WindowType type);
 
     List<ScheduleWindow> findByTypeAndClosesAtLessThan(WindowType type, LocalDateTime dateTime);
+
+    List<ScheduleWindow> findByTypeAndClosesAtBetween(WindowType type, LocalDateTime afterTime, LocalDateTime beforeTime);
 }

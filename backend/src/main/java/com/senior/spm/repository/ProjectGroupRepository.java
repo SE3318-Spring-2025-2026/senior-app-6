@@ -24,4 +24,6 @@ public interface ProjectGroupRepository extends JpaRepository<ProjectGroup, UUID
     long countByAdvisorIdAndTermIdAndStatusNot(UUID advisorId, String termId, GroupStatus status);
 
     List<ProjectGroup> findByTermIdAndStatusNotAndAdvisorIsNull(String termId, GroupStatus status);
+
+    List<ProjectGroup> findByTermIdAndStatusInAndAdvisorIsNull(String termId, List<GroupStatus> statuses);
 }
