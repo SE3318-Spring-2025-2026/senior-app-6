@@ -66,8 +66,6 @@ public class AdvisorService {
      * </ol>
      *
      * @return list of available advisors with capacity info (atCapacity is null/absent)
-     *
-     * TODO: Issue #59 — [Backend] AdvisorService — Browse & Request Flow
      */
     @Transactional(readOnly = true)
     public List<AdvisorCapacityResponse> getAvailableAdvisors() {
@@ -116,8 +114,6 @@ public class AdvisorService {
      * @param advisorId     UUID of the target professor
      * @param requesterUUID internal student UUID extracted from JWT
      * @return response with requestId, groupId, advisorId, status=PENDING, sentAt
-     *
-     * TODO: Issue #59 — [Backend] AdvisorService — Browse & Request Flow
      */
     @Transactional
     public AdvisorRequestResponse sendAdvisorRequest(UUID groupId, UUID advisorId, UUID requesterUUID) {
@@ -202,8 +198,6 @@ public class AdvisorService {
      * @param groupId       UUID of the group
      * @param studentUUID   internal student UUID extracted from JWT
      * @return response with requestId, advisorId, advisorName, status, sentAt, respondedAt
-     *
-     * TODO: Issue #59 — [Backend] AdvisorService — Browse & Request Flow
      */
     @Transactional(readOnly = true)
     public AdvisorRequestResponse getAdvisorRequest(UUID groupId, UUID studentUUID) {
@@ -250,8 +244,6 @@ public class AdvisorService {
      * @param groupId       UUID of the group
      * @param requesterUUID internal student UUID extracted from JWT
      * @return response with requestId and status=CANCELLED
-     *
-     * TODO: Issue #59 — [Backend] AdvisorService — Browse & Request Flow
      */
     @Transactional
     public AdvisorRequestResponse cancelAdvisorRequest(UUID groupId, UUID requesterUUID) {
