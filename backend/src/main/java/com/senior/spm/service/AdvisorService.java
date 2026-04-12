@@ -139,8 +139,11 @@ public class AdvisorService {
         }
 
         // 3. Verify ADVISOR_ASSOCIATION window is active for this group's termId
+        //    Use group.getTermId() — not TermConfigService — so window and capacity checks
+        //    are both scoped to the same term the group belongs to.
+        String groupTermId = group.getTermId();
         ScheduleWindow window = scheduleWindowRepository
-                .findByTermIdAndType(group.getTermId(), ScheduleWindow.WindowType.ADVISOR_ASSOCIATION)
+                .findByTermIdAndType(groupTermId, ScheduleWindow.WindowType.ADVISOR_ASSOCIATION)
                 .orElseThrow(() -> new ScheduleWindowClosedException(
                         "Advisor association window is not currently active"));
 
@@ -160,10 +163,9 @@ public class AdvisorService {
                 .filter(u -> u.getRole() == StaffUser.Role.Professor)
                 .orElseThrow(() -> new AdvisorNotFoundException("Advisor not found"));
 
-        // 6. Check advisor capacity
-        String termId = termConfigService.getActiveTermId();
+        // 6. Check advisor capacity scoped to this group's term
         long currentGroupCount = projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(
-                advisorId, termId, ProjectGroup.GroupStatus.DISBANDED);
+                advisorId, groupTermId, ProjectGroup.GroupStatus.DISBANDED);
 
         if (currentGroupCount >= advisor.getAdvisorCapacity()) {
             throw new AdvisorAtCapacityException("Advisor has reached maximum group capacity for this term");
@@ -253,7 +255,11 @@ public class AdvisorService {
      */
     @Transactional
     public AdvisorRequestResponse cancelAdvisorRequest(UUID groupId, UUID requesterUUID) {
-        // 1. Verify requester is TEAM_LEADER of the group
+        // 1. Fetch group first — 404 if not found (must be reachable independently of membership)
+        projectGroupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException("Group not found"));
+
+        // 2. Verify requester is TEAM_LEADER of the group
         GroupMembership membership = groupMembershipRepository
                 .findByGroupIdAndStudentId(groupId, requesterUUID)
                 .orElseThrow(() -> new ForbiddenException("Only the Team Leader can cancel advisor requests"));
@@ -262,18 +268,14 @@ public class AdvisorService {
             throw new ForbiddenException("Only the Team Leader can cancel advisor requests");
         }
 
-        // 2. Fetch group — 404 if not found
-        projectGroupRepository.findById(groupId)
-                .orElseThrow(() -> new GroupNotFoundException("Group not found"));
-
-        // 3. Fetch the most recent request — 404 if none exists at all
+        // 3. Fetch the most recent request — 404 if none exists at all.
         //    Per CLAUDE.md: use findTop first, then check status. Do NOT use findByStatus alone
         //    (the 404 case becomes unreachable if using findByGroupIdAndStatus(PENDING)).
         AdvisorRequest request = advisorRequestRepository
                 .findTopByGroupIdOrderBySentAtDesc(groupId)
                 .orElseThrow(() -> new RequestNotFoundException("No advisor request found for this group"));
 
-        // 4. Guard: only a PENDING request can be cancelled
+        // 4. Guard: only a PENDING request can be cancelled → 400
         if (request.getStatus() != AdvisorRequest.RequestStatus.PENDING) {
             throw new BusinessRuleException("No active pending request to cancel");
         }
