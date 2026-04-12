@@ -27,6 +27,8 @@ public interface AdvisorRequestRepository extends JpaRepository<AdvisorRequest, 
 
     long countByAdvisorIdAndStatus(UUID advisorId, RequestStatus status);
 
+    long countByGroupIdAndStatus(UUID groupId, RequestStatus status);
+
     @Modifying
     @Query("UPDATE AdvisorRequest ar SET ar.status = ?1 WHERE ar.status = 'PENDING' AND ar.group.id = ?2 AND ar.id != ?3")
     void bulkUpdateStatusForGroup(RequestStatus status, UUID groupId, UUID excludeId);

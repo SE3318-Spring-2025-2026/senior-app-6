@@ -48,6 +48,8 @@ public class SecurityConfig {
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/api/coordinator/**").hasRole("COORDINATOR")
                                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
+                                // P3: Professor-only endpoints live under /api/advisor/**
+                                .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
                                 .anyRequest().authenticated())
                 .exceptionHandling(
                         ex -> ex.accessDeniedHandler(

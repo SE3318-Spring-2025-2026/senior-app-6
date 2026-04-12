@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.senior.spm.controller.dto.AdvisorCapacityResponse;
+import com.senior.spm.controller.dto.AdvisorOverrideRequest;
+import com.senior.spm.controller.dto.AdvisorOverrideResponse;
 import com.senior.spm.controller.dto.GroupDetailResponse;
 import com.senior.spm.controller.request.CoordinatorMemberRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
@@ -27,6 +30,7 @@ import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.controller.response.GroupSummaryResponse;
 import com.senior.spm.exception.AlreadyExistsException;
 import com.senior.spm.exception.NotFoundException;
+import com.senior.spm.service.AdvisorService;
 import com.senior.spm.service.DeliverableService;
 import com.senior.spm.service.GroupService;
 import com.senior.spm.service.SprintService;
@@ -44,17 +48,20 @@ public class CoordinatorController {
     private final StudentService studentService;
     private final SystemStateService systemStateService;
     private final GroupService groupService;
+    private final AdvisorService advisorService;
 
     public CoordinatorController(SprintService sprintService,
             DeliverableService deliverableService,
             StudentService studentService,
             SystemStateService systemStateService,
-            GroupService groupService) {
+            GroupService groupService,
+            AdvisorService advisorService) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
         this.studentService = studentService;
         this.systemStateService = systemStateService;
         this.groupService = groupService;
+        this.advisorService = advisorService;
     }
 
     @PostMapping("/sprints")
@@ -260,6 +267,81 @@ public class CoordinatorController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // ========== P3 ADVISOR OVERRIDE ENDPOINTS ==========
+
+    /**
+     * Lists all professors with their current group assignment count and capacity for the active
+     * term. Unlike the student-facing {@code GET /api/advisors}, this includes advisors who are
+     * at or above capacity and adds the {@code atCapacity} flag.
+     *
+     * <p>termId is resolved server-side via {@link com.senior.spm.service.TermConfigService} —
+     * never passed from the client.
+     *
+     * <p>Auth: Staff JWT with role=Coordinator (enforced by SecurityConfig).
+     *
+     * <p>REST Endpoint: {@code GET /api/coordinator/advisors}
+     * <p>Sequence: DFD 3.5 / sequence 3.5_coordinator_advisor_p3.md
+     *
+     * @return 200 with list of all professors and capacity metadata
+     */
+    @GetMapping("/advisors")
+    public ResponseEntity<List<AdvisorCapacityResponse>> listAdvisorsWithCapacity() {
+        List<AdvisorCapacityResponse> advisors = advisorService.getAllAdvisorsWithCapacity();
+        return ResponseEntity.ok(advisors);
+    }
+
+    /**
+     * Coordinator force-assigns or force-removes an advisor for a group, bypassing both the
+     * schedule window and the advisor capacity limit.
+     *
+     * <p>Action {@code ASSIGN}:
+     * <ul>
+     *   <li>Requires {@code advisorId} in the body → 400 if absent.</li>
+     *   <li>Returns 400 if group is DISBANDED.</li>
+     *   <li>Returns 400 if group status is not TOOLS_BOUND or ADVISOR_ASSIGNED.</li>
+     *   <li>Returns 400 if the group already has this exact advisor assigned.</li>
+     *   <li>Atomically sets {@code group.advisorId}, sets {@code group.status = ADVISOR_ASSIGNED},
+     *       and bulk AUTO_REJECTs all PENDING advisor requests for the group.</li>
+     * </ul>
+     *
+     * <p>Action {@code REMOVE}:
+     * <ul>
+     *   <li>{@code advisorId} in the body is ignored.</li>
+     *   <li>Returns 400 if the group has no advisor assigned.</li>
+     *   <li>Clears {@code group.advisorId}, sets {@code group.status = TOOLS_BOUND}.</li>
+     * </ul>
+     *
+     * <p>Auth: Staff JWT with role=Coordinator (enforced by SecurityConfig).
+     *
+     * <p>REST Endpoint: {@code PATCH /api/coordinator/groups/{groupId}/advisor}
+     * <p>Sequence: DFD 3.5 / sequence 3.5_coordinator_advisor_p3.md
+     *
+     * @param groupId UUID of the target group
+     * @param request {@link AdvisorOverrideRequest} with {@code action} and optional {@code advisorId}
+     * @return 200 with {@link AdvisorOverrideResponse} containing groupId, updated status, and advisorId
+     *
+     *         Error responses:
+     *         - 400: advisorId absent for ASSIGN; group DISBANDED; invalid status; already assigned; no advisor to remove
+     *         - 404: group not found; advisor not found
+     */
+    @PatchMapping("/groups/{groupId}/advisor")
+    public ResponseEntity<?> overrideAdvisor(
+            @PathVariable UUID groupId,
+            @Valid @RequestBody AdvisorOverrideRequest request) {
+        if ("ASSIGN".equals(request.getAction())) {
+            if (request.getAdvisorId() == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(new ErrorMessage("advisorId is required for ASSIGN action"));
+            }
+            AdvisorOverrideResponse result = advisorService.assignAdvisor(groupId, request.getAdvisorId());
+            return ResponseEntity.ok(result);
+        } else {
+            // REMOVE — advisorId is ignored
+            AdvisorOverrideResponse result = advisorService.removeAdvisor(groupId);
+            return ResponseEntity.ok(result);
         }
     }
 
