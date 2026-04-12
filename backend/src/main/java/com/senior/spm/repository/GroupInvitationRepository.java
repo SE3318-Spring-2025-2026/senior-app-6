@@ -59,16 +59,6 @@ public interface GroupInvitationRepository extends JpaRepository<GroupInvitation
     long countByGroupIdAndStatus(UUID groupId, InvitationStatus status);
 
     /**
-     * Mark pending invitations for a student as auto-denied except invitations from the accepted group.
-     *
-     * @param studentId internal UUID of the invited student
-     * @param acceptedGroupId UUID of the group whose invitation was accepted
-     */
-    @Modifying
-    @Query("UPDATE GroupInvitation gi SET gi.status = 'AUTO_DENIED' WHERE gi.status = 'PENDING' AND gi.invitee.id = ?1 AND gi.group.id != ?2")
-    void autoDenyOtherPendingInvitations(UUID studentId, UUID acceptedGroupId);
-
-    /**
      * Mark a student's other pending invitations as auto-denied after one invitation is accepted.
      *
      * <p>This accept-specific bulk update excludes the accepted invitation by id
@@ -86,6 +76,15 @@ public interface GroupInvitationRepository extends JpaRepository<GroupInvitation
            AND gi.id <> ?2
         """)
     void autoDenyOtherPendingInvitationsExcept(UUID studentId, UUID acceptedInvitationId);
+
+    /**
+     * Mark all pending invitations for a student as auto-denied.
+     *
+     * @param studentId internal UUID of the invited student
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE GroupInvitation gi SET gi.status = 'AUTO_DENIED' WHERE gi.status = 'PENDING' AND gi.invitee.id = ?1")
+    void autoDenyAllPendingByInviteeId(UUID studentId);
 
     /**
      * Mark all pending invitations sent by a group as auto-denied.

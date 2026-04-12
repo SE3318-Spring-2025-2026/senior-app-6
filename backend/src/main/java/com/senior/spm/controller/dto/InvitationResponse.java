@@ -17,13 +17,14 @@ import lombok.Data;
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class InvitationResponse {
+public final class InvitationResponse implements InvitationActionResponse {
 
     private UUID invitationId;
     private UUID groupId;
     private String targetStudentId;
     private String status;
     private LocalDateTime sentAt;
+    private LocalDateTime respondedAt;
     private String groupName;
     private String teamLeaderStudentId;
 }

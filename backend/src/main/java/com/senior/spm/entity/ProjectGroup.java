@@ -79,6 +79,13 @@ public class ProjectGroup {
         TOOLS_PENDING,
         TOOLS_BOUND,
         ADVISOR_ASSIGNED,
-        DISBANDED
+        DISBANDED;
+
+        public boolean locksRoster() {
+            return switch (this) {
+                case TOOLS_BOUND, ADVISOR_ASSIGNED -> true;
+                case FORMING, TOOLS_PENDING, DISBANDED -> false;
+            };
+        }
     }
 }

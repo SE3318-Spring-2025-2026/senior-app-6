@@ -284,5 +284,6 @@ class InvitationServiceEdgeCaseTest {
 
         assertThat(response.getStatus()).isEqualTo("CANCELLED");
         assertThat(invitation.getRespondedAt()).isNotNull();
+        assertThat(response.getRespondedAt()).isEqualTo(invitation.getRespondedAt());
     }
 }

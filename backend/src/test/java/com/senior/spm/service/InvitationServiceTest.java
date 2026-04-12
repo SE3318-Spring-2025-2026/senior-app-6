@@ -228,8 +228,26 @@ class InvitationServiceTest {
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).getGroupId()).isEqualTo(groupId);
         assertThat(responses.get(0).getGroupName()).isEqualTo("Team Alpha");
+        assertThat(responses.get(0).getStatus()).isEqualTo("PENDING");
         assertThat(responses.get(0).getTeamLeaderStudentId()).isEqualTo("23070000001");
         assertThat(responses.get(0).getTargetStudentId()).isNull();
+    }
+
+    @Test
+    void getGroupInvitations_includesRespondedAtForTerminalInvitations() {
+        LocalDateTime respondedAt = LocalDateTime.now();
+        invitation.setStatus(InvitationStatus.CANCELLED);
+        invitation.setRespondedAt(respondedAt);
+
+        when(projectGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
+        when(groupMembershipRepository.findByGroupIdAndStudentId(groupId, requesterId))
+            .thenReturn(Optional.of(leaderMembership));
+        when(groupInvitationRepository.findByGroupId(groupId)).thenReturn(List.of(invitation));
+
+        List<InvitationResponse> responses = invitationService.getGroupInvitations(groupId, requesterId);
+
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).getRespondedAt()).isEqualTo(respondedAt);
     }
 
     @Test
@@ -264,6 +282,7 @@ class InvitationServiceTest {
 
         assertThat(response.getInvitationId()).isEqualTo(invitation.getId());
         assertThat(response.getStatus()).isEqualTo("DECLINED");
+        assertThat(response.getRespondedAt()).isNotNull();
     }
 
     @Test

@@ -98,6 +98,15 @@ class EntityAnnotationTest {
     }
 
     @Test
+    void groupStatus_locksRosterOnlyAfterToolsBoundBeforeDisband() {
+        assertThat(ProjectGroup.GroupStatus.FORMING.locksRoster()).isFalse();
+        assertThat(ProjectGroup.GroupStatus.TOOLS_PENDING.locksRoster()).isFalse();
+        assertThat(ProjectGroup.GroupStatus.TOOLS_BOUND.locksRoster()).isTrue();
+        assertThat(ProjectGroup.GroupStatus.ADVISOR_ASSIGNED.locksRoster()).isTrue();
+        assertThat(ProjectGroup.GroupStatus.DISBANDED.locksRoster()).isFalse();
+    }
+
+    @Test
     void invitationStatus_hasAllRequiredValues() {
         assertThat(GroupInvitation.InvitationStatus.values())
                 .containsExactlyInAnyOrder(

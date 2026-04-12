@@ -112,6 +112,7 @@ class InvitationControllerIntegrationTest {
         response.setInvitationId(invitationId);
         response.setGroupId(groupId);
         response.setGroupName("Team Alpha");
+        response.setStatus("PENDING");
         response.setTeamLeaderStudentId("23070000001");
         response.setSentAt(LocalDateTime.now());
 
@@ -123,6 +124,7 @@ class InvitationControllerIntegrationTest {
             .andExpect(jsonPath("$[0].invitationId").value(invitationId.toString()))
             .andExpect(jsonPath("$[0].groupId").value(groupId.toString()))
             .andExpect(jsonPath("$[0].groupName").value("Team Alpha"))
+            .andExpect(jsonPath("$[0].status").value("PENDING"))
             .andExpect(jsonPath("$[0].teamLeaderStudentId").value("23070000001"));
     }
 

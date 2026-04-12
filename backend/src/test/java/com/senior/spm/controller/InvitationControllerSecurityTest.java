@@ -42,6 +42,7 @@ class InvitationControllerSecurityTest {
     private MockMvc mockMvc;
 
 
+    @MockBean
     private InvitationService invitationService;
 
     @Test

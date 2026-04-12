@@ -8,6 +8,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.senior.spm.controller.dto.InvitationActionResponse;
 import com.senior.spm.controller.dto.InvitationResponse;
 import com.senior.spm.entity.GroupInvitation;
 import com.senior.spm.entity.GroupInvitation.InvitationStatus;
@@ -184,7 +185,7 @@ public class InvitationService {
      * @throws BusinessRuleException if accept is blocked by group status, capacity, or membership rules
      */
     @Transactional
-    public Object respondToInvitation(UUID invitationId, UUID studentUUID, boolean accept) {
+    public InvitationActionResponse respondToInvitation(UUID invitationId, UUID studentUUID, boolean accept) {
         GroupInvitation invitation = groupInvitationRepository.findById(invitationId)
             .orElseThrow(() -> new InvitationNotFoundException("Invitation not found"));
 
@@ -209,7 +210,7 @@ public class InvitationService {
             throw new BusinessRuleException("This group has been disbanded");
         }
 
-        if (group.getStatus() == GroupStatus.TOOLS_BOUND || group.getStatus() == GroupStatus.ADVISOR_ASSIGNED) {
+        if (group.getStatus().locksRoster()) {
             throw new BusinessRuleException("Group roster is locked after tool binding");
         }
 
@@ -266,6 +267,7 @@ public class InvitationService {
         response.setTargetStudentId(invitation.getInvitee().getStudentId());
         response.setStatus(invitation.getStatus().toString());
         response.setSentAt(invitation.getSentAt());
+        response.setRespondedAt(invitation.getRespondedAt());
         return response;
     }
 
@@ -274,6 +276,8 @@ public class InvitationService {
         response.setInvitationId(invitation.getId());
         response.setGroupId(invitation.getGroup().getId());
         response.setGroupName(invitation.getGroup().getGroupName());
+        response.setStatus(invitation.getStatus().toString());
+        // TODO: Batch-load team leaders if pending inbox sizes grow beyond the current small roster limit.
         response.setTeamLeaderStudentId(
             groupMembershipRepository.findByGroupIdAndRole(invitation.getGroup().getId(), MemberRole.TEAM_LEADER)
                 .map(GroupMembership::getStudent)
@@ -288,6 +292,7 @@ public class InvitationService {
         InvitationResponse response = new InvitationResponse();
         response.setInvitationId(invitation.getId());
         response.setStatus(invitation.getStatus().toString());
+        response.setRespondedAt(invitation.getRespondedAt());
         return response;
     }
 

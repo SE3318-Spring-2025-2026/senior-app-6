@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.senior.spm.controller.dto.InvitationActionResponse;
 import com.senior.spm.controller.dto.InvitationResponse;
 import com.senior.spm.controller.dto.RespondInvitationRequest;
 import com.senior.spm.service.InvitationService;
@@ -68,11 +69,11 @@ public class InvitationController {
      * @throws com.senior.spm.exception.BusinessRuleException if accept is blocked by status or roster rules
      */
     @PatchMapping("/{invitationId}/respond")
-    public ResponseEntity<?> respondToInvitation(
+    public ResponseEntity<InvitationActionResponse> respondToInvitation(
         @PathVariable UUID invitationId,
         @Valid @RequestBody RespondInvitationRequest request
     ) {
-        Object response = invitationService.respondToInvitation(
+        InvitationActionResponse response = invitationService.respondToInvitation(
             invitationId,
             extractStudentUUIDFromJWT(),
             request.getAccept()
