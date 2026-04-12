@@ -4,11 +4,15 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.senior.spm.entity.AdvisorRequest.RequestStatus;
 import com.senior.spm.entity.ProjectGroup;
 import com.senior.spm.entity.ProjectGroup.GroupStatus;
 import com.senior.spm.entity.ScheduleWindow;
@@ -19,84 +23,128 @@ import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.ScheduleWindowRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * SanitizationService handles the automatic disbanding of unadvised groups
  * once the ADVISOR_ASSOCIATION window closes.
- * 
- * Scheduled job runs periodically to detect newly closed windows.
- * Manual trigger available for coordinators to force sanitization.
- * Gracefully handles OptimisticLockException — skips groups modified concurrently.
+ *
+ * <p>Scheduled job runs periodically to detect newly closed windows.
+ * Manual trigger (force=true) available for coordinators via a future endpoint.
+ *
+ * <p>Transaction design:
+ * <ul>
+ *   <li>{@code runSanitizationIfWindowClosed} — no transaction; calls self-proxy to
+ *       ensure Spring AOP is active on {@code runSanitization}.</li>
+ *   <li>{@code runSanitization} — read-only transaction for group fetch; delegates
+ *       per-group writes to {@code disbandGroup} through self-proxy.</li>
+ *   <li>{@code disbandGroup} — {@code REQUIRES_NEW} transaction; one commit per group.
+ *       {@code OptimisticLockingFailureException} rolls back only this group's
+ *       transaction and is caught by the caller, allowing the loop to continue.</li>
+ * </ul>
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SanitizationService {
 
     private final ScheduleWindowRepository scheduleWindowRepository;
-    private final ProjectGroupRepository projectGroupRepository;
+    private final ProjectGroupRepository   projectGroupRepository;
     private final GroupMembershipRepository groupMembershipRepository;
     private final AdvisorRequestRepository advisorRequestRepository;
 
     /**
-     * Scheduled job that runs every 5 minutes to check for closed ADVISOR_ASSOCIATION windows
-     * and automatically disband unadvised groups.
+     * Self-proxy reference — injected lazily to avoid circular dependency.
+     * Required so that internal calls to {@code runSanitization} and
+     * {@code disbandGroup} pass through the Spring AOP proxy, activating
+     * the {@code @Transactional} annotations on those methods.
      */
-    @Scheduled(fixedRate = 300000) // 5 minutes
+    @Autowired
+    @Lazy
+    private SanitizationService self;
+
+    // ── scheduled entry point ────────────────────────────────────────────────
+
+    /**
+     * Runs every 5 minutes. Finds all closed ADVISOR_ASSOCIATION windows and
+     * triggers sanitization per term. Logs and continues on per-term failure.
+     */
+    @Scheduled(fixedRate = 300_000)
     public void runSanitizationIfWindowClosed() {
         LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
-        
-        // Find all ADVISOR_ASSOCIATION windows that have closed
+
         List<ScheduleWindow> closedWindows = scheduleWindowRepository
             .findByTypeAndClosesAtLessThan(WindowType.ADVISOR_ASSOCIATION, now);
 
         for (ScheduleWindow window : closedWindows) {
             try {
-                runSanitization(window.getTermId(), false);
+                // Call through self-proxy so @Transactional on runSanitization is applied
+                self.runSanitization(window.getTermId(), false);
             } catch (Exception e) {
-                // Continue to next window even if one fails
+                log.error("Sanitization failed for term {}: {}", window.getTermId(), e.getMessage(), e);
             }
         }
     }
 
+    // ── per-term logic ───────────────────────────────────────────────────────
+
     /**
-     * Core sanitization logic:
-     * 1. Find all groups without an advisor (unadvised)
-     * 2. Mark them DISBANDED
-     * 3. Hard-delete their memberships (frees students)
-     * 4. Auto-reject pending advisor requests
-     * 
-     * Gracefully skips groups that throw OptimisticLockException
-     * (indicates concurrent modification by advisor accept).
-     * 
+     * Queries all unadvised groups for {@code termId} and disbands each one in its
+     * own transaction. Groups that raise an {@code OptimisticLockingFailureException}
+     * (concurrent advisor acceptance) are skipped and will be re-evaluated on the
+     * next scheduler tick.
+     *
      * @param termId the term to sanitize
-     * @param force flag (for audit purposes)
+     * @param force  when {@code true}, logs a warning for audit purposes (coordinator trigger)
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public void runSanitization(String termId, boolean force) {
-        // Find all unadvised groups (status FORMING, TOOLS_PENDING, TOOLS_BOUND with no advisor assigned)
+        if (force) {
+            log.warn("Forced sanitization triggered for term {}", termId);
+        }
+
         List<ProjectGroup> unadvisedGroups = projectGroupRepository
-            .findByTermIdAndStatusInAndAdvisorIsNull(termId, 
-                java.util.List.of(GroupStatus.FORMING, GroupStatus.TOOLS_PENDING, GroupStatus.TOOLS_BOUND));
+            .findByTermIdAndStatusInAndAdvisorIsNull(termId,
+                List.of(GroupStatus.FORMING, GroupStatus.TOOLS_PENDING, GroupStatus.TOOLS_BOUND));
 
         for (ProjectGroup group : unadvisedGroups) {
             try {
-                // Mark group as DISBANDED
-                group.setStatus(GroupStatus.DISBANDED);
-                projectGroupRepository.save(group);
-
-                // Hard-delete all memberships (frees students to rejoin next term)
-                groupMembershipRepository.deleteByGroupId(group.getId());
-
-                // Auto-reject all PENDING advisor requests for this group
-                advisorRequestRepository.bulkUpdateStatusByGroupId(
-                    com.senior.spm.entity.AdvisorRequest.RequestStatus.AUTO_REJECTED,
-                    group.getId()
-                );
-
+                // Call through self-proxy so REQUIRES_NEW starts a fresh transaction per group
+                self.disbandGroup(group);
             } catch (OptimisticLockingFailureException e) {
-                // Group was concurrently modified (likely by advisor accept).
-                // Skip this group and continue — it will be re-queried on next run.
+                // Concurrent advisor acceptance modified this group between our read and
+                // this write. The group's own transaction was already rolled back by
+                // REQUIRES_NEW. Skip — next tick will re-query and decide correctly.
+                log.warn("Skipping group {} (term {}) — concurrent OL conflict; will retry on next tick",
+                    group.getId(), termId);
             }
         }
+    }
+
+    // ── per-group atomic unit ────────────────────────────────────────────────
+
+    /**
+     * Disbands a single group atomically (P3.6):
+     * <ol>
+     *   <li>Mark group DISBANDED and persist.</li>
+     *   <li>Hard-delete all {@code GroupMembership} rows (frees students).</li>
+     *   <li>Bulk-update all {@code PENDING} {@code AdvisorRequest} rows → {@code AUTO_REJECTED}.</li>
+     * </ol>
+     *
+     * <p>Uses {@code REQUIRES_NEW} so this group's transaction is independent of any
+     * outer transaction. An {@code OptimisticLockingFailureException} rolls back only
+     * this group without poisoning the outer session.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void disbandGroup(ProjectGroup group) {
+        group.setStatus(GroupStatus.DISBANDED);
+        projectGroupRepository.save(group);
+
+        groupMembershipRepository.deleteByGroupId(group.getId());
+
+        advisorRequestRepository.bulkUpdateStatusByGroupId(
+            RequestStatus.AUTO_REJECTED,
+            group.getId()
+        );
     }
 }
