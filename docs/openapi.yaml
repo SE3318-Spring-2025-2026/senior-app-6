@@ -114,6 +114,70 @@ components:
         weight:
           type: number
 
+    # ── P4 — Blue Team ────────────────────────────────────────────────────────
+    CommitteeSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        committeeName:
+          type: string
+        termId:
+          type: string
+          format: uuid
+
+    ProfessorAssignment:
+      type: object
+      required:
+        - professorId
+        - role
+      properties:
+        professorId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [ADVISOR, JURY]
+
+    CommitteeDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        committeeName:
+          type: string
+        termId:
+          type: string
+          format: uuid
+        professors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProfessorAssignment'
+        groupIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ProfessorCommitteeSummary:
+      type: object
+      properties:
+        committeeId:
+          type: string
+          format: uuid
+        committeeName:
+          type: string
+        role:
+          type: string
+          enum: [ADVISOR, JURY]
+        groupIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
     # ── P2 — Red Team ─────────────────────────────────────────────────────────
     GroupMember:
       type: object
@@ -1840,6 +1904,220 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
         '404':
           description: Group or advisor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  # ── P4 — Blue Team ────────────────────────────────────────────────────────
+  /committees:
+    post:
+      summary: Create a new committee for a specific term
+      tags: [Committees]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [committeeName, termId]
+              properties:
+                committeeName:
+                  type: string
+                termId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Committee created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: A committee with the same name already exists for this term
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+    get:
+      summary: List all committees, optionally filtered by term
+      tags: [Committees]
+      parameters:
+        - name: termId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of committees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CommitteeSummary'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /committees/{id}:
+    get:
+      summary: Get full details of a committee including professors and groups
+      tags: [Committees]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Committee detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommitteeDetail'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Committee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /committees/{id}/professors:
+    post:
+      summary: Assign professors with ADVISOR or JURY roles to a committee
+      tags: [Committees]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [professors]
+              properties:
+                professors:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ProfessorAssignment'
+      responses:
+        '200':
+          description: Professors assigned
+        '400':
+          description: >
+            Invalid professor IDs, scheduling conflict, or constraint violation
+            (e.g. zero or multiple primary ADVISORs submitted).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Committee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /committees/{id}/groups:
+    post:
+      summary: Batch-assign student groups to a committee
+      tags: [Committees]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [groupIds]
+              properties:
+                groupIds:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+      responses:
+        '200':
+          description: Groups assigned; each group is now eligible for Proposal submission
+        '400':
+          description: >
+            A group has not completed Advisor Association (Process 3), is already
+            assigned to another committee, or a group ID is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Committee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /professors/me/committees:
+    get:
+      summary: Get committees assigned to the authenticated professor
+      tags: [Professors]
+      responses:
+        '200':
+          description: List of committees the professor belongs to, with assigned groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProfessorCommitteeSummary'
+        '403':
+          description: Caller is not a Professor
           content:
             application/json:
               schema:
