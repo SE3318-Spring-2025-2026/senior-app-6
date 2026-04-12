@@ -248,8 +248,12 @@ public class AdvisorService {
     @Transactional
     public AdvisorRequestResponse cancelAdvisorRequest(UUID groupId, UUID requesterUUID) {
         // 1. Fetch group first — 404 if not found (must be reachable independently of membership)
-        projectGroupRepository.findById(groupId)
+        ProjectGroup group = projectGroupRepository.findById(groupId)
                 .orElseThrow(() -> new GroupNotFoundException("Group not found"));
+
+        if (group.getStatus() != ProjectGroup.GroupStatus.TOOLS_BOUND) {
+            throw new BusinessRuleException("Group must be in TOOLS_BOUND status to cancel an advisor request");
+        }
 
         // 2. Verify requester is TEAM_LEADER of the group
         GroupMembership membership = groupMembershipRepository
