@@ -272,7 +272,6 @@ public class CoordinatorController {
      * trigger to mark groups DISBANDED and hard-delete their memberships.
      * 
      * Requires force=true if ADVISOR_ASSOCIATION window is still open.
-     * Returns counts of affected groups and advisor requests.
      * 
      * REST Endpoint: {@code POST /api/coordinator/sanitize}
      * Auth: Coordinator (staff role)
@@ -282,8 +281,8 @@ public class CoordinatorController {
             @RequestBody(required = false) java.util.Map<String, Object> body) {
         try {
             boolean force = body != null && Boolean.TRUE.equals(body.get("force"));
-            SanitizationService.SanitizationReport report = sanitizationService.triggerManually(force);
-            return ResponseEntity.status(HttpStatus.OK).body(report);
+            sanitizationService.triggerManually(force);
+            return ResponseEntity.status(HttpStatus.OK).body(java.util.Map.of("message", "Sanitization completed successfully"));
         } catch (com.senior.spm.exception.BusinessRuleException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
         } catch (Exception e) {
