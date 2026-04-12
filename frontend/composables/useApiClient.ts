@@ -79,6 +79,27 @@ export interface GithubLoginResponse {
   };
 }
 
+export interface BindJiraRequest {
+  jiraSpaceUrl: string;
+  jiraProjectKey: string;
+  jiraApiToken: string;
+}
+
+export interface BindGithubRequest {
+  githubOrgName: string;
+  githubPat: string;
+}
+
+export interface BindToolResponse {
+  groupId: string;
+  status: GroupDetailResponse["status"];
+  jiraSpaceUrl?: string | null;
+  jiraProjectKey?: string | null;
+  githubOrgName?: string | null;
+  jiraBound: boolean;
+  githubBound: boolean;
+}
+
 async function apiCall<T>(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" = "GET",
@@ -287,6 +308,32 @@ export function useApiClient() {
     return apiCall<GroupDetailResponse>("/groups/my", "GET", undefined, token);
   }
 
+  async function bindJiraTool(
+    groupId: string,
+    payload: BindJiraRequest,
+    token?: string
+  ): Promise<BindToolResponse> {
+    return apiCall<BindToolResponse>(
+      `/groups/${encodeURIComponent(groupId)}/jira`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
+  async function bindGithubTool(
+    groupId: string,
+    payload: BindGithubRequest,
+    token?: string
+  ): Promise<BindToolResponse> {
+    return apiCall<BindToolResponse>(
+      `/groups/${encodeURIComponent(groupId)}/github`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -309,5 +356,7 @@ export function useApiClient() {
     registerProfessor,
     createGroup,
     fetchMyGroup,
+    bindJiraTool,
+    bindGithubTool,
   };
 }
