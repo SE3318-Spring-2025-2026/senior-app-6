@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.exception.AdvisorAtCapacityException;
+import com.senior.spm.exception.AdvisorNotFoundException;
 import com.senior.spm.exception.AlreadyInGroupException;
 import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.DuplicateGroupNameException;
+import com.senior.spm.exception.DuplicateRequestException;
 import com.senior.spm.exception.ExternalToolValidationException;
 import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GroupNotFoundException;
@@ -116,6 +118,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RequestNotPendingException.class)
     public ResponseEntity<ErrorMessage> handleRequestNotPending(RequestNotPendingException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    // Thrown when an advisor (StaffUser with role=Professor) cannot be found by ID,
+    // or the resolved user is not a Professor.
+    @ExceptionHandler(AdvisorNotFoundException.class)
+    public ResponseEntity<ErrorMessage> handleAdvisorNotFound(AdvisorNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    // Thrown when a group tries to send a second advisor request while a PENDING one already
+    // exists. Maps to 409 Conflict per the P3 API spec (endpoints_p3.md).
+    @ExceptionHandler(DuplicateRequestException.class)
+    public ResponseEntity<ErrorMessage> handleDuplicateRequest(DuplicateRequestException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(ex.getMessage()));
     }
 
     // Thrown by stub endpoints (Issue #45) that are not yet implemented.

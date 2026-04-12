@@ -12,11 +12,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.senior.spm.controller.dto.SanitizationReport;
 import com.senior.spm.entity.AdvisorRequest.RequestStatus;
 import com.senior.spm.entity.ProjectGroup;
 import com.senior.spm.entity.ProjectGroup.GroupStatus;
 import com.senior.spm.entity.ScheduleWindow;
 import com.senior.spm.entity.ScheduleWindow.WindowType;
+import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.repository.AdvisorRequestRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
@@ -52,6 +54,7 @@ public class SanitizationService {
     private final ProjectGroupRepository   projectGroupRepository;
     private final GroupMembershipRepository groupMembershipRepository;
     private final AdvisorRequestRepository advisorRequestRepository;
+    private final TermConfigService        termConfigService;
 
     /**
      * Self-proxy reference — injected lazily to avoid circular dependency.
@@ -119,6 +122,64 @@ public class SanitizationService {
                     group.getId(), termId);
             }
         }
+    }
+
+    // ── coordinator manual trigger ───────────────────────────────────────────
+
+    /**
+     * Manual trigger for the sanitization job, exposed via
+     * {@code POST /api/coordinator/sanitize} (DFD 3.4 / sequence 3.4_sanitization_p3.md).
+     *
+     * <p>Window check:
+     * <ul>
+     *   <li>If the {@code ADVISOR_ASSOCIATION} window is still active AND {@code force = false} →
+     *       throws {@link BusinessRuleException} (400).</li>
+     *   <li>If {@code force = true} OR the window is already closed → proceeds immediately.</li>
+     * </ul>
+     *
+     * <p>Counts for the report are computed <em>before</em> the sanitization run so they reflect
+     * the groups that were targeted. Groups that fail with an
+     * {@code OptimisticLockingFailureException} are skipped (caught in {@link #runSanitization}),
+     * which means the returned counts may be slightly optimistic — this is acceptable per the spec.
+     *
+     * @param force when {@code true}, skips the window-active guard (coordinator override)
+     * @return {@link SanitizationReport} with disbanded count, auto-rejected request count, and trigger timestamp
+     * @throws BusinessRuleException if the window is still active and {@code force = false}
+     */
+    public SanitizationReport triggerManually(boolean force) {
+        String termId = termConfigService.getActiveTermId();
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+
+        // Window check — only bypass when force=true
+        scheduleWindowRepository.findByTermIdAndType(termId, WindowType.ADVISOR_ASSOCIATION)
+            .ifPresent(window -> {
+                boolean windowActive = !window.getOpensAt().isAfter(now) && window.getClosesAt().isAfter(now);
+                if (windowActive && !force) {
+                    throw new BusinessRuleException(
+                        "Advisor association window is still active — cannot sanitize early without confirmation");
+                }
+            });
+
+        // Pre-count groups that will be targeted (for report)
+        List<ProjectGroup> targetGroups = projectGroupRepository.findByTermIdAndStatusInAndAdvisorIsNull(termId,
+            List.of(GroupStatus.FORMING, GroupStatus.TOOLS_PENDING, GroupStatus.TOOLS_BOUND));
+
+        int disbandedCount = targetGroups.size();
+
+        // Pre-count PENDING advisor requests across all targeted groups (for report)
+        long autoRejectedRequestCount = targetGroups.stream()
+            .mapToLong(g -> advisorRequestRepository.countByGroupIdAndStatus(
+                g.getId(), RequestStatus.PENDING))
+            .sum();
+
+        // Run the actual sanitization (calls disbandGroup per group via self-proxy)
+        self.runSanitization(termId, force);
+
+        return SanitizationReport.builder()
+            .disbandedCount(disbandedCount)
+            .autoRejectedRequestCount(autoRejectedRequestCount)
+            .triggeredAt(now)
+            .build();
     }
 
     // ── per-group atomic unit ────────────────────────────────────────────────
