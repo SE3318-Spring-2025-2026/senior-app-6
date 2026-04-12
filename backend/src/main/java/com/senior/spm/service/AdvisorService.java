@@ -1,6 +1,7 @@
 package com.senior.spm.service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -12,18 +13,23 @@ import com.senior.spm.controller.dto.AdvisorCapacityResponse;
 import com.senior.spm.controller.dto.AdvisorOverrideResponse;
 import com.senior.spm.controller.dto.AdvisorRequestResponse;
 import com.senior.spm.entity.AdvisorRequest;
+import com.senior.spm.entity.GroupMembership;
 import com.senior.spm.entity.ProjectGroup;
+import com.senior.spm.entity.ScheduleWindow;
 import com.senior.spm.entity.StaffUser;
 import com.senior.spm.exception.AdvisorAtCapacityException;
 import com.senior.spm.exception.AdvisorNotFoundException;
 import com.senior.spm.exception.BusinessRuleException;
+import com.senior.spm.exception.DuplicateRequestException;
 import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.RequestNotFoundException;
 import com.senior.spm.exception.RequestNotPendingException;
+import com.senior.spm.exception.ScheduleWindowClosedException;
 import com.senior.spm.repository.AdvisorRequestRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
+import com.senior.spm.repository.ScheduleWindowRepository;
 import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.service.dto.AdvisorRequestDetail;
 import com.senior.spm.service.dto.AdvisorRequestSummary;
@@ -39,6 +45,7 @@ public class AdvisorService {
     private final ProjectGroupRepository projectGroupRepository;
     private final GroupMembershipRepository groupMembershipRepository;
     private final StaffUserRepository staffUserRepository;
+    private final ScheduleWindowRepository scheduleWindowRepository;
     private final TermConfigService termConfigService;
 
     // =========================================================================
@@ -64,8 +71,31 @@ public class AdvisorService {
      */
     @Transactional(readOnly = true)
     public List<AdvisorCapacityResponse> getAvailableAdvisors() {
-        // TODO: Issue #59 — implement getAvailableAdvisors()
-        throw new UnsupportedOperationException("Not implemented yet — see Issue #59");
+        String termId = termConfigService.getActiveTermId();
+
+        List<StaffUser> professors = staffUserRepository.findByRole(StaffUser.Role.Professor);
+
+        return professors.stream()
+            .map(professor -> {
+                long currentGroupCount = projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(
+                        professor.getId(), termId, ProjectGroup.GroupStatus.DISBANDED);
+                return new Object[]{ professor, currentGroupCount };
+            })
+            .filter(pair -> (long) pair[1] < ((StaffUser) pair[0]).getAdvisorCapacity())
+            .map(pair -> {
+                StaffUser professor = (StaffUser) pair[0];
+                long currentGroupCount = (long) pair[1];
+                return AdvisorCapacityResponse.builder()
+                        .advisorId(professor.getId())
+                        .name(professor.getMail())
+                        .mail(professor.getMail())
+                        .currentGroupCount((int) currentGroupCount)
+                        .capacity(professor.getAdvisorCapacity())
+                        // atCapacity is intentionally null — student endpoint never exposes it
+                        .atCapacity(null)
+                        .build();
+            })
+            .collect(Collectors.toList());
     }
 
     /**
@@ -91,8 +121,69 @@ public class AdvisorService {
      */
     @Transactional
     public AdvisorRequestResponse sendAdvisorRequest(UUID groupId, UUID advisorId, UUID requesterUUID) {
-        // TODO: Issue #59 — implement sendAdvisorRequest()
-        throw new UnsupportedOperationException("Not implemented yet — see Issue #59");
+        // 1. Verify requester is TEAM_LEADER of this group
+        GroupMembership membership = groupMembershipRepository
+                .findByGroupIdAndStudentId(groupId, requesterUUID)
+                .orElseThrow(() -> new ForbiddenException("Only the Team Leader can send advisor requests"));
+
+        if (membership.getRole() != com.senior.spm.entity.GroupMembership.MemberRole.TEAM_LEADER) {
+            throw new ForbiddenException("Only the Team Leader can send advisor requests");
+        }
+
+        // 2. Fetch group and enforce TOOLS_BOUND status
+        ProjectGroup group = projectGroupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException("Group not found"));
+
+        if (group.getStatus() != ProjectGroup.GroupStatus.TOOLS_BOUND) {
+            throw new BusinessRuleException("Group must be in TOOLS_BOUND status to request an advisor");
+        }
+
+        // 3. Verify ADVISOR_ASSOCIATION window is active for this group's termId
+        ScheduleWindow window = scheduleWindowRepository
+                .findByTermIdAndType(group.getTermId(), ScheduleWindow.WindowType.ADVISOR_ASSOCIATION)
+                .orElseThrow(() -> new ScheduleWindowClosedException(
+                        "Advisor association window is not currently active"));
+
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
+        if (window.getOpensAt().isAfter(now) || window.getClosesAt().isBefore(now)) {
+            throw new ScheduleWindowClosedException("Advisor association window is not currently active");
+        }
+
+        // 4. Check no PENDING request already exists for this group (409 Conflict)
+        if (advisorRequestRepository.findByGroupIdAndStatus(groupId, AdvisorRequest.RequestStatus.PENDING)
+                .isPresent()) {
+            throw new DuplicateRequestException("Group already has an active pending advisor request");
+        }
+
+        // 5. Fetch advisor — must exist and must be a Professor
+        StaffUser advisor = staffUserRepository.findById(advisorId)
+                .filter(u -> u.getRole() == StaffUser.Role.Professor)
+                .orElseThrow(() -> new AdvisorNotFoundException("Advisor not found"));
+
+        // 6. Check advisor capacity
+        String termId = termConfigService.getActiveTermId();
+        long currentGroupCount = projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(
+                advisorId, termId, ProjectGroup.GroupStatus.DISBANDED);
+
+        if (currentGroupCount >= advisor.getAdvisorCapacity()) {
+            throw new AdvisorAtCapacityException("Advisor has reached maximum group capacity for this term");
+        }
+
+        // 7. Persist and return
+        AdvisorRequest request = new AdvisorRequest();
+        request.setGroup(group);
+        request.setAdvisor(advisor);
+        request.setStatus(AdvisorRequest.RequestStatus.PENDING);
+        request.setSentAt(now);
+        AdvisorRequest saved = advisorRequestRepository.save(request);
+
+        return AdvisorRequestResponse.builder()
+                .requestId(saved.getId())
+                .groupId(group.getId())
+                .advisorId(advisor.getId())
+                .status(saved.getStatus())
+                .sentAt(saved.getSentAt())
+                .build();
     }
 
     /**
@@ -114,8 +205,27 @@ public class AdvisorService {
      */
     @Transactional(readOnly = true)
     public AdvisorRequestResponse getAdvisorRequest(UUID groupId, UUID studentUUID) {
-        // TODO: Issue #59 — implement getAdvisorRequest()
-        throw new UnsupportedOperationException("Not implemented yet — see Issue #59");
+        // 1. Verify requester is a member of the group
+        boolean isMember = groupMembershipRepository
+                .findByGroupIdAndStudentId(groupId, studentUUID)
+                .isPresent();
+        if (!isMember) {
+            throw new ForbiddenException("You are not a member of this group");
+        }
+
+        // 2. Fetch the most recent request (any status)
+        AdvisorRequest request = advisorRequestRepository
+                .findTopByGroupIdOrderBySentAtDesc(groupId)
+                .orElseThrow(() -> new RequestNotFoundException("No advisor request found for this group"));
+
+        return AdvisorRequestResponse.builder()
+                .requestId(request.getId())
+                .advisorId(request.getAdvisor().getId())
+                .advisorName(request.getAdvisor().getMail())
+                .status(request.getStatus())
+                .sentAt(request.getSentAt())
+                .respondedAt(request.getRespondedAt())
+                .build();
     }
 
     /**
@@ -143,8 +253,39 @@ public class AdvisorService {
      */
     @Transactional
     public AdvisorRequestResponse cancelAdvisorRequest(UUID groupId, UUID requesterUUID) {
-        // TODO: Issue #59 — implement cancelAdvisorRequest()
-        throw new UnsupportedOperationException("Not implemented yet — see Issue #59");
+        // 1. Verify requester is TEAM_LEADER of the group
+        GroupMembership membership = groupMembershipRepository
+                .findByGroupIdAndStudentId(groupId, requesterUUID)
+                .orElseThrow(() -> new ForbiddenException("Only the Team Leader can cancel advisor requests"));
+
+        if (membership.getRole() != com.senior.spm.entity.GroupMembership.MemberRole.TEAM_LEADER) {
+            throw new ForbiddenException("Only the Team Leader can cancel advisor requests");
+        }
+
+        // 2. Fetch group — 404 if not found
+        projectGroupRepository.findById(groupId)
+                .orElseThrow(() -> new GroupNotFoundException("Group not found"));
+
+        // 3. Fetch the most recent request — 404 if none exists at all
+        //    Per CLAUDE.md: use findTop first, then check status. Do NOT use findByStatus alone
+        //    (the 404 case becomes unreachable if using findByGroupIdAndStatus(PENDING)).
+        AdvisorRequest request = advisorRequestRepository
+                .findTopByGroupIdOrderBySentAtDesc(groupId)
+                .orElseThrow(() -> new RequestNotFoundException("No advisor request found for this group"));
+
+        // 4. Guard: only a PENDING request can be cancelled
+        if (request.getStatus() != AdvisorRequest.RequestStatus.PENDING) {
+            throw new BusinessRuleException("No active pending request to cancel");
+        }
+
+        // 5. Cancel and persist
+        request.setStatus(AdvisorRequest.RequestStatus.CANCELLED);
+        advisorRequestRepository.save(request);
+
+        return AdvisorRequestResponse.builder()
+                .requestId(request.getId())
+                .status(AdvisorRequest.RequestStatus.CANCELLED)
+                .build();
     }
 
     // =========================================================================
