@@ -29,7 +29,6 @@ import com.senior.spm.exception.AlreadyExistsException;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.service.DeliverableService;
 import com.senior.spm.service.GroupService;
-import com.senior.spm.service.SanitizationService;
 import com.senior.spm.service.SprintService;
 import com.senior.spm.service.StudentService;
 import com.senior.spm.service.SystemStateService;
@@ -45,20 +44,17 @@ public class CoordinatorController {
     private final StudentService studentService;
     private final SystemStateService systemStateService;
     private final GroupService groupService;
-    private final SanitizationService sanitizationService;
 
     public CoordinatorController(SprintService sprintService,
             DeliverableService deliverableService,
             StudentService studentService,
             SystemStateService systemStateService,
-            GroupService groupService,
-            SanitizationService sanitizationService) {
+            GroupService groupService) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
         this.studentService = studentService;
         this.systemStateService = systemStateService;
         this.groupService = groupService;
-        this.sanitizationService = sanitizationService;
     }
 
     @PostMapping("/sprints")
@@ -267,27 +263,4 @@ public class CoordinatorController {
         }
     }
 
-    /**
-     * Automatic sanitization — disband all unadvised groups (without advisors)
-     * trigger to mark groups DISBANDED and hard-delete their memberships.
-     * 
-     * Requires force=true if ADVISOR_ASSOCIATION window is still open.
-     * 
-     * REST Endpoint: {@code POST /api/coordinator/sanitize}
-     * Auth: Coordinator (staff role)
-     */
-    @PostMapping("/sanitize")
-    public ResponseEntity<?> sanitizeUnadvisedGroups(
-            @RequestBody(required = false) java.util.Map<String, Object> body) {
-        try {
-            boolean force = body != null && Boolean.TRUE.equals(body.get("force"));
-            sanitizationService.triggerManually(force);
-            return ResponseEntity.status(HttpStatus.OK).body(java.util.Map.of("message", "Sanitization completed successfully"));
-        } catch (com.senior.spm.exception.BusinessRuleException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorMessage("Sanitization failed: " + e.getMessage()));
-        }
-    }
 }

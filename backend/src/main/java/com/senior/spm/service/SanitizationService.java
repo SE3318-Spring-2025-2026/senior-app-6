@@ -13,7 +13,6 @@ import com.senior.spm.entity.ProjectGroup;
 import com.senior.spm.entity.ProjectGroup.GroupStatus;
 import com.senior.spm.entity.ScheduleWindow;
 import com.senior.spm.entity.ScheduleWindow.WindowType;
-import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.repository.AdvisorRequestRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
@@ -37,7 +36,6 @@ public class SanitizationService {
     private final ProjectGroupRepository projectGroupRepository;
     private final GroupMembershipRepository groupMembershipRepository;
     private final AdvisorRequestRepository advisorRequestRepository;
-    private final TermConfigService termConfigService;
 
     /**
      * Scheduled job that runs every 5 minutes to check for closed ADVISOR_ASSOCIATION windows
@@ -58,32 +56,6 @@ public class SanitizationService {
                 // Continue to next window even if one fails
             }
         }
-    }
-
-    /**
-     * Manual trigger for coordinators to sanitize (disband unadvised groups).
-     * Requires force=true if the ADVISOR_ASSOCIATION window is still open.
-     * 
-     * @param force if true, bypasses window check and sanitizes immediately
-     */
-    public void triggerManually(boolean force) {
-        String termId = termConfigService.getActiveTermId();
-        
-        // Check if window is still open
-        ScheduleWindow window = scheduleWindowRepository
-            .findByTermIdAndType(termId, WindowType.ADVISOR_ASSOCIATION)
-            .orElse(null);
-
-        LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
-        boolean windowIsActive = window != null && window.getClosesAt().isAfter(now);
-
-        if (windowIsActive && !force) {
-            throw new BusinessRuleException(
-                "Advisor association window is still active — cannot sanitize early without confirmation"
-            );
-        }
-
-        runSanitization(termId, force);
     }
 
     /**
