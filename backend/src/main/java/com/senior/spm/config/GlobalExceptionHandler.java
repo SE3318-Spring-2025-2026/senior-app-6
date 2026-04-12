@@ -17,10 +17,13 @@ import com.senior.spm.exception.AdvisorNotFoundException;
 import com.senior.spm.exception.AlreadyInGroupException;
 import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.DuplicateGroupNameException;
+import com.senior.spm.exception.DuplicateInvitationException;
 import com.senior.spm.exception.DuplicateRequestException;
 import com.senior.spm.exception.ExternalToolValidationException;
 import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GroupNotFoundException;
+import com.senior.spm.exception.InvitationNotFoundException;
+import com.senior.spm.exception.InvitationNotPendingException;
 import com.senior.spm.exception.NotInGroupException;
 import com.senior.spm.exception.RequestNotFoundException;
 import com.senior.spm.exception.RequestNotPendingException;
@@ -67,6 +70,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(ex.getMessage()));
     }
 
+    @ExceptionHandler(DuplicateInvitationException.class)
+    public ResponseEntity<ErrorMessage> handleDuplicateInvitation(DuplicateInvitationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(ex.getMessage()));
+    }
+
     @ExceptionHandler(NotInGroupException.class)
     public ResponseEntity<ErrorMessage> handleNotInGroup(NotInGroupException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
@@ -100,6 +108,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(GroupNotFoundException.class)
     public ResponseEntity<ErrorMessage> handleGroupNotFound(GroupNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvitationNotFoundException.class)
+    public ResponseEntity<ErrorMessage> handleInvitationNotFound(InvitationNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvitationNotPendingException.class)
+    public ResponseEntity<ErrorMessage> handleInvitationNotPending(InvitationNotPendingException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
     }
 
     // Thrown when an advisor has reached their maximum group capacity.

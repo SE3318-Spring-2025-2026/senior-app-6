@@ -320,7 +320,6 @@ class AdvisorServiceTest {
     void respondToRequest_accept_advisorAtExactCapacity_throwsAdvisorAtCapacityException() {
         // capacity = 5, current = 5 → at limit
         when(advisorRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest));
-        when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(PROFESSOR_ID, TERM_ID, GroupStatus.DISBANDED))
                 .thenReturn((long) CAPACITY); // 5 >= 5
 
@@ -333,7 +332,6 @@ class AdvisorServiceTest {
     void respondToRequest_accept_advisorOverCapacity_throwsAdvisorAtCapacityException() {
         // capacity = 5, current = 6 → over limit (edge case overflow)
         when(advisorRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest));
-        when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(PROFESSOR_ID, TERM_ID, GroupStatus.DISBANDED))
                 .thenReturn((long) CAPACITY + 1);
 
@@ -345,7 +343,6 @@ class AdvisorServiceTest {
     void respondToRequest_accept_atCapacity_requestStaysPending() {
         // P3 rule #1: request must NOT be auto-rejected when advisor is at capacity
         when(advisorRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest));
-        when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(PROFESSOR_ID, TERM_ID, GroupStatus.DISBANDED))
                 .thenReturn((long) CAPACITY);
 
@@ -360,7 +357,6 @@ class AdvisorServiceTest {
     @Test
     void respondToRequest_accept_atCapacity_groupNotModified() {
         when(advisorRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest));
-        when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(PROFESSOR_ID, TERM_ID, GroupStatus.DISBANDED))
                 .thenReturn((long) CAPACITY);
 
@@ -375,7 +371,6 @@ class AdvisorServiceTest {
     void respondToRequest_accept_oneBelowCapacity_succeeds() {
         // capacity = 5, current = 4 → one slot available
         when(advisorRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest));
-        when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(PROFESSOR_ID, TERM_ID, GroupStatus.DISBANDED))
                 .thenReturn((long) CAPACITY - 1); // 4 < 5
 
@@ -388,7 +383,6 @@ class AdvisorServiceTest {
     void respondToRequest_accept_capacityQueryExcludesDisbandedGroups() {
         // The query MUST use StatusNot(DISBANDED), not plain countByAdvisorIdAndTermId
         when(advisorRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest));
-        when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(PROFESSOR_ID, TERM_ID, GroupStatus.DISBANDED))
                 .thenReturn(0L);
 
@@ -396,21 +390,6 @@ class AdvisorServiceTest {
 
         verify(projectGroupRepository).countByAdvisorIdAndTermIdAndStatusNot(
                 PROFESSOR_ID, TERM_ID, GroupStatus.DISBANDED);
-    }
-
-    @Test
-    void respondToRequest_accept_capacityQueryUsesActiveTermFromTermConfigService() {
-        String differentTerm = "2025-SPRING";
-        when(advisorRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest));
-        when(termConfigService.getActiveTermId()).thenReturn(differentTerm);
-        when(projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(PROFESSOR_ID, differentTerm, GroupStatus.DISBANDED))
-                .thenReturn(0L);
-
-        advisorService.respondToRequest(REQUEST_ID, PROFESSOR_ID, true);
-
-        verify(termConfigService).getActiveTermId();
-        verify(projectGroupRepository).countByAdvisorIdAndTermIdAndStatusNot(
-                eq(PROFESSOR_ID), eq(differentTerm), eq(GroupStatus.DISBANDED));
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -481,10 +460,12 @@ class AdvisorServiceTest {
     //  helpers
     // ══════════════════════════════════════════════════════════════════════════
 
-    /** Stubs the happy-path prerequisites for an accept (capacity = 0 active groups). */
+    /**
+     * Stubs the happy-path prerequisites for an accept (capacity = 0 active groups).
+     * Capacity check uses group.getTermId() (TERM_ID = "2024-FALL") — no termConfigService stub needed.
+     */
     private void stubAcceptPrereqs() {
         when(advisorRequestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(pendingRequest));
-        when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(PROFESSOR_ID, TERM_ID, GroupStatus.DISBANDED))
                 .thenReturn(0L);
     }

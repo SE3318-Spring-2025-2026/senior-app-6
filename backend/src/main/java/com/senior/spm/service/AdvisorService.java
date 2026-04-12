@@ -426,11 +426,13 @@ public class AdvisorService {
                 .build();
         }
 
-        // Accept flow — capacity re-check inside the transaction (CLAUDE.md P3 rule 3.1)
-        String activeTermId = termConfigService.getActiveTermId();
+        // Accept flow — capacity re-check inside the transaction (CLAUDE.md P3 rule 3.1).
+        // Use the group's own termId, not getActiveTermId() — if the active term has rolled over
+        // the capacity count must still be scoped to the term this group belongs to.
+        String groupTermId = request.getGroup().getTermId();
 
         long currentGroupCount = projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(
-                professorId, activeTermId, ProjectGroup.GroupStatus.DISBANDED);
+                professorId, groupTermId, ProjectGroup.GroupStatus.DISBANDED);
 
         if (currentGroupCount >= request.getAdvisor().getAdvisorCapacity()) {
             throw new AdvisorAtCapacityException("You have reached your maximum group capacity for this term");
