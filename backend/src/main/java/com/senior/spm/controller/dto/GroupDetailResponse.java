@@ -7,7 +7,7 @@ import java.util.UUID;
 import lombok.Data;
 
 @Data
-public class GroupDetailResponse {
+public final class GroupDetailResponse implements InvitationActionResponse {
 
     private UUID id;
     private String groupName;

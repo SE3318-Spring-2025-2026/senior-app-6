@@ -408,7 +408,7 @@ class GroupServiceTest {
             assertThat(captor.getValue().getStudent()).isEqualTo(targetStudent);
             assertThat(captor.getValue().getGroup()).isEqualTo(group);
 
-            verify(groupInvitationRepository).autoDenyOtherPendingInvitations(studentUUID, groupId);
+            verify(groupInvitationRepository).autoDenyAllPendingByInviteeId(studentUUID);
         }
 
         @Test

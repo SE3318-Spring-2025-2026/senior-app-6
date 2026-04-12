@@ -371,7 +371,7 @@ public class GroupService {
      *   <li>Checks student is not already in another group</li>
      *   <li>Validates group has not reached maximum team size (current members + pending invitations)</li>
      *   <li>Creates membership atomically as MEMBER role</li>
-     *   <li>Auto-denies all other PENDING invitations for this student</li>
+     *   <li>Auto-denies all PENDING invitations for this student</li>
      * </ul>
      * <p>
      * All operations are executed within a single @Transactional block to ensure atomicity.
@@ -426,8 +426,8 @@ public class GroupService {
         membership.setJoinedAt(LocalDateTime.now(ZoneId.of("UTC")));
         groupMembershipRepository.save(membership);
 
-        // 6. Auto-deny all PENDING invitations for this student (excluding this group if any existed)
-        groupInvitationRepository.autoDenyOtherPendingInvitations(student.getId(), groupId);
+        // 6. Auto-deny all PENDING invitations for this student
+        groupInvitationRepository.autoDenyAllPendingByInviteeId(student.getId());
 
         return toGroupDetailResponse(group, null);
     }

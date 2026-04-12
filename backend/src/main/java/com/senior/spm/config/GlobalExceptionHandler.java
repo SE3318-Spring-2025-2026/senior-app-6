@@ -16,6 +16,7 @@ import com.senior.spm.exception.AdvisorAtCapacityException;
 import com.senior.spm.exception.AdvisorNotFoundException;
 import com.senior.spm.exception.AlreadyInGroupException;
 import com.senior.spm.exception.BusinessRuleException;
+import com.senior.spm.exception.DuplicateInvitationException;
 import com.senior.spm.exception.DuplicateGroupNameException;
 import com.senior.spm.exception.DuplicateInvitationException;
 import com.senior.spm.exception.DuplicateRequestException;
@@ -70,6 +71,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(ex.getMessage()));
     }
 
+    /**
+     * Map duplicate pending invitations to HTTP 409 Conflict.
+     *
+     * @param ex duplicate invitation domain exception
+     * @return conflict response with a user-facing error message
+     */
     @ExceptionHandler(DuplicateInvitationException.class)
     public ResponseEntity<ErrorMessage> handleDuplicateInvitation(DuplicateInvitationException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(ex.getMessage()));
@@ -110,14 +117,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
     }
 
+    /**
+     * Map missing invitations to HTTP 404 Not Found.
+     *
+     * @param ex invitation not found domain exception
+     * @return not found response with a user-facing error message
+     */
     @ExceptionHandler(InvitationNotFoundException.class)
     public ResponseEntity<ErrorMessage> handleInvitationNotFound(InvitationNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
-    }
-
-    @ExceptionHandler(InvitationNotPendingException.class)
-    public ResponseEntity<ErrorMessage> handleInvitationNotPending(InvitationNotPendingException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
     }
 
     // Thrown when an advisor has reached their maximum group capacity.
@@ -150,6 +158,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateRequestException.class)
     public ResponseEntity<ErrorMessage> handleDuplicateRequest(DuplicateRequestException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(ex.getMessage()));
+    /**
+     * Map non-pending invitation lifecycle actions to HTTP 400 Bad Request.
+     *
+     * @param ex invitation state domain exception
+     * @return bad request response with a user-facing error message
+     */
+    @ExceptionHandler(InvitationNotPendingException.class)
+    public ResponseEntity<ErrorMessage> handleInvitationNotPending(InvitationNotPendingException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
     }
 
     // Thrown by stub endpoints (Issue #45) that are not yet implemented.
