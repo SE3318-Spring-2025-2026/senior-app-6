@@ -158,6 +158,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateRequestException.class)
     public ResponseEntity<ErrorMessage> handleDuplicateRequest(DuplicateRequestException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(ex.getMessage()));
+    }
     /**
      * Map non-pending invitation lifecycle actions to HTTP 400 Bad Request.
      *
