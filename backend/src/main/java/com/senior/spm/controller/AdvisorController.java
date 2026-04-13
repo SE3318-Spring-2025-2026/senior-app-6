@@ -62,8 +62,6 @@ public class AdvisorController {
      * <p>Auth: Student JWT (any authenticated student).
      *
      * @return 200 with list of available advisors; empty list when none are available
-     *
-     * TODO: Issue #59 — student service method not yet implemented; returns 501 until then
      */
     @GetMapping("/api/advisors")
     public ResponseEntity<List<AdvisorCapacityResponse>> getAvailableAdvisors() {
@@ -93,8 +91,6 @@ public class AdvisorController {
      * @param groupId UUID of the group
      * @param body    {@link SendAdvisorRequestBody} containing the target advisorId
      * @return 201 with {@link AdvisorRequestResponse} containing requestId, groupId, advisorId, status=PENDING, sentAt
-     *
-     * TODO: Issue #59 — student service method not yet implemented; returns 501 until then
      */
     @PostMapping("/api/groups/{groupId}/advisor-request")
     public ResponseEntity<AdvisorRequestResponse> sendAdvisorRequest(
@@ -113,8 +109,6 @@ public class AdvisorController {
      *
      * @param groupId UUID of the group
      * @return 200 with {@link AdvisorRequestResponse} containing requestId, advisorId, advisorName, status, sentAt, respondedAt
-     *
-     * TODO: Issue #59 — student service method not yet implemented; returns 501 until then
      */
     @GetMapping("/api/groups/{groupId}/advisor-request")
     public ResponseEntity<AdvisorRequestResponse> getAdvisorRequest(
@@ -132,8 +126,6 @@ public class AdvisorController {
      *
      * @param groupId UUID of the group
      * @return 200 with {@link AdvisorRequestResponse} containing requestId and status=CANCELLED
-     *
-     * TODO: Issue #59 — student service method not yet implemented; returns 501 until then
      */
     @DeleteMapping("/api/groups/{groupId}/advisor-request")
     public ResponseEntity<AdvisorRequestResponse> cancelAdvisorRequest(

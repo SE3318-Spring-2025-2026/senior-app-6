@@ -1,4 +1,3 @@
-// TODO: Issue #49 — [Backend] Tool Binding & Encryption Orchestration
 package com.senior.spm.controller.dto;
 
 import jakarta.validation.constraints.NotBlank;

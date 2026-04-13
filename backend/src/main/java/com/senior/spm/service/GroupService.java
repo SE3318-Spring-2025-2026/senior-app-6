@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.senior.spm.controller.dto.BindToolResponse;
 import com.senior.spm.controller.dto.GroupDetailResponse;
 import com.senior.spm.controller.response.GroupSummaryResponse;
-import com.senior.spm.entity.AdvisorRequest;
 import com.senior.spm.entity.AdvisorRequest.RequestStatus;
 import com.senior.spm.entity.GroupMembership;
 import com.senior.spm.entity.GroupMembership.MemberRole;

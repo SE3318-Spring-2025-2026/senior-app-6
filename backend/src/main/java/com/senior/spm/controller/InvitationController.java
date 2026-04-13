@@ -23,9 +23,6 @@ import com.senior.spm.service.InvitationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-// TODO: Issue #45 — [Backend] Invitation Lifecycle Services & Controller
-// This skeleton was scaffolded as part of Issue #40 (Base API Layer).
-// Full service wiring, business rules, and transactional logic belong to Issue #45.
 /**
  * REST controller for invitation-owned lifecycle endpoints.
  *

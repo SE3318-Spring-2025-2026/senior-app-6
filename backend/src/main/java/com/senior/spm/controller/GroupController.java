@@ -99,7 +99,6 @@ public class GroupController {
         return ResponseEntity.ok(response);
     }
 
-    // TODO: Issue #45 — [Backend] Invitation Lifecycle Services & Controller
     /**
      * Send a group invitation to a target student.
      * Auth: Student JWT (must be TEAM_LEADER of groupId)

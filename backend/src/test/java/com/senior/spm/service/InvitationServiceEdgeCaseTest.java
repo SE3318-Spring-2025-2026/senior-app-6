@@ -6,8 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,7 +30,6 @@ import com.senior.spm.exception.AlreadyInGroupException;
 import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.DuplicateInvitationException;
 import com.senior.spm.exception.ForbiddenException;
-import com.senior.spm.exception.InvitationNotFoundException;
 import com.senior.spm.exception.InvitationNotPendingException;
 import com.senior.spm.repository.GroupInvitationRepository;
 import com.senior.spm.repository.GroupMembershipRepository;

@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.senior.spm.entity.AdvisorRequest;
 import com.senior.spm.service.SymmetricEncryptionService;
@@ -26,7 +26,7 @@ abstract class RepositoryTestBase {
 
     // AccessTokenEncryptionConverter (on Student.accessToken) depends on this service.
     // @DataJpaTest doesn't load @Service beans, so we mock it to satisfy the dependency.
-    @MockBean
+    @MockitoBean
     SymmetricEncryptionService symmetricEncryptionService;
 
     @Autowired

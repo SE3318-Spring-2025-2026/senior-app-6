@@ -11,8 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 
-// TODO: Issue #45 — [Backend] Invitation Lifecycle Services & Controller
-// Student search is part of the invitation dispatch flow (DFD 2.2).
+// TODO: Implement student search endpoint — requires StudentService.searchAvailableStudents(q)
 @RestController
 @RequestMapping("/api/students")
 @RequiredArgsConstructor

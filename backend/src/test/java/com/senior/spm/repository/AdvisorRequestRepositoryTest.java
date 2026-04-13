@@ -40,7 +40,7 @@ class AdvisorRequestRepositoryTest extends RepositoryTestBase {
         LocalDateTime earlier = LocalDateTime.now().minusHours(2);
         LocalDateTime later = LocalDateTime.now().minusHours(1);
 
-        AdvisorRequest old = makeAdvisorRequest(group, prof, RequestStatus.REJECTED, earlier);
+        makeAdvisorRequest(group, prof, RequestStatus.REJECTED, earlier);
         AdvisorRequest recent = makeAdvisorRequest(group, prof, RequestStatus.PENDING, later);
 
         var result = repo.findTopByGroupIdOrderBySentAtDesc(group.getId());

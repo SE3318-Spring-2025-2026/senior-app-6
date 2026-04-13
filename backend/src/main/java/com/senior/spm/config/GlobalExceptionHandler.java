@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,7 +17,6 @@ import com.senior.spm.exception.AdvisorAtCapacityException;
 import com.senior.spm.exception.AdvisorNotFoundException;
 import com.senior.spm.exception.AlreadyInGroupException;
 import com.senior.spm.exception.BusinessRuleException;
-import com.senior.spm.exception.DuplicateInvitationException;
 import com.senior.spm.exception.DuplicateGroupNameException;
 import com.senior.spm.exception.DuplicateInvitationException;
 import com.senior.spm.exception.DuplicateRequestException;
@@ -48,6 +48,12 @@ public class GlobalExceptionHandler {
         var message = "Access denied: " + authority.getAuthority()
                 + " does not have permission to access this resource.";
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorMessage(message));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorMessage> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorMessage("Invalid request body: " + ex.getMessage()));
     }
 
     @ExceptionHandler(RuntimeException.class)

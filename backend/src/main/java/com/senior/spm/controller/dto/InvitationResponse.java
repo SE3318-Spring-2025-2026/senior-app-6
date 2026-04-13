@@ -1,4 +1,3 @@
-// TODO: Issue #45 — [Backend] Invitation Lifecycle Services & Controller
 package com.senior.spm.controller.dto;
 
 import java.time.LocalDateTime;

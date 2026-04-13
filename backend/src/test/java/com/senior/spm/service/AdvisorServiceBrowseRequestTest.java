@@ -336,7 +336,7 @@ class AdvisorServiceBrowseRequestTest {
             AdvisorRequest saved = buildRequest(RequestStatus.PENDING);
             when(advisorRequestRepository.save(any())).thenReturn(saved);
 
-            AdvisorRequestResponse response = advisorService.sendAdvisorRequest(GROUP_ID, ADVISOR_ID, STUDENT_UUID);
+            advisorService.sendAdvisorRequest(GROUP_ID, ADVISOR_ID, STUDENT_UUID);
 
             ArgumentCaptor<AdvisorRequest> captor = ArgumentCaptor.forClass(AdvisorRequest.class);
             verify(advisorRequestRepository).save(captor.capture());
