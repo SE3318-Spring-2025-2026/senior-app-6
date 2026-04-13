@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.senior.spm.controller.dto.AdvisorCapacityResponse;
-import com.senior.spm.controller.dto.AdvisorRequestResponse;
-import com.senior.spm.controller.dto.AdvisorRespondRequest;
-import com.senior.spm.controller.dto.SendAdvisorRequestBody;
+import com.senior.spm.controller.response.AdvisorCapacityResponse;
+import com.senior.spm.controller.response.AdvisorRequestResponse;
+import com.senior.spm.controller.request.AdvisorRespondRequest;
+import com.senior.spm.controller.request.SendAdvisorRequestBody;
 import com.senior.spm.service.AdvisorService;
 import com.senior.spm.service.dto.AdvisorRequestDetail;
 import com.senior.spm.service.dto.AdvisorRequestSummary;

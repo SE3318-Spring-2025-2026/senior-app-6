@@ -9,8 +9,8 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.senior.spm.controller.dto.BindToolResponse;
-import com.senior.spm.controller.dto.GroupDetailResponse;
+import com.senior.spm.controller.response.BindToolResponse;
+import com.senior.spm.controller.response.GroupDetailResponse;
 import com.senior.spm.controller.response.GroupSummaryResponse;
 import com.senior.spm.entity.AdvisorRequest.RequestStatus;
 import com.senior.spm.entity.GroupMembership;
@@ -407,11 +407,11 @@ public class GroupService {
         // 4. Check max team size (current members + pending outbound invitations)
         long currentMembers = groupMembershipRepository.countByGroupId(groupId);
         long pendingInvitations = groupInvitationRepository.countByGroupIdAndStatus(
-            groupId, 
+            groupId,
             com.senior.spm.entity.GroupInvitation.InvitationStatus.PENDING
         );
         long totalCount = currentMembers + pendingInvitations;
-        
+
         int maxTeamSize = termConfigService.getMaxTeamSize();
         if (totalCount >= maxTeamSize) {
             throw new BusinessRuleException("Group has reached maximum team size");

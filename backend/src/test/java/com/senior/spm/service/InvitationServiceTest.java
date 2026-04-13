@@ -22,8 +22,8 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.senior.spm.controller.dto.GroupDetailResponse;
-import com.senior.spm.controller.dto.InvitationResponse;
+import com.senior.spm.controller.response.GroupDetailResponse;
+import com.senior.spm.controller.response.InvitationResponse;
 import com.senior.spm.entity.GroupInvitation;
 import com.senior.spm.entity.GroupInvitation.InvitationStatus;
 import com.senior.spm.entity.GroupMembership;

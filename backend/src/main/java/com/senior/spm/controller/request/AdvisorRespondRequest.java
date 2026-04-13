@@ -1,4 +1,4 @@
-package com.senior.spm.controller.dto;
+package com.senior.spm.controller.request;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

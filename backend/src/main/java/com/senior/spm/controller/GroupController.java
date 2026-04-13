@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.senior.spm.controller.dto.BindGithubRequest;
-import com.senior.spm.controller.dto.BindJiraRequest;
-import com.senior.spm.controller.dto.BindToolResponse;
-import com.senior.spm.controller.dto.CreateGroupRequest;
-import com.senior.spm.controller.dto.GroupDetailResponse;
-import com.senior.spm.controller.dto.InvitationResponse;
-import com.senior.spm.controller.dto.SendInvitationRequest;
+import com.senior.spm.controller.request.BindGithubRequest;
+import com.senior.spm.controller.request.BindJiraRequest;
+import com.senior.spm.controller.response.BindToolResponse;
+import com.senior.spm.controller.request.CreateGroupRequest;
+import com.senior.spm.controller.response.GroupDetailResponse;
+import com.senior.spm.controller.response.InvitationResponse;
+import com.senior.spm.controller.request.SendInvitationRequest;
 import com.senior.spm.service.GroupService;
 import com.senior.spm.service.InvitationService;
 
@@ -39,11 +39,11 @@ public class GroupController {
 
     /**
      * Create a new group for the authenticated student.
-     * 
+     *
      * Validates that the student is not already in a group, the group name is unique for the current term,
      * and the GROUP_CREATION schedule window is active. On success, creates a ProjectGroup and adds
      * the requesting student as TEAM_LEADER.
-     * 
+     *
      * @param request the {@link CreateGroupRequest} containing the group name (required)
      * @return {@link ResponseEntity} with status 201 and {@link GroupDetailResponse} containing:
      *         - id: UUID of the created group
@@ -52,7 +52,7 @@ public class GroupController {
      *         - status: initial status is FORMING
      *         - createdAt: ISO-8601 timestamp
      *         - members: list containing the TEAM_LEADER member record
-     *         
+     *
      *         Error responses:
      *         - 400: if group creation window is not active, student is already in a group, or group name is duplicate
      *         - 409: if a group with the same name already exists for the term
@@ -70,10 +70,10 @@ public class GroupController {
 
     /**
      * Retrieve the authenticated student's current group details.
-     * 
+     *
      * Returns the complete group information including members, tool binding status (Jira, GitHub),
      * and all relevant metadata.
-     * 
+     *
      * @return {@link ResponseEntity} with status 200 and {@link GroupDetailResponse} containing:
      *         - id: UUID of the group
      *         - groupName: the group name
@@ -86,7 +86,7 @@ public class GroupController {
      *         - githubOrgName: GitHub organization name (null if not bound)
      *         - githubBound: boolean indicating if GitHub is bound
      *         - members: list of group members with studentId, role (TEAM_LEADER or MEMBER), and joinedAt
-     *         
+     *
      *         Error responses:
      *         - 404: if the authenticated student is not a member of any group
      */

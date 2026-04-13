@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.senior.spm.controller.response.InvitationResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -77,7 +78,7 @@ class InvitationServicePersistenceTest {
         createMembership(groupA, MemberRole.TEAM_LEADER);
         createMembership(groupB, MemberRole.TEAM_LEADER);
         createMembership(groupC, MemberRole.TEAM_LEADER);
-        
+
         entityManager.flush();
         entityManager.clear();
     }
@@ -110,7 +111,7 @@ class InvitationServicePersistenceTest {
         assertThat(updatedA.getStatus()).isEqualTo(InvitationStatus.ACCEPTED);
         assertThat(updatedB.getStatus()).isEqualTo(InvitationStatus.AUTO_DENIED);
         assertThat(updatedC.getStatus()).isEqualTo(InvitationStatus.AUTO_DENIED);
-        
+
         // 4. Verify Membership
         assertThat(groupMembershipRepository.findByGroupIdAndStudentId(groupA.getId(), student.getId()).isPresent()).isTrue();
     }
@@ -144,13 +145,13 @@ class InvitationServicePersistenceTest {
         groupA = projectGroupRepository.findById(groupA.getId()).orElseThrow();
 
         GroupInvitation inv = createInvitation(groupA, student);
-        
+
         // Setup: Group A is at 4 members. Max is 5.
         // setUp() already created 1 Leader. We add 4 more members to hit 5.
         for (int i = 0; i < 4; i++) {
             createMembership(groupA, MemberRole.MEMBER);
         }
-        
+
         entityManager.flush();
         entityManager.clear();
 
@@ -172,7 +173,7 @@ class InvitationServicePersistenceTest {
         student = studentRepository.findById(student.getId()).orElseThrow();
         groupA = projectGroupRepository.findById(groupA.getId()).orElseThrow();
         GroupInvitation inv = createInvitation(groupA, student);
-        
+
         invitationService.respondToInvitation(inv.getId(), student.getId(), true);
 
         entityManager.flush();
@@ -214,7 +215,7 @@ class InvitationServicePersistenceTest {
         entityManager.flush();
         entityManager.clear();
 
-        List<com.senior.spm.controller.dto.InvitationResponse> results =
+        List<InvitationResponse> results =
             invitationService.getPendingInvitations(student.getId());
 
         assertThat(results).hasSize(1);

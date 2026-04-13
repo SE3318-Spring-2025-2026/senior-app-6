@@ -23,9 +23,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.senior.spm.controller.dto.AdvisorCapacityResponse;
-import com.senior.spm.controller.dto.AdvisorOverrideResponse;
-import com.senior.spm.controller.dto.AdvisorRequestResponse;
+import com.senior.spm.controller.response.AdvisorCapacityResponse;
+import com.senior.spm.controller.response.AdvisorOverrideResponse;
+import com.senior.spm.controller.response.AdvisorRequestResponse;
 import com.senior.spm.entity.AdvisorRequest;
 import com.senior.spm.entity.AdvisorRequest.RequestStatus;
 import com.senior.spm.entity.GroupMembership;

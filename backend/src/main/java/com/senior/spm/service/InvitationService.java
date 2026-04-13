@@ -8,8 +8,8 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.senior.spm.controller.dto.InvitationActionResponse;
-import com.senior.spm.controller.dto.InvitationResponse;
+import com.senior.spm.controller.response.InvitationActionResponse;
+import com.senior.spm.controller.response.InvitationResponse;
 import com.senior.spm.entity.GroupInvitation;
 import com.senior.spm.entity.GroupInvitation.InvitationStatus;
 import com.senior.spm.entity.GroupMembership;

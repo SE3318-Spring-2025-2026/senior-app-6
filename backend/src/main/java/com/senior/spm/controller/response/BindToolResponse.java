@@ -1,4 +1,4 @@
-package com.senior.spm.controller.dto;
+package com.senior.spm.controller.response;
 
 import java.util.UUID;
 

@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.senior.spm.controller.dto.AdvisorCapacityResponse;
-import com.senior.spm.controller.dto.AdvisorOverrideResponse;
-import com.senior.spm.controller.dto.AdvisorRequestResponse;
+import com.senior.spm.controller.response.AdvisorCapacityResponse;
+import com.senior.spm.controller.response.AdvisorOverrideResponse;
+import com.senior.spm.controller.response.AdvisorRequestResponse;
 import com.senior.spm.entity.AdvisorRequest;
 import com.senior.spm.entity.GroupMembership;
 import com.senior.spm.entity.ProjectGroup;

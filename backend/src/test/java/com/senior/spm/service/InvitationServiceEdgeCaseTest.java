@@ -17,8 +17,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.senior.spm.controller.dto.GroupDetailResponse;
-import com.senior.spm.controller.dto.InvitationResponse;
+import com.senior.spm.controller.response.GroupDetailResponse;
+import com.senior.spm.controller.response.InvitationResponse;
 import com.senior.spm.entity.GroupInvitation;
 import com.senior.spm.entity.GroupInvitation.InvitationStatus;
 import com.senior.spm.entity.GroupMembership;
@@ -154,7 +154,7 @@ class InvitationServiceEdgeCaseTest {
     void respondToInvitation_accept_ignoresPendingOutboundCapacity() {
         when(groupInvitationRepository.findById(invitation.getId())).thenReturn(Optional.of(invitation));
         when(projectGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
-        
+
         when(groupMembershipRepository.countByGroupId(groupId)).thenReturn(4L);
         when(termConfigService.getMaxTeamSize()).thenReturn(5);
         when(groupMembershipRepository.existsByStudentId(inviteeId)).thenReturn(false);
@@ -188,7 +188,7 @@ class InvitationServiceEdgeCaseTest {
 
         assertThat(response).isInstanceOf(InvitationResponse.class);
         assertThat(((InvitationResponse)response).getStatus()).isEqualTo("DECLINED");
-        
+
         // Ensure auto-deny logic was NOT triggered
         verify(groupInvitationRepository, never()).autoDenyOtherPendingInvitationsExcept(any(), any());
     }

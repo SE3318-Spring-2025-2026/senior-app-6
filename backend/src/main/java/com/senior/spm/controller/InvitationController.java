@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.senior.spm.controller.dto.InvitationActionResponse;
-import com.senior.spm.controller.dto.InvitationResponse;
-import com.senior.spm.controller.dto.RespondInvitationRequest;
+import com.senior.spm.controller.response.InvitationActionResponse;
+import com.senior.spm.controller.response.InvitationResponse;
+import com.senior.spm.controller.request.RespondInvitationRequest;
 import com.senior.spm.service.InvitationService;
 
 import jakarta.validation.Valid;

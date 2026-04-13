@@ -13,10 +13,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.senior.spm.controller.dto.AdvisorCapacityResponse;
-import com.senior.spm.controller.dto.AdvisorOverrideRequest;
-import com.senior.spm.controller.dto.AdvisorOverrideResponse;
-import com.senior.spm.controller.dto.GroupDetailResponse;
+import com.senior.spm.controller.response.AdvisorCapacityResponse;
+import com.senior.spm.controller.request.AdvisorOverrideRequest;
+import com.senior.spm.controller.response.AdvisorOverrideResponse;
+import com.senior.spm.controller.response.GroupDetailResponse;
 import com.senior.spm.controller.request.CoordinatorMemberRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.MapDeliverablesRequest;

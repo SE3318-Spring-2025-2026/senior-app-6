@@ -27,8 +27,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.senior.spm.controller.dto.GroupDetailResponse;
-import com.senior.spm.controller.dto.InvitationResponse;
+import com.senior.spm.controller.response.GroupDetailResponse;
+import com.senior.spm.controller.response.InvitationResponse;
 import com.senior.spm.service.GroupService;
 import com.senior.spm.service.GithubService;
 import com.senior.spm.service.InvitationService;

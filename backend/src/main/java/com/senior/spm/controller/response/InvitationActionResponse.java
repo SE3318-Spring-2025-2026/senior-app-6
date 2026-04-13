@@ -1,4 +1,4 @@
-package com.senior.spm.controller.dto;
+package com.senior.spm.controller.response;
 
 public sealed interface InvitationActionResponse permits GroupDetailResponse, InvitationResponse {
 }

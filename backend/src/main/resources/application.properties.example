@@ -13,6 +13,8 @@ jwt.expiration=604800000
 # Generate a key with: openssl rand -base64 32
 encryption.key=
 encryption.secret=
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
 
 # --- Swagger / springdoc (Development by default) ---
 # Swagger UI is enabled in development.

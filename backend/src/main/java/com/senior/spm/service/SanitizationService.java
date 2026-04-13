@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.senior.spm.controller.dto.SanitizationReport;
+import com.senior.spm.controller.response.SanitizationReport;
 import com.senior.spm.entity.AdvisorRequest.RequestStatus;
 import com.senior.spm.entity.ProjectGroup;
 import com.senior.spm.entity.ProjectGroup.GroupStatus;

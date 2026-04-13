@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.senior.spm.controller.dto.SanitizationReport;
-import com.senior.spm.controller.dto.SanitizationTriggerRequest;
+import com.senior.spm.controller.response.SanitizationReport;
+import com.senior.spm.controller.request.SanitizationTriggerRequest;
 import com.senior.spm.service.SanitizationService;
 
 import lombok.RequiredArgsConstructor;
