@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.exception.AdvisorAtCapacityException;
+import com.senior.spm.exception.RepositoryException;
 import com.senior.spm.exception.AdvisorNotFoundException;
 import com.senior.spm.exception.AlreadyInGroupException;
 import com.senior.spm.exception.BusinessRuleException;
@@ -48,6 +49,12 @@ public class GlobalExceptionHandler {
         var message = "Access denied: " + authority.getAuthority()
                 + " does not have permission to access this resource.";
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorMessage(message));
+    }
+
+    @ExceptionHandler(RepositoryException.class)
+    public ResponseEntity<ErrorMessage> handleRepositoryException(RepositoryException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorMessage("An unexpected error occurred: " + ex.getMessage()));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
