@@ -32,16 +32,34 @@
 		advisors.value.find((advisor) => advisor.advisorId === selectedAdvisorId.value) || null
 	);
 
+	const hasAssignedAdvisor = computed(() =>
+		Boolean(group.value?.advisorId) || group.value?.status === "ADVISOR_ASSIGNED"
+	);
+
 	const assignedAdvisor = computed(() => {
-		if (!group.value?.advisorId) {
+		const currentGroup = group.value;
+		if (!currentGroup || (!currentGroup.advisorId && !hasAssignedAdvisor.value)) {
 			return null;
 		}
 
+		if (!currentGroup.advisorId) {
+			return {
+				advisorId: "",
+				name: currentGroup.advisorName || "Assigned advisor",
+				mail: currentGroup.advisorMail || "",
+				currentGroupCount: 0,
+				capacity: 0,
+				atCapacity: false,
+			};
+		}
+
 		return (
-			advisors.value.find((advisor) => advisor.advisorId === group.value?.advisorId) || {
-				advisorId: group.value.advisorId,
-				name: group.value.advisorName || "Assigned advisor",
-				mail: group.value.advisorMail || "",
+			advisors.value.find((advisor) => advisor.advisorId === currentGroup.advisorId) ||
+			selectedAdvisor.value ||
+			{
+				advisorId: currentGroup.advisorId,
+				name: currentGroup.advisorName || "Assigned advisor",
+				mail: currentGroup.advisorMail || "",
 				currentGroupCount: 0,
 				capacity: 0,
 				atCapacity: false,
@@ -70,7 +88,7 @@
 			}
 
 			group.value = await fetchCoordinatorGroup(groupId.value, token);
-			selectedAdvisorId.value = group.value.advisorId || selectedAdvisorId.value;
+			selectedAdvisorId.value = group.value.advisorId || "";
 		} catch (error: unknown) {
 			const apiError = error as { message?: string };
 			group.value = null;
@@ -124,8 +142,8 @@
 				...group.value,
 				status: response.status,
 				advisorId: response.advisorId,
-				advisorName: advisor?.name || group.value.advisorName || null,
-				advisorMail: advisor?.mail || group.value.advisorMail || null,
+				advisorName: advisor?.name || null,
+				advisorMail: advisor?.mail || null,
 			};
 			removeConfirmationArmed.value = false;
 			advisorMessage.value = "Advisor assigned. Group status updated without a reload.";
@@ -144,7 +162,7 @@
 
 		if (!removeConfirmationArmed.value) {
 			removeConfirmationArmed.value = true;
-			advisorMessage.value = "Click Remove Advisor again to confirm removal.";
+			advisorMessage.value = "Click Confirm Removal to remove the advisor from this group.";
 			return;
 		}
 
@@ -356,7 +374,7 @@
               <button
                 type="button"
                 class="inline-flex items-center justify-center gap-2 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-70 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/30"
-                :disabled="!group.advisorId || submitting"
+                :disabled="!hasAssignedAdvisor || submitting"
                 @click="handleRemoveAdvisor"
               >
                 <UserMinus class="h-4 w-4" />
