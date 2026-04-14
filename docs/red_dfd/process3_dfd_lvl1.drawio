@@ -1,0 +1,365 @@
+<mxfile host="65bd71144e">
+    <diagram id="dfd-level-1-p3" name="P3 Advisor Association Architecture">
+        <mxGraphModel dx="1339" dy="818" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" background="#F9F9F9" math="0" shadow="1">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;&lt;b&gt;P3 Level 1 DFD: Advisor Association &amp;amp; Sanitization&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="10" width="800" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: #dae8fc; border: 1px solid #6c8ebf; padding: 2px 5px;&quot;&gt; External Actors &lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;background-color: #ffe6cc; border: 1px solid #d79b00; padding: 2px 5px;&quot;&gt; Sub-Processes &lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;background-color: #d5e8d4; border: 1px solid #82b366; padding: 2px 5px;&quot;&gt; Data Stores &lt;/span&gt;&lt;/div&gt;" style="rounded=1;html=1;fillColor=#ffffff;strokeColor=#cccccc;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="1420" y="20" width="120" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="actor_student" value="&lt;b&gt;STUDENT&lt;/b&gt;&lt;br&gt;(Team Leader)" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="197" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="actor_advisor" value="&lt;b&gt;ADVISOR&lt;/b&gt;&lt;br&gt;(Professor)" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="452" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="actor_coordinator" value="&lt;b&gt;COORDINATOR&lt;/b&gt;" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="952" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="p41" value="&lt;b&gt;3.1&lt;/b&gt;&lt;br&gt;Browse Advisors&lt;br&gt;&amp;amp; Send Request" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="182" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="p42" value="&lt;b&gt;3.2&lt;/b&gt;&lt;br&gt;Advisor Reviews&lt;br&gt;Pending Requests" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="402" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="p43" value="&lt;b&gt;3.3&lt;/b&gt;&lt;br&gt;Process Association&lt;br&gt;Response" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="590" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="p44" value="&lt;b&gt;3.4&lt;/b&gt;&lt;br&gt;Auto-Sanitization&lt;br&gt;(Disband Unadvised)" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="750" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="p45" value="&lt;b&gt;3.5&lt;/b&gt;&lt;br&gt;Coordinator&lt;br&gt;Advisor Override" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="450" y="930" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="ds_term" value="D1: Term Config" style="shape=partialRectangle;right=0;left=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontColor=#333333;fontStyle=1;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="990" y="147" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="ds_users" value="D2: Users (Profiles, Roles)" style="shape=partialRectangle;right=0;left=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontColor=#333333;fontStyle=1;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="990" y="320" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="ds_groups" value="D3: Groups &amp;amp; Committees" style="shape=partialRectangle;right=0;left=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontColor=#333333;fontStyle=1;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="990" y="620" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_stu_p41" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.056;entryY=0.721;entryDx=0;entryDy=0;textShadow=0;entryPerimeter=0;" parent="1" target="p41" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="200" y="247.0000000000001" as="sourcePoint"/>
+                        <mxPoint x="449.9999999999998" y="232.0000000000001" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_stu_p41" value="groupId, targetAdvisorId" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_stu_p41" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint y="-12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p41_stu" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0;exitY=0.3;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;textShadow=0;" parent="1" source="p41" target="actor_student" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="200" y="210"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p41_stu" value="RequestResponse (id, PENDING)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p41_stu" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="15" y="-13" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_d1_p41" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.823;entryY=0.09;entryDx=0;entryDy=0;textShadow=0;entryPerimeter=0;" parent="1" target="p41" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="990" y="160.02" as="sourcePoint"/>
+                        <mxPoint x="601.6475870816591" y="160.0008212565953" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_d1_p41" value="Active window check" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_d1_p41" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="-87" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_d2_p41" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.001;exitY=0.442;exitDx=0;exitDy=0;textShadow=0;entryX=0.913;entryY=0.227;entryDx=0;entryDy=0;entryPerimeter=0;exitPerimeter=0;" parent="1" source="ds_users" target="p41" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="990" y="340"/>
+                            <mxPoint x="950" y="340"/>
+                            <mxPoint x="950" y="202"/>
+                        </Array>
+                        <mxPoint x="990" y="434" as="sourcePoint"/>
+                        <mxPoint x="598.96" y="201.67999999999995" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_d2_p41" value="Available advisors (below capacity)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_d2_p41" vertex="1" connectable="0">
+                    <mxGeometry x="0.7" relative="1" as="geometry">
+                        <mxPoint x="17" y="-8" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_d3_p41" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;textShadow=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="ds_groups" target="p41" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1080" y="500"/>
+                            <mxPoint x="920" y="500"/>
+                            <mxPoint x="920" y="240"/>
+                        </Array>
+                        <mxPoint x="1170" y="640" as="sourcePoint"/>
+                        <mxPoint x="579.9972586110688" y="269.4244161685707" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_d3_p41" value="TOOLS_BOUND check + no PENDING request" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_d3_p41" vertex="1" connectable="0">
+                    <mxGeometry x="0.8" relative="1" as="geometry">
+                        <mxPoint x="81" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p41_d3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;textShadow=0;" parent="1" source="p41" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="530" y="280"/>
+                            <mxPoint x="900" y="280"/>
+                            <mxPoint x="900" y="520"/>
+                            <mxPoint x="1040" y="520"/>
+                        </Array>
+                        <mxPoint x="640.0002068630711" y="246.97084334042688" as="sourcePoint"/>
+                        <mxPoint x="1040.31" y="620" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p41_d3" value="AdvisorRequest record (PENDING)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p41_d3" vertex="1" connectable="0">
+                    <mxGeometry x="0.2" relative="1" as="geometry">
+                        <mxPoint x="-150" y="-145" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_adv_p42" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;textShadow=0;exitX=0.643;exitY=-0.033;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.441;entryY=0.006;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" target="p42" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="120.01999999999998" y="447.45" as="sourcePoint"/>
+                        <mxPoint x="436" y="422.0199999999999" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="120" y="370"/>
+                            <mxPoint x="520" y="370"/>
+                            <mxPoint x="520" y="403"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_adv_p42" value="advisorId" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_adv_p42" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="137" y="-8" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p42_adv" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;entryX=1;entryY=0.7;entryDx=0;entryDy=0;textShadow=0;" parent="1" source="p42" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="396.59" y="433.6199999999999" as="sourcePoint"/>
+                        <mxPoint x="140.03" y="452" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="140" y="434"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p42_adv" value="RequestListResponse" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p42_adv" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="-71" y="-12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_d3_p42" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.188;exitY=-0.063;exitDx=0;exitDy=0;entryX=0.92;entryY=0.813;entryDx=0;entryDy=0;textShadow=0;exitPerimeter=0;entryPerimeter=0;" parent="1" source="ds_groups" target="p42" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1024" y="560"/>
+                            <mxPoint x="880" y="560"/>
+                            <mxPoint x="880" y="475"/>
+                        </Array>
+                        <mxPoint x="990" y="644.65" as="sourcePoint"/>
+                        <mxPoint x="604.3236102995718" y="430.0015112928959" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_d3_p42" value="PENDING requests + group summary" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_d3_p42" vertex="1" connectable="0">
+                    <mxGeometry x="0.7" relative="1" as="geometry">
+                        <mxPoint x="38" y="-15" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_adv_p43" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.024;entryY=0.322;entryDx=0;entryDy=0;textShadow=0;entryPerimeter=0;" parent="1" target="p43" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="140" y="619"/>
+                        </Array>
+                        <mxPoint x="140.04" y="512" as="sourcePoint"/>
+                        <mxPoint x="430.41890388135295" y="618.7780225829028" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_adv_p43" value="requestId, ACCEPTED | REJECTED" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_adv_p43" vertex="1" connectable="0">
+                    <mxGeometry x="0.5" relative="1" as="geometry">
+                        <mxPoint x="2" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p43_adv" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0;exitY=0.7;exitDx=0;exitDy=0;textShadow=0;" parent="1" target="actor_advisor" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="455" y="650"/>
+                            <mxPoint x="120" y="650"/>
+                        </Array>
+                        <mxPoint x="455.3789038813529" y="651.2219774170972" as="sourcePoint"/>
+                        <mxPoint x="130" y="512" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p43_adv" value="AssociationResponse" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p43_adv" vertex="1" connectable="0">
+                    <mxGeometry x="0.5" relative="1" as="geometry">
+                        <mxPoint x="60" y="7" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_d3_p43" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=-0.002;exitY=0.13;exitDx=0;exitDy=0;textShadow=0;exitPerimeter=0;" parent="1" source="ds_groups" target="p43" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="990" y="631.66" as="sourcePoint"/>
+                        <mxPoint x="604.3173449666999" y="610.0026640591881" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="990" y="627"/>
+                            <mxPoint x="990" y="627"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_d3_p43" value="Pending request record" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_d3_p43" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="-76" y="-12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p43_d3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=1;exitY=0.7;exitDx=0;exitDy=0;textShadow=0;" parent="1" source="p43" target="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="900" y="652"/>
+                            <mxPoint x="900" y="652"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p43_d3" value="advisorId + ADVISOR_ASSIGNED + AUTO_REJECT others" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p43_d3" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint y="12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_d1_p44" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;textShadow=0;" parent="1" target="p44" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1208" y="150"/>
+                            <mxPoint x="1208" y="780"/>
+                        </Array>
+                        <mxPoint x="1170" y="150.00000000000006" as="sourcePoint"/>
+                        <mxPoint x="610.0002068630711" y="778.0291566595731" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_d1_p44" value="Closed window check" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_d1_p44" vertex="1" connectable="0">
+                    <mxGeometry x="0.9" relative="1" as="geometry">
+                        <mxPoint x="13" y="-15" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_d3_p44" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.17;exitY=1.046;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;textShadow=0;exitPerimeter=0;" parent="1" source="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1021" y="810"/>
+                        </Array>
+                        <mxPoint x="980" y="670" as="sourcePoint"/>
+                        <mxPoint x="600" y="810" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_d3_p44" value="Groups without advisorId" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_d3_p44" vertex="1" connectable="0">
+                    <mxGeometry x="0.5" relative="1" as="geometry">
+                        <mxPoint x="-60" y="-15" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p44_d3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.77;exitY=0.916;exitDx=0;exitDy=0;entryX=0.069;entryY=1.032;entryDx=0;entryDy=0;textShadow=0;entryPerimeter=0;exitPerimeter=0;" parent="1" source="p44" target="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="573" y="835"/>
+                            <mxPoint x="1002" y="835"/>
+                        </Array>
+                        <mxPoint x="580" y="835" as="sourcePoint"/>
+                        <mxPoint x="960" y="700" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p44_d3" value="status → DISBANDED" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p44_d3" vertex="1" connectable="0">
+                    <mxGeometry x="0.5" relative="1" as="geometry">
+                        <mxPoint x="-332" y="6" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p44_coord" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=0.735;entryY=0.056;entryDx=0;entryDy=0;textShadow=0;entryPerimeter=0;" parent="1" source="p44" target="actor_coordinator" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="455" y="813"/>
+                            <mxPoint x="163" y="813"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p44_coord" value="SanitizationReport" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p44_coord" vertex="1" connectable="0">
+                    <mxGeometry x="0.5" relative="1" as="geometry">
+                        <mxPoint x="197" y="-46" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_coord_p45" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;textShadow=0;" parent="1" source="actor_coordinator" target="p45" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="450" y="970"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_coord_p45" value="groupId, advisorId, ASSIGN | REMOVE" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_coord_p45" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="5" y="-23" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p45_coord" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0;exitY=0.7;exitDx=0;exitDy=0;entryX=1;entryY=0.7;entryDx=0;entryDy=0;textShadow=0;" parent="1" source="p45" target="actor_coordinator" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="456" y="994"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p45_coord" value="Updated GroupDetail" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p45_coord" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="44" y="-12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_d3_p45" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.289;exitY=1.008;exitDx=0;exitDy=0;entryX=1;entryY=0.3;entryDx=0;entryDy=0;textShadow=0;exitPerimeter=0;" parent="1" source="ds_groups" target="p45" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1040" y="670"/>
+                            <mxPoint x="1040" y="880"/>
+                            <mxPoint x="850" y="880"/>
+                            <mxPoint x="850" y="957"/>
+                            <mxPoint x="610" y="957"/>
+                            <mxPoint x="610" y="958"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_d3_p45" value="Current advisor assignment" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_d3_p45" vertex="1" connectable="0">
+                    <mxGeometry x="0.8" relative="1" as="geometry">
+                        <mxPoint x="285" y="-87" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_d2_p45" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0.942;entryY=0.71;entryDx=0;entryDy=0;textShadow=0;entryPerimeter=0;" parent="1" source="ds_users" target="p45" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1190" y="355"/>
+                            <mxPoint x="1190" y="994"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_d2_p45" value="Advisor lookup (Professor role)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_d2_p45" vertex="1" connectable="0">
+                    <mxGeometry x="0.9" relative="1" as="geometry">
+                        <mxPoint x="432" y="-11" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p45_d3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=1;exitY=0.5;exitDx=0;exitDy=0;textShadow=0;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="880" y="980"/>
+                            <mxPoint x="880" y="930"/>
+                            <mxPoint x="1060" y="930"/>
+                        </Array>
+                        <mxPoint x="610" y="980" as="sourcePoint"/>
+                        <mxPoint x="1060" y="670" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p45_d3" value="Updated advisorId + status" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p45_d3" vertex="1" connectable="0">
+                    <mxGeometry x="0.2" relative="1" as="geometry">
+                        <mxPoint x="-36" y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="5" value="System Boundary&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#FF0000;strokeWidth=2;dashed=1;align=right;verticalAlign=top;spacingRight=10;spacingTop=10;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="90" width="540" height="970" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

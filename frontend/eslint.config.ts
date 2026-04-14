@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { globalIgnores } from 'eslint/config'
 import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
 import pluginVue from 'eslint-plugin-vue'
@@ -10,18 +11,30 @@ import prettier from "eslint-config-prettier"
 // configureVueProject({ scriptLangs: ['ts', 'tsx'] })
 // More info at https://github.com/vuejs/eslint-config-typescript/#advanced-setup
 
+const oxlintConfig = existsSync('.oxlintrc.json')
+	? pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json')
+	: []
+
 export default defineConfigWithVueTs(
   {
     name: 'app/files-to-lint',
     files: ['**/*.{vue,ts,mts,tsx}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['**/.nuxt/**', '**/.output/**', '**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
 
   ...pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
 
-  ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
+  ...oxlintConfig,
+
+  {
+    name: 'app/nuxt-overrides',
+    files: ['layouts/**/*.vue', 'pages/**/*.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  },
 
   skipFormatting,
 

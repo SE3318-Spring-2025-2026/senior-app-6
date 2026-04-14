@@ -1,5 +1,6 @@
 package com.senior.spm.entity;
 
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -9,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,6 +39,15 @@ public class StaffUser {
 
     @Column(nullable = false)
     private boolean firstLogin = true;
+
+    @Column(nullable = false)
+    private int advisorCapacity = 5;
+
+    @OneToMany(mappedBy = "advisor")
+    private List<ProjectGroup> advisedGroups;
+
+    @OneToMany(mappedBy = "advisor")
+    private List<AdvisorRequest> receivedRequests;
 
     public enum Role {
         Admin, Coordinator, Professor

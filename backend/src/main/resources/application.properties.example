@@ -7,6 +7,18 @@ spring.jpa.defer-datasource-initialization=true
 spring.sql.init.mode=always
 jwt.secret=
 jwt.expiration=604800000
+
+# AES-256-GCM key for encrypting GitHub PATs and JIRA API tokens at rest (NFR-7).
+# Must be a Base64-encoded value that decodes to exactly 32 bytes (256 bits).
+# Generate a key with: openssl rand -base64 32
+encryption.key=
 encryption.secret=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
+
+# --- Swagger / springdoc (Development by default) ---
+# Swagger UI is enabled in development.
+springdoc.swagger-ui.enabled=true
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.enabled=true
+springdoc.api-docs.path=/v3/api-docs

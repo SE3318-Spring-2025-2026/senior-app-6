@@ -1,0 +1,539 @@
+<mxfile host="65bd71144e">
+    <diagram id="dfd-level-1" name="Group Management Architecture">
+        <mxGraphModel dx="1913" dy="1169" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" background="#F9F9F9" math="0" shadow="1">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" value="&lt;font style=&quot;font-size: 24px;&quot;&gt;&lt;b&gt;P2 Level 1 DFD: Group Management &amp;amp; Integration&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="20" y="10" width="600" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: #dae8fc; border: 1px solid #6c8ebf; padding: 2px 5px;&quot;&gt; External Actors &lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;background-color: #ffe6cc; border: 1px solid #d79b00; padding: 2px 5px;&quot;&gt; Sub-Processes &lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;background-color: #d5e8d4; border: 1px solid #82b366; padding: 2px 5px;&quot;&gt; Data Stores &lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;background-color: #e1d5e7; border: 1px solid #9673a6; padding: 2px 5px;&quot;&gt; External APIs &lt;/span&gt;&lt;/div&gt;" style="rounded=1;html=1;fillColor=#ffffff;strokeColor=#cccccc;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="1400" y="20" width="130" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="actor_student" value="&lt;b&gt;STUDENT&lt;/b&gt;&lt;br&gt;(Student / Team Leader)" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="90" y="499.28000000000003" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="actor_coordinator" value="&lt;b&gt;COORDINATOR&lt;/b&gt;" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="90" y="970" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="16" style="edgeStyle=none;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.008;entryY=0.169;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;" parent="1" source="p31" target="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="660" y="265"/>
+                            <mxPoint x="660" y="330"/>
+                            <mxPoint x="900" y="330"/>
+                            <mxPoint x="900" y="600"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="17" value="Group record + TEAM_LEADER membership" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="16" vertex="1" connectable="0">
+                    <mxGeometry x="0.0545" y="-3" relative="1" as="geometry">
+                        <mxPoint x="-107" y="-32" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="p31" value="&lt;b&gt;2.1&lt;/b&gt;&lt;br&gt;Validate Schedule&lt;br&gt;&amp;amp; Create Group" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="220" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" style="edgeStyle=none;html=1;textShadow=0;exitX=0.801;exitY=0.123;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.005;entryY=0.212;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="p32" target="ds_students" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="659" y="370" as="sourcePoint"/>
+                        <mxPoint x="980" y="411.09652892561985" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="820" y="380"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="19" value="Target student lookup" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="18" vertex="1" connectable="0">
+                    <mxGeometry x="-0.1882" y="-2" relative="1" as="geometry">
+                        <mxPoint x="-58" y="-12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="23" style="edgeStyle=none;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0.218;entryY=-0.001;entryDx=0;entryDy=0;textShadow=0;entryPerimeter=0;" parent="1" target="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="606.7537080814132" y="436.71530745726045" as="sourcePoint"/>
+                        <mxPoint x="980" y="1015" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="620" y="440"/>
+                            <mxPoint x="620" y="460"/>
+                            <mxPoint x="680" y="460"/>
+                            <mxPoint x="890" y="460"/>
+                            <mxPoint x="1020" y="460"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="26" value="Invitation record " style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="23" vertex="1" connectable="0">
+                    <mxGeometry x="-0.7085" y="-2" relative="1" as="geometry">
+                        <mxPoint x="4" y="-12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="p32" value="&lt;b&gt;2.2&lt;/b&gt;&lt;br&gt;Search Student&lt;br&gt;&amp;amp; Send Invitation" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="370" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="29" style="edgeStyle=none;html=1;exitX=0.995;exitY=0.565;exitDx=0;exitDy=0;entryX=0.112;entryY=-0.008;entryDx=0;entryDy=0;textShadow=0;entryPerimeter=0;exitPerimeter=0;" parent="1" source="p33" target="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="569.9985424949239" y="559.2798051533948" as="sourcePoint"/>
+                        <mxPoint x="943.43" y="1010.68" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="1000" y="550"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="30" value="Updated invitation status" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="29" vertex="1" connectable="0">
+                    <mxGeometry x="-0.6253" y="3" relative="1" as="geometry">
+                        <mxPoint x="25" y="-8" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="p33" value="&lt;b&gt;2.3&lt;/b&gt;&lt;br&gt;Process Invitation&lt;br&gt;Response" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="499.28" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="36" style="edgeStyle=none;html=1;textShadow=0;exitX=0.631;exitY=0.982;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.134;entryY=1.012;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="p34" target="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="540" y="750" as="sourcePoint"/>
+                        <mxPoint x="1018.2843810046666" y="639.28" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="570" y="750"/>
+                            <mxPoint x="670" y="750"/>
+                            <mxPoint x="800" y="750"/>
+                            <mxPoint x="1004" y="750"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="37" value="encryptedJiraToken, URL, projectKey" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="36" vertex="1" connectable="0">
+                    <mxGeometry x="-0.5528" y="3" relative="1" as="geometry">
+                        <mxPoint x="34" y="-8" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="p34" value="&lt;b&gt;2.4&lt;/b&gt;&lt;br&gt;Validate &amp;amp;&lt;br&gt;Bind JIRA" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="670" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="42" style="edgeStyle=none;html=1;exitX=0.909;exitY=0.758;exitDx=0;exitDy=0;entryX=0.283;entryY=1.01;entryDx=0;entryDy=0;textShadow=0;entryPerimeter=0;exitPerimeter=0;" parent="1" source="p35" target="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1152.3400000000001" y="440.44999999999993" as="targetPoint"/>
+                        <mxPoint x="609.9999999999982" y="885" as="sourcePoint"/>
+                        <Array as="points">
+                            <mxPoint x="1031" y="890"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="43" value="Status → TOOLS_BOUND" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="42" vertex="1" connectable="0">
+                    <mxGeometry x="-0.823" y="5" relative="1" as="geometry">
+                        <mxPoint x="34" y="-3" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="58" style="edgeStyle=none;html=1;exitX=0.221;exitY=0.917;exitDx=0;exitDy=0;exitPerimeter=0;textShadow=0;" parent="1" source="p35" target="api_github" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1454.7999999999997" y="820" as="targetPoint"/>
+                        <mxPoint x="473.4314575050739" y="893.2998051533959" as="sourcePoint"/>
+                        <Array as="points">
+                            <mxPoint x="495" y="920"/>
+                            <mxPoint x="420" y="920"/>
+                            <mxPoint x="420" y="1170"/>
+                            <mxPoint x="1340" y="1170"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="59" value="Org + repo-scope test call" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="58" vertex="1" connectable="0">
+                    <mxGeometry x="0.3693" y="1" relative="1" as="geometry">
+                        <mxPoint x="-109" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="p35" value="&lt;b&gt;2.5&lt;/b&gt;&lt;br&gt;Validate &amp;amp;&lt;br&gt;Bind GitHub" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="820" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="49" style="edgeStyle=none;html=1;exitX=0.968;exitY=0.672;exitDx=0;exitDy=0;textShadow=0;entryX=0.379;entryY=0.98;entryDx=0;entryDy=0;entryPerimeter=0;exitPerimeter=0;" parent="1" source="p36" target="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="900" y="1030"/>
+                            <mxPoint x="1050" y="1030"/>
+                            <mxPoint x="1050" y="920"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="50" value="Updated membership" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="49" vertex="1" connectable="0">
+                    <mxGeometry x="-0.8656" y="-3" relative="1" as="geometry">
+                        <mxPoint x="42" y="-13" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="p36" value="&lt;b&gt;2.6&lt;/b&gt;&lt;br&gt;Coordinator&lt;br&gt;Group Override" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="970" width="160" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="ds_schedule" value="D1: Term Config" style="shape=partialRectangle;right=0;left=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontColor=#333333;fontStyle=1;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="980" y="220" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="ds_students" value="D2: Users (Profiles, Roles)" style="shape=partialRectangle;right=0;left=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontColor=#333333;fontStyle=1;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="981" y="370" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="44" style="edgeStyle=none;html=1;entryX=0.913;entryY=0.205;entryDx=0;entryDy=0;textShadow=0;exitX=0.01;exitY=0.786;exitDx=0;exitDy=0;exitPerimeter=0;entryPerimeter=0;" parent="1" source="ds_groups" target="p36" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1025" y="438" as="sourcePoint"/>
+                        <mxPoint x="620" y="1003" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="860" y="630"/>
+                            <mxPoint x="860" y="990"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="45" value="Current membership" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="44" vertex="1" connectable="0">
+                    <mxGeometry x="0.6982" y="-3" relative="1" as="geometry">
+                        <mxPoint x="-21" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="ds_groups" value="D3: Groups &amp;amp; Committees,&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: rgb(51, 51, 51);&quot;&gt;Bound Tokens&lt;/span&gt;&lt;/div&gt;" style="shape=partialRectangle;right=0;left=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontColor=#333333;fontStyle=1;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="980" y="589.28" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="api_jira" value="&lt;b&gt;JIRA REST API&lt;/b&gt;" style="rounded=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="650" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="60" style="edgeStyle=none;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.329;entryY=0.933;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;" parent="1" source="api_github" target="p35" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="468.84033956579765" y="903.5871816570645" as="targetPoint"/>
+                        <mxPoint x="1389.0322580645159" y="840" as="sourcePoint"/>
+                        <Array as="points">
+                            <mxPoint x="1300" y="1140"/>
+                            <mxPoint x="440" y="1140"/>
+                            <mxPoint x="440" y="940"/>
+                            <mxPoint x="513" y="940"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="61" value="200 / 401 / 403 / 404" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="60" vertex="1" connectable="0">
+                    <mxGeometry x="-0.1415" y="-5" relative="1" as="geometry">
+                        <mxPoint x="-471" y="-5" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="api_github" value="&lt;b&gt;GitHub REST API&lt;/b&gt;" style="rounded=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="1260" y="760" width="140" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e_stu_p31" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.355;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=-0.001;entryY=0.564;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;" parent="1" source="actor_student" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="140" y="270.28"/>
+                        </Array>
+                        <mxPoint x="140" y="499.28000000000003" as="sourcePoint"/>
+                        <mxPoint x="459.8399999999999" y="270.03999999999985" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_stu_p31" value="groupName,&amp;nbsp;&lt;span style=&quot;color: rgb(63, 63, 63); background-color: light-dark(rgb(255, 255, 255), rgb(18, 18, 18));&quot;&gt;termId, studentId&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_stu_p31" vertex="1" connectable="0">
+                    <mxGeometry x="0.2" relative="1" as="geometry">
+                        <mxPoint x="50" y="10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p31_stu" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;entryX=0.219;entryY=0.078;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.061;exitY=0.342;exitDx=0;exitDy=0;exitPerimeter=0;textShadow=0;" parent="1" target="actor_student" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="121" y="250.28"/>
+                        </Array>
+                        <mxPoint x="469.76" y="250.05999999999997" as="sourcePoint"/>
+                        <mxPoint x="120.03999999999989" y="499.28000000000003" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p31_stu" value="GroupResponse (id, status=FORMING)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p31_stu" vertex="1" connectable="0">
+                    <mxGeometry x="0.2" relative="1" as="geometry">
+                        <mxPoint x="160" y="-22" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_ds0_p31" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;textShadow=0;exitX=-0.008;exitY=0.589;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="ds_schedule" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="950" y="250"/>
+                            <mxPoint x="950" y="210"/>
+                            <mxPoint x="580" y="210"/>
+                        </Array>
+                        <mxPoint x="945.62" y="212.5" as="sourcePoint"/>
+                        <mxPoint x="580.0447233265651" y="230" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_ds0_p31" value="Active window check" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_ds0_p31" vertex="1" connectable="0">
+                    <mxGeometry x="-0.1" relative="1" as="geometry">
+                        <mxPoint x="-32" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_stu_p32" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.718;exitY=0;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.021;entryY=0.453;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;" parent="1" source="actor_student" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="191" y="410.28000000000003"/>
+                        </Array>
+                        <mxPoint x="190.5" y="499.28000000000003" as="sourcePoint"/>
+                        <mxPoint x="463.3599999999999" y="410.05" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_stu_p32" value="targetStudentId, groupId" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_stu_p32" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="-10" y="20" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p32_stu" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;entryX=0.571;entryY=0.072;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.111;exitY=0.227;exitDx=0;exitDy=0;exitPerimeter=0;textShadow=0;" parent="1" target="actor_student" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="170" y="389.28000000000003"/>
+                        </Array>
+                        <mxPoint x="477.76" y="389.70999999999987" as="sourcePoint"/>
+                        <mxPoint x="170" y="499.28000000000003" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p32_stu" value="InvitationResponse" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p32_stu" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="24" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_stu_p33" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.976;exitY=0.478;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.006;entryY=0.406;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;" parent="1" target="p33" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points"/>
+                        <mxPoint x="226.64" y="536.1" as="sourcePoint"/>
+                        <mxPoint x="460.00002321995805" y="552.4542857142857" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="12" value="&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;invitationId, ACCEPTED | DECLINED&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="e_stu_p33" vertex="1" connectable="0">
+                    <mxGeometry x="-0.1434" y="-1" relative="1" as="geometry">
+                        <mxPoint x="3" y="-11" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_stu_p34" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.712;exitY=0.994;exitDx=0;exitDy=0;exitPerimeter=0;entryX=-0.001;entryY=0.432;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;" parent="1" source="actor_student" target="p34" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="190" y="708"/>
+                            <mxPoint x="460" y="708"/>
+                        </Array>
+                        <mxPoint x="190" y="559.28" as="sourcePoint"/>
+                        <mxPoint x="470" y="709" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_stu_p34" value="jiraSpaceUrl,&amp;nbsp;&lt;span style=&quot;color: rgb(63, 63, 63); background-color: light-dark(rgb(255, 255, 255), rgb(18, 18, 18));&quot;&gt;projectKey, token&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_stu_p34" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="43" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p34_stu" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;entryX=0.574;entryY=0.928;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.045;exitY=0.675;exitDx=0;exitDy=0;exitPerimeter=0;textShadow=0;" parent="1" source="p34" target="actor_student" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="467" y="729"/>
+                            <mxPoint x="170" y="729"/>
+                        </Array>
+                        <mxPoint x="460" y="730" as="sourcePoint"/>
+                        <mxPoint x="170" y="559.28" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p34_stu" value="Bind confirmation or error" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p34_stu" vertex="1" connectable="0">
+                    <mxGeometry x="0.2" relative="1" as="geometry">
+                        <mxPoint x="130" y="10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_stu_p35" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.362;exitY=0.978;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.026;entryY=0.444;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;" parent="1" source="actor_student" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="141" y="859.28"/>
+                        </Array>
+                        <mxPoint x="139.5" y="559.28" as="sourcePoint"/>
+                        <mxPoint x="464.15999999999985" y="859.24" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_stu_p35" value="githubOrgName, org_owner_githubPAT" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_stu_p35" vertex="1" connectable="0">
+                    <mxGeometry x="0.2" relative="1" as="geometry">
+                        <mxPoint x="88" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p35_stu" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;entryX=0.214;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.059;exitY=0.676;exitDx=0;exitDy=0;exitPerimeter=0;textShadow=0;" parent="1" target="actor_student" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="120" y="880.28"/>
+                        </Array>
+                        <mxPoint x="469.4399999999998" y="880.1199999999999" as="sourcePoint"/>
+                        <mxPoint x="120" y="559.28" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p35_stu" value="Bind confirmation or error" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p35_stu" vertex="1" connectable="0">
+                    <mxGeometry x="0.2" relative="1" as="geometry">
+                        <mxPoint x="170" y="64" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_coor_p36" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;entryX=0.139;entryY=0.213;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.979;exitY=0.367;exitDx=0;exitDy=0;exitPerimeter=0;textShadow=0;" parent="1" source="actor_coordinator" target="p36" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="227" y="990"/>
+                            <mxPoint x="300" y="990"/>
+                        </Array>
+                        <mxPoint x="250" y="980" as="sourcePoint"/>
+                        <mxPoint x="470" y="977" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_coor_p36" value="groupId, studentId" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_coor_p36" vertex="1" connectable="0">
+                    <mxGeometry x="-0.1" relative="1" as="geometry">
+                        <mxPoint x="-2" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e_p36_coor" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.019;exitY=0.484;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;textShadow=0;" parent="1" source="p36" target="actor_coordinator" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="463" y="1015"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l_p36_coor" value="Updated GroupDetail" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="e_p36_coor" vertex="1" connectable="0">
+                    <mxGeometry x="0.1" relative="1" as="geometry">
+                        <mxPoint x="-3" y="15" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="14" style="edgeStyle=none;html=1;exitX=0.213;exitY=-0.018;exitDx=0;exitDy=0;entryX=0.933;entryY=0.261;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;exitPerimeter=0;" parent="1" source="ds_students" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="994.2400000000002" y="413.24" as="sourcePoint"/>
+                        <mxPoint x="620" y="250" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="1020" y="320"/>
+                            <mxPoint x="940" y="320"/>
+                            <mxPoint x="940" y="280"/>
+                            <mxPoint x="700" y="280"/>
+                            <mxPoint x="700" y="250"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="15" value="Creator student record" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="14" vertex="1" connectable="0">
+                    <mxGeometry x="0.2528" y="2" relative="1" as="geometry">
+                        <mxPoint x="-18" y="-12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="21" style="edgeStyle=none;html=1;entryX=1;entryY=0;entryDx=0;entryDy=0;textShadow=0;exitX=-0.01;exitY=0.358;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="979.9999999999999" y="596.73" as="sourcePoint"/>
+                        <mxPoint x="614.4170149517724" y="420.24132782874824" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="854" y="607"/>
+                            <mxPoint x="854.42" y="420"/>
+                            <mxPoint x="767.74" y="420"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="22" value="Membership check" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="21" vertex="1" connectable="0">
+                    <mxGeometry x="0.2838" y="3" relative="1" as="geometry">
+                        <mxPoint x="-101" y="-16" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="27" style="edgeStyle=none;html=1;exitX=0.166;exitY=-0.059;exitDx=0;exitDy=0;entryX=0.926;entryY=0.222;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;exitPerimeter=0;" parent="1" source="ds_groups" target="p33" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1085.0000000000002" y="569.3499999999999" as="sourcePoint"/>
+                        <mxPoint x="590" y="509.99999999999994" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="1010" y="520"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="28" value="Pending invitation record" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="27" vertex="1" connectable="0">
+                    <mxGeometry x="0.6633" y="2" relative="1" as="geometry">
+                        <mxPoint x="10" y="-12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="31" style="edgeStyle=none;html=1;exitX=0.765;exitY=0.919;exitDx=0;exitDy=0;entryX=0.035;entryY=0.393;entryDx=0;entryDy=0;exitPerimeter=0;textShadow=0;entryPerimeter=0;" parent="1" source="p33" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="580" y="620"/>
+                            <mxPoint x="834.6999999999999" y="619.3"/>
+                            <mxPoint x="934.6999999999999" y="619.3"/>
+                        </Array>
+                        <mxPoint x="609.9" y="562.6399999999999" as="sourcePoint"/>
+                        <mxPoint x="981.0000000000001" y="618.23" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="32" value="GroupMembership (role=MEMBER)" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="31" vertex="1" connectable="0">
+                    <mxGeometry x="-0.3699" relative="1" as="geometry">
+                        <mxPoint x="16" y="-11" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="33" style="edgeStyle=none;html=1;exitX=0.058;exitY=0.983;exitDx=0;exitDy=0;entryX=0.97;entryY=0.53;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;exitPerimeter=0;" parent="1" source="ds_groups" target="p34" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="990" y="720"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="34" value="TEAM_LEADER check" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="33" vertex="1" connectable="0">
+                    <mxGeometry x="0.7482" relative="1" as="geometry">
+                        <mxPoint x="48" y="-8" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="38" style="edgeStyle=none;html=1;textShadow=0;exitX=0.057;exitY=0.971;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.97;entryY=0.33;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="ds_groups" target="p35" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1161.44" y="430" as="sourcePoint"/>
+                        <mxPoint x="620" y="850" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="990" y="850"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="39" value="TEAM_LEADER check" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="38" vertex="1" connectable="0">
+                    <mxGeometry x="0.7482" relative="1" as="geometry">
+                        <mxPoint x="21" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="40" style="edgeStyle=none;html=1;exitX=0.715;exitY=0.049;exitDx=0;exitDy=0;textShadow=0;exitPerimeter=0;entryX=0.213;entryY=1.01;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="p35" target="ds_groups" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1033.23" y="639.28" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="574" y="800"/>
+                            <mxPoint x="1020" y="800"/>
+                        </Array>
+                        <mxPoint x="559.9994945571289" y="830.9236333590501" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="41" value="encryptedGithubPAT, orgName" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="40" vertex="1" connectable="0">
+                    <mxGeometry x="-0.433" relative="1" as="geometry">
+                        <mxPoint x="-36" y="-8" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="47" style="edgeStyle=none;html=1;textShadow=0;exitX=1.013;exitY=0.585;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.578;entryY=0.965;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="ds_students" target="p36" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1200" y="399"/>
+                            <mxPoint x="1200" y="1090"/>
+                            <mxPoint x="1100" y="1090"/>
+                            <mxPoint x="810" y="1090"/>
+                            <mxPoint x="820" y="1090"/>
+                            <mxPoint x="550" y="1090"/>
+                        </Array>
+                        <mxPoint x="1160" y="406.6700000000001" as="sourcePoint"/>
+                        <mxPoint x="740" y="1030" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="48" value="T&lt;span style=&quot;color: rgb(63, 63, 63); background-color: light-dark(#ffffff, var(--ge-dark-color, #121212));&quot;&gt;arget student lookup&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="47" vertex="1" connectable="0">
+                    <mxGeometry x="0.5616" y="-3" relative="1" as="geometry">
+                        <mxPoint x="-169" y="-7" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="51" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;textShadow=0;" parent="1" source="p34" target="api_jira" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="610" y="660" as="sourcePoint"/>
+                        <mxPoint x="1360" y="600" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="528" y="640"/>
+                            <mxPoint x="440" y="640"/>
+                            <mxPoint x="440" y="190"/>
+                            <mxPoint x="1280" y="190"/>
+                            <mxPoint x="1280" y="680"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="52" value="Validation test call" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;textShadow=0;" parent="51" vertex="1" connectable="0">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="624" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="53" style="edgeStyle=none;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.149;entryY=0.254;entryDx=0;entryDy=0;entryPerimeter=0;textShadow=0;" parent="1" source="api_jira" target="p34" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1330" y="160"/>
+                            <mxPoint x="430" y="160"/>
+                            <mxPoint x="430" y="660"/>
+                            <mxPoint x="484" y="660"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="55" value="200 OK or error" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];textShadow=0;" parent="53" vertex="1" connectable="0">
+                    <mxGeometry x="0.6035" y="3" relative="1" as="geometry">
+                        <mxPoint x="47" y="-205" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="67" value="System Boundary&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#FF0000;strokeWidth=2;dashed=1;align=right;verticalAlign=top;spacingRight=10;spacingTop=10;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="90" width="530" height="1100" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

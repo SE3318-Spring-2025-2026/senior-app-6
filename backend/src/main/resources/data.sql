@@ -95,3 +95,7 @@ VALUES (
     NOW(),
     DATE_ADD(NOW(), INTERVAL 1 DAY)
 );
+
+-- Issue 55: Red Team system_config seed data
+INSERT IGNORE INTO system_config (config_key, config_value) VALUES ('active_term_id', '2026-SPRING');
+INSERT IGNORE INTO system_config (config_key, config_value) VALUES ('max_team_size', '4');

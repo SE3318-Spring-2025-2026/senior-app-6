@@ -4,6 +4,7 @@
  */
 
 import { useAuthStore } from '~/stores/auth';
+import type { GroupDetailResponse, CreateGroupResponse, CreateGroupRequest } from '~/types/group';
 
 export interface ApiError {
   status: number;
@@ -249,11 +250,11 @@ export function useApiClient() {
 
   async function updateRubric(deliverableId: string, criteria: GradingCriterion[], token?: string): Promise<RubricCriterionResponse[]> {
     return apiCall<RubricCriterionResponse[]>(
-			`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`,
-			"POST",
-			{ criteria: criteria },
-			token
-		);
+      `/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`,
+      "POST",
+      { criteria: criteria },
+      token
+    );
   }
 
   async function createSprintDeliverableMapping(
@@ -278,6 +279,14 @@ export function useApiClient() {
     return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", { mail }, token);
   }
 
+  async function createGroup(data: CreateGroupRequest, token?: string): Promise<CreateGroupResponse> {
+    return apiCall<CreateGroupResponse>("/groups", "POST", data, token);
+  }
+
+  async function fetchMyGroup(token?: string): Promise<GroupDetailResponse> {
+    return apiCall<GroupDetailResponse>("/groups/my", "GET", undefined, token);
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -298,5 +307,7 @@ export function useApiClient() {
     createSprintDeliverableMapping,
     publishConfig,
     registerProfessor,
+    createGroup,
+    fetchMyGroup,
   };
 }

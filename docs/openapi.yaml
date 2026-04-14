@@ -114,6 +114,7 @@ components:
         weight:
           type: number
 
+    # ── P4 — Blue Team ────────────────────────────────────────────────────────
     CommitteeSummary:
       type: object
       properties:
@@ -176,6 +177,432 @@ components:
           items:
             type: string
             format: uuid
+
+    # ── P2 — Red Team ─────────────────────────────────────────────────────────
+    GroupMember:
+      type: object
+      properties:
+        studentId:
+          type: string
+        role:
+          type: string
+          enum: [TEAM_LEADER, MEMBER]
+        joinedAt:
+          type: string
+          format: date-time
+
+    CreateGroupRequest:
+      type: object
+      required: [groupName]
+      properties:
+        groupName:
+          type: string
+
+    CreateGroupResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        groupName:
+          type: string
+        termId:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupMember'
+
+    GroupDetailResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        groupName:
+          type: string
+        termId:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        jiraSpaceUrl:
+          type: string
+          nullable: true
+        jiraProjectKey:
+          type: string
+          nullable: true
+        jiraBound:
+          type: boolean
+        githubOrgName:
+          type: string
+          nullable: true
+        githubBound:
+          type: boolean
+        advisorId:
+          type: string
+          format: uuid
+          nullable: true
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupMember'
+
+    StudentSearchResponse:
+      type: object
+      properties:
+        studentId:
+          type: string
+        githubUsername:
+          type: string
+          nullable: true
+        inGroup:
+          type: boolean
+
+    SendInvitationRequest:
+      type: object
+      required: [targetStudentId]
+      properties:
+        targetStudentId:
+          type: string
+
+    InvitationResponse:
+      type: object
+      properties:
+        invitationId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        targetStudentId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, ACCEPTED, DECLINED, AUTO_DENIED, CANCELLED]
+        sentAt:
+          type: string
+          format: date-time
+
+    PendingInvitationResponse:
+      type: object
+      properties:
+        invitationId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        groupName:
+          type: string
+        teamLeaderStudentId:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+
+    RespondInvitationRequest:
+      type: object
+      required: [accept]
+      properties:
+        accept:
+          type: boolean
+
+    DeclineInvitationResponse:
+      type: object
+      properties:
+        invitationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+
+    BindJiraRequest:
+      type: object
+      required: [jiraSpaceUrl, jiraProjectKey, jiraApiToken]
+      properties:
+        jiraSpaceUrl:
+          type: string
+        jiraProjectKey:
+          type: string
+        jiraApiToken:
+          type: string
+
+    BindJiraResponse:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        jiraSpaceUrl:
+          type: string
+        jiraProjectKey:
+          type: string
+        jiraBound:
+          type: boolean
+
+    BindGithubRequest:
+      type: object
+      required: [githubOrgName, githubPat]
+      properties:
+        githubOrgName:
+          type: string
+        githubPat:
+          type: string
+
+    BindGithubResponse:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        githubOrgName:
+          type: string
+        githubBound:
+          type: boolean
+
+    CoordinatorGroupSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        groupName:
+          type: string
+        termId:
+          type: string
+        status:
+          type: string
+        memberCount:
+          type: integer
+        jiraBound:
+          type: boolean
+        githubBound:
+          type: boolean
+
+    CoordinatorMemberActionRequest:
+      type: object
+      required: [studentId, action]
+      properties:
+        studentId:
+          type: string
+        action:
+          type: string
+          enum: [ADD, REMOVE]
+
+    CoordinatorDisbandResponse:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        status:
+          type: string
+
+    # ── P3 — Red Team ─────────────────────────────────────────────────────────
+    AdvisorSummary:
+      type: object
+      properties:
+        advisorId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        mail:
+          type: string
+        currentGroupCount:
+          type: integer
+        capacity:
+          type: integer
+
+    CoordinatorAdvisorSummary:
+      type: object
+      properties:
+        advisorId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        mail:
+          type: string
+        currentGroupCount:
+          type: integer
+        capacity:
+          type: integer
+        atCapacity:
+          type: boolean
+
+    AdvisorRequestPayload:
+      type: object
+      required: [advisorId]
+      properties:
+        advisorId:
+          type: string
+          format: uuid
+
+    AdvisorRequestCreatedResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        advisorId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+
+    AdvisorRequestDetailStudent:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        advisorId:
+          type: string
+          format: uuid
+        advisorName:
+          type: string
+        status:
+          type: string
+        sentAt:
+          type: string
+          format: date-time
+        respondedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    AdvisorRequestCancelResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        status:
+          type: string
+
+    AdvisorRequestSummaryProfessor:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        groupName:
+          type: string
+        termId:
+          type: string
+        memberCount:
+          type: integer
+        sentAt:
+          type: string
+          format: date-time
+
+    AdvisorRequestDetailProfessor:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        group:
+          $ref: '#/components/schemas/GroupDetailResponse'
+        sentAt:
+          type: string
+          format: date-time
+
+    RespondAdvisorRequestPayload:
+      type: object
+      required: [accept]
+      properties:
+        accept:
+          type: boolean
+
+    RespondAdvisorRequestAcceptResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        groupId:
+          type: string
+          format: uuid
+        groupStatus:
+          type: string
+
+    RespondAdvisorRequestRejectResponse:
+      type: object
+      properties:
+        requestId:
+          type: string
+          format: uuid
+        status:
+          type: string
+
+    SanitizeRequest:
+      type: object
+      properties:
+        force:
+          type: boolean
+
+    SanitizationReportResponse:
+      type: object
+      properties:
+        disbandedCount:
+          type: integer
+        autoRejectedRequestCount:
+          type: integer
+        triggeredAt:
+          type: string
+          format: date-time
+
+    CoordinatorAdvisorActionRequest:
+      type: object
+      required: [action]
+      description: For action=ASSIGN, advisorId is required. For action=REMOVE, advisorId is ignored.
+      properties:
+        action:
+          type: string
+          enum: [ASSIGN, REMOVE]
+        advisorId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Required when action=ASSIGN. Ignored when action=REMOVE.
+
+    CoordinatorAdvisorActionResponse:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        status:
+          type: string
+        advisorId:
+          type: string
+          format: uuid
+          nullable: true
 
 security:
   - bearerAuth: []
@@ -749,6 +1176,740 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
 
+  # ── P2 — Red Team ────────────────────────────────────────────────────────────
+
+  /groups:
+    post:
+      tags: [Student]
+      summary: Validate Schedule & Create Group
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGroupRequest'
+      responses:
+        '201':
+          description: Group created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateGroupResponse'
+        '400':
+          description: Schedule window closed or student already in a group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: Group name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /groups/my:
+    get:
+      tags: [Student]
+      summary: Get student's current group
+      responses:
+        '200':
+          description: Returns the group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupDetailResponse'
+        '404':
+          description: Not a member of any group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /students/search:
+    get:
+      tags: [Student]
+      summary: Search ungrouped students
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Returns list of available students
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentSearchResponse'
+        '400':
+          description: Query parameter too short
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /groups/{groupId}/invitations:
+    post:
+      tags: [Student]
+      summary: Send Invitation
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendInvitationRequest'
+      responses:
+        '201':
+          description: Invitation sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationResponse'
+        '400':
+          description: Target student already in a group; group is DISBANDED; or (members + pending invitations) >= max team size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not the Team Leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: Pending invitation already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    get:
+      tags: [Student]
+      summary: List group invitations
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns list of invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InvitationResponse'
+        '403':
+          description: Caller is not the Team Leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /invitations/{invitationId}:
+    delete:
+      tags: [Student]
+      summary: Cancel a pending invitation
+      parameters:
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Invitation cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeclineInvitationResponse'
+        '400':
+          description: Invitation is no longer pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not the Team Leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Invitation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /invitations/pending:
+    get:
+      tags: [Student]
+      summary: List pending invitations for the student
+      responses:
+        '200':
+          description: Returns list of pending invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PendingInvitationResponse'
+
+  /invitations/{invitationId}/respond:
+    patch:
+      tags: [Student]
+      summary: Respond to an invitation
+      parameters:
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RespondInvitationRequest'
+      responses:
+        '200':
+          description: Invitation processed successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/GroupDetailResponse'
+                  - $ref: '#/components/schemas/DeclineInvitationResponse'
+        '400':
+          description: Invitation is no longer pending; or group status is TOOLS_BOUND or higher (roster lock blocks student accept)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Invitation does not belong to the user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Invitation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /groups/{groupId}/jira:
+    post:
+      tags: [Student]
+      summary: Validate and Bind JIRA
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindJiraRequest'
+      responses:
+        '200':
+          description: JIRA successfully bound
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BindJiraResponse'
+        '400':
+          description: Group is DISBANDED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not the Team Leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '422':
+          description: JIRA Validation Failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /groups/{groupId}/github:
+    post:
+      tags: [Student]
+      summary: Validate and Bind GitHub
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BindGithubRequest'
+      responses:
+        '200':
+          description: GitHub successfully bound
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BindGithubResponse'
+        '400':
+          description: Group is DISBANDED
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not the Team Leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '422':
+          description: GitHub Validation Failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/groups:
+    get:
+      tags: [Coordinator]
+      summary: List all groups for the active term
+      responses:
+        '200':
+          description: Returns list of all groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CoordinatorGroupSummary'
+
+  /coordinator/groups/{groupId}:
+    get:
+      tags: [Coordinator]
+      summary: Get details of a specific group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns group details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupDetailResponse'
+        '404':
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/groups/{groupId}/members:
+    patch:
+      tags: [Coordinator]
+      summary: Add or remove a member manually
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoordinatorMemberActionRequest'
+      responses:
+        '200':
+          description: Group member updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GroupDetailResponse'
+        '400':
+          description: Removing the Team Leader; or (members + pending invitations) >= max team size on ADD
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Group or Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/groups/{groupId}/disband:
+    patch:
+      tags: [Coordinator]
+      summary: Disband a group manually
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Group disbanded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoordinatorDisbandResponse'
+        '400':
+          description: Group already disbanded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Group not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  # ── P3 — Red Team ────────────────────────────────────────────────────────────
+
+  /advisors:
+    get:
+      tags: [Student]
+      summary: Browse available advisors
+      responses:
+        '200':
+          description: Returns list of available advisors below capacity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdvisorSummary'
+
+  /groups/{groupId}/advisor-request:
+    post:
+      tags: [Student]
+      summary: Send an advisor request
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdvisorRequestPayload'
+      responses:
+        '201':
+          description: Advisor request sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvisorRequestCreatedResponse'
+        '400':
+          description: Window inactive, status not TOOLS_BOUND, or advisor at capacity
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not the Team Leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Advisor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: Pending request already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    get:
+      tags: [Student]
+      summary: Get group's advisor request status
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns the latest advisor request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvisorRequestDetailStudent'
+        '403':
+          description: Not a member of the group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: No request found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    delete:
+      tags: [Student]
+      summary: Cancel an advisor request
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Request cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvisorRequestCancelResponse'
+        '400':
+          description: No active pending request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not the Team Leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Group or request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /advisor/requests:
+    get:
+      tags: [Professor]
+      summary: Get all pending advisor requests for the professor
+      responses:
+        '200':
+          description: Returns list of pending requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdvisorRequestSummaryProfessor'
+
+  /advisor/requests/{requestId}:
+    get:
+      tags: [Professor]
+      summary: Get details of a specific advisor request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns request details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdvisorRequestDetailProfessor'
+        '403':
+          description: Request not addressed to this professor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /advisor/requests/{requestId}/respond:
+    patch:
+      tags: [Professor]
+      summary: Respond to an advisor request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RespondAdvisorRequestPayload'
+      responses:
+        '200':
+          description: Request processed successfully
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/RespondAdvisorRequestAcceptResponse'
+                  - $ref: '#/components/schemas/RespondAdvisorRequestRejectResponse'
+        '400':
+          description: Request is no longer pending; or advisor has reached maximum capacity (AdvisorAtCapacityException — request stays PENDING, group can retry)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Request not addressed to this professor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/sanitize:
+    post:
+      tags: [Coordinator]
+      summary: Trigger auto-sanitization manually
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SanitizeRequest'
+      responses:
+        '200':
+          description: Sanitization run complete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanitizationReportResponse'
+        '400':
+          description: Window is active and force flag not set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/advisors:
+    get:
+      tags: [Coordinator]
+      summary: List all professors with capacity status
+      responses:
+        '200':
+          description: Returns list of all advisors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CoordinatorAdvisorSummary'
+
+  /coordinator/groups/{groupId}/advisor:
+    patch:
+      tags: [Coordinator]
+      summary: Override group advisor assignment
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CoordinatorAdvisorActionRequest'
+      responses:
+        '200':
+          description: Advisor overridden successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoordinatorAdvisorActionResponse'
+        '400':
+          description: ASSIGN — group is DISBANDED (no DISBANDED→ADVISOR_ASSIGNED transition); or group status is not TOOLS_BOUND or ADVISOR_ASSIGNED. REMOVE — group has no assigned advisor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Group or advisor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  # ── P4 — Blue Team ────────────────────────────────────────────────────────
   /committees:
     post:
       summary: Create a new committee for a specific term
