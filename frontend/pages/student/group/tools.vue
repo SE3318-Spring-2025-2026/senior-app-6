@@ -79,7 +79,8 @@ async function loadGroup() {
     group.value = fetchedGroup;
 
     if (!fetchedGroup.members.some((member) => member.studentId === currentStudentId.value)) {
-      throw new Error("Your account is not part of this group.");
+      await router.replace("/forbidden");
+      return;
     }
 
     if (!fetchedGroup.members.some((member) => member.studentId === currentStudentId.value && member.role === "TEAM_LEADER")) {
@@ -87,6 +88,12 @@ async function loadGroup() {
       return;
     }
   } catch (error: unknown) {
+    const apiError = error as { status?: number; message?: string };
+    if (apiError.status === 404 || apiError.status === 403) {
+      await router.replace("/forbidden");
+      return;
+    }
+
     const errorMessage =
       error && typeof error === "object" && "message" in error
         ? String(error.message)
@@ -196,7 +203,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
               {{ group.groupName }}
             </p>
             <div class="mt-2">
-              <GroupStatusBadge :status="group.status" />
+              <UiGroupStatusBadge :status="group.status" />
             </div>
           </div>
         </div>
