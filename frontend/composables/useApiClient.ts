@@ -65,6 +65,21 @@ export interface RubricCriterionResponse {
   weight: number;
 }
 
+export interface CoordinatorGroupSummary {
+  id: string;
+  groupName: string;
+  termId: string;
+  status: string;
+  memberCount: number;
+  jiraBound: boolean;
+  githubBound: boolean;
+}
+
+export interface CoordinatorGroupMemberActionRequest {
+  studentId: string;
+  action: "ADD" | "REMOVE";
+}
+
 export interface GithubLoginRequest {
   code: string;
   studentId: string;
@@ -287,6 +302,51 @@ export function useApiClient() {
     return apiCall<GroupDetailResponse>("/groups/my", "GET", undefined, token);
   }
 
+  async function fetchCoordinatorGroups(
+    token?: string,
+    termId?: string
+  ): Promise<CoordinatorGroupSummary[]> {
+    const query = termId ? `?termId=${encodeURIComponent(termId)}` : "";
+    return apiCall<CoordinatorGroupSummary[]>(`/coordinator/groups${query}`, "GET", undefined, token);
+  }
+
+  async function fetchCoordinatorGroupDetail(
+    groupId: string,
+    token?: string
+  ): Promise<GroupDetailResponse> {
+    return apiCall<GroupDetailResponse>(
+      `/coordinator/groups/${encodeURIComponent(groupId)}`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function updateCoordinatorGroupMembers(
+    groupId: string,
+    payload: CoordinatorGroupMemberActionRequest,
+    token?: string
+  ): Promise<GroupDetailResponse> {
+    return apiCall<GroupDetailResponse>(
+      `/coordinator/groups/${encodeURIComponent(groupId)}/members`,
+      "PATCH",
+      payload,
+      token
+    );
+  }
+
+  async function disbandCoordinatorGroup(
+    groupId: string,
+    token?: string
+  ): Promise<GroupDetailResponse> {
+    return apiCall<GroupDetailResponse>(
+      `/coordinator/groups/${encodeURIComponent(groupId)}/disband`,
+      "PATCH",
+      undefined,
+      token
+    );
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -309,5 +369,9 @@ export function useApiClient() {
     registerProfessor,
     createGroup,
     fetchMyGroup,
+    fetchCoordinatorGroups,
+    fetchCoordinatorGroupDetail,
+    updateCoordinatorGroupMembers,
+    disbandCoordinatorGroup,
   };
 }
