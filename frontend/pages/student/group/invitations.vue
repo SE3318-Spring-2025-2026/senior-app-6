@@ -71,8 +71,8 @@
 					v-for="invitation in pendingInvitations"
 					:key="invitation.id"
 					:invitation="invitation"
-					@accepted="onInvitationHandled"
-					@declined="onInvitationHandled"
+					@accept="handleAccept"
+					@decline="handleDecline"
 				/>
 			</div>
 
@@ -97,8 +97,8 @@
 
 	const {
 		fetchInvitations,
-		invitations,
-		count,
+		invitations: pendingInvitations,
+		count: pendingCount,
 		isLoading,
 		error,
 		lastFetchTime,
@@ -107,16 +107,6 @@
 	} = usePendingInvitations();
 
 	const lastUpdateTime = ref<string>("");
-
-	/**
-	 * Computed property for pending invitation count
-	 */
-	const pendingCount = computed(() => count.value);
-
-	/**
-	 * Computed property for pending invitations list
-	 */
-	const pendingInvitations = computed(() => invitations.value);
 
 	/**
 	 * Refresh invitations from server
@@ -153,22 +143,35 @@
 	 * Acceptance criteria: Navigation badge updates without page reload
 	 * This happens automatically through the composable state update
 	 */
-	const onInvitationHandled = (invitationId: string) => {
-		console.log(`Invitation ${invitationId} handled`);
-		updateLastUpdateTime();
-		// The badge will update automatically through the reactive count property
+	/**
+	 * Executes the API call to accept an invitation and updates the timestamp.
+	 * Acceptance criteria: Navigation badge updates automatically without page reload
+	 * via the shared composable state.
+	 */
+	const handleAccept = async (invitationId: string) => {
+		try {
+			await acceptInvitation(invitationId);
+			updateLastUpdateTime();
+		} catch (err) {
+			console.error("Failed to accept invitation:", err);
+		}
 	};
 
 	/**
-	 * Load pending invitations on mount
+	 * Executes the API call to decline an invitation and updates the timestamp.
+	 * Acceptance criteria: Navigation badge updates automatically without page reload
+	 * via the shared composable state.
 	 */
+	const handleDecline = async (invitationId: string) => {
+		try {
+			await declineInvitation(invitationId);
+			updateLastUpdateTime();
+		} catch (err) {
+			console.error("Failed to decline invitation:", err);
+		}
+	};
+
 	onMounted(async () => {
 		await refreshInvitations();
-
-		// Refresh every 30 seconds for real-time updates
-		const interval = setInterval(refreshInvitations, 30000);
-
-		// Cleanup on unmount
-		onBeforeUnmount(() => clearInterval(interval));
 	});
 </script>

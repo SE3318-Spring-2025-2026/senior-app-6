@@ -3,8 +3,8 @@
  * Note: LoginResponse and User types are defined globally in types/*.d.ts
  */
 
-import { useAuthStore } from '~/stores/auth';
-import type { GroupDetailResponse, CreateGroupResponse, CreateGroupRequest } from '~/types/group';
+import { useAuthStore } from "~/stores/auth";
+import type { GroupDetailResponse, CreateGroupResponse, CreateGroupRequest } from "~/types/group";
 
 export interface ApiError {
 	status: number;
@@ -59,10 +59,10 @@ export interface CreateRubricRequest {
 }
 
 export interface RubricCriterionResponse {
-  id: string;
-  criterionName: string;
-  gradingType: "Binary" | "Soft";
-  weight: number;
+	id: string;
+	criterionName: string;
+	gradingType: "Binary" | "Soft";
+	weight: number;
 }
 
 export interface GithubLoginRequest {
@@ -322,11 +322,23 @@ export function useApiClient() {
 		return apiCall<Sprint[]>("/coordinator/sprints", "GET", undefined, token);
 	}
 
-	async function fetchRubric(deliverableId: string, token?: string): Promise<RubricCriterionResponse[]> {
-		return apiCall<RubricCriterionResponse[]>(`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`, "GET", undefined, token);
+	async function fetchRubric(
+		deliverableId: string,
+		token?: string
+	): Promise<RubricCriterionResponse[]> {
+		return apiCall<RubricCriterionResponse[]>(
+			`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`,
+			"GET",
+			undefined,
+			token
+		);
 	}
 
-	async function updateRubric(deliverableId: string, criteria: GradingCriterion[], token?: string): Promise<RubricCriterionResponse[]> {
+	async function updateRubric(
+		deliverableId: string,
+		criteria: GradingCriterion[],
+		token?: string
+	): Promise<RubricCriterionResponse[]> {
 		return apiCall<RubricCriterionResponse[]>(
 			`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`,
 			"POST",
@@ -357,7 +369,10 @@ export function useApiClient() {
 		return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", { mail }, token);
 	}
 
-	async function createGroup(data: CreateGroupRequest, token?: string): Promise<CreateGroupResponse> {
+	async function createGroup(
+		data: CreateGroupRequest,
+		token?: string
+	): Promise<CreateGroupResponse> {
 		return apiCall<CreateGroupResponse>("/groups", "POST", data, token);
 	}
 

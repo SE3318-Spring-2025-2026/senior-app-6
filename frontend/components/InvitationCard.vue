@@ -27,7 +27,7 @@
 		<!-- Action buttons -->
 		<div class="flex gap-2">
 			<button
-				@click="handleAccept"
+				@click="onAccept"
 				:disabled="isProcessing || invitation.status !== 'PENDING'"
 				class="flex-1 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-emerald-700 dark:hover:bg-emerald-600"
 			>
@@ -44,7 +44,7 @@
 			</button>
 
 			<button
-				@click="handleDecline"
+				@click="onDecline"
 				:disabled="isProcessing || invitation.status !== 'PENDING'"
 				class="flex-1 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
 			>
@@ -70,29 +70,45 @@
 
 <script setup lang="ts">
 	import { ref } from "vue";
-	import { usePendingInvitations } from "~/composables/usePendingInvitations";
 	import type { GroupInvitation } from "~/composables/useApiClient";
 
 	interface Props {
 		invitation: GroupInvitation;
 	}
 
-	defineProps<Props>();
+	const props = defineProps<Props>();
 
 	const emit = defineEmits<{
-		accepted: [invitationId: string];
-		declined: [invitationId: string];
+		accept: [invitationId: string];
+		decline: [invitationId: string];
 	}>();
-
-	const { acceptInvitation, declineInvitation } = usePendingInvitations();
 
 	const isProcessing = ref(false);
 	const activeAction = ref<"accept" | "decline" | null>(null);
 	const errorMessage = ref<string>("");
 
-	/**
-	 * Format date to readable string
-	 */
+	const onAccept = () => {
+		if (isProcessing.value) return;
+		isProcessing.value = true;
+		activeAction.value = "accept";
+		emit("accept", props.invitation.id);
+		setTimeout(() => {
+			isProcessing.value = false;
+			activeAction.value = null;
+		}, 500);
+	};
+
+	const onDecline = () => {
+		if (isProcessing.value) return;
+		isProcessing.value = true;
+		activeAction.value = "decline";
+		emit("decline", props.invitation.id);
+		setTimeout(() => {
+			isProcessing.value = false;
+			activeAction.value = null;
+		}, 500);
+	};
+
 	const formatDate = (dateString: string) => {
 		try {
 			const date = new Date(dateString);
@@ -105,52 +121,6 @@
 			});
 		} catch {
 			return dateString;
-		}
-	};
-
-	/**
-	 * Handle accept button click
-	 * Acceptance criteria: buttons disable during API calls
-	 */
-	const handleAccept = async () => {
-		if (isProcessing.value) return;
-
-		try {
-			isProcessing.value = true;
-			activeAction.value = "accept";
-			errorMessage.value = "";
-
-			await acceptInvitation(invitation.id);
-			emit("accepted", invitation.id);
-		} catch (err: unknown) {
-			const errorMsg = err instanceof Error ? err.message : "Failed to accept invitation";
-			errorMessage.value = errorMsg;
-		} finally {
-			isProcessing.value = false;
-			activeAction.value = null;
-		}
-	};
-
-	/**
-	 * Handle decline button click
-	 * Acceptance criteria: buttons disable during API calls
-	 */
-	const handleDecline = async () => {
-		if (isProcessing.value) return;
-
-		try {
-			isProcessing.value = true;
-			activeAction.value = "decline";
-			errorMessage.value = "";
-
-			await declineInvitation(invitation.id);
-			emit("declined", invitation.id);
-		} catch (err: unknown) {
-			const errorMsg = err instanceof Error ? err.message : "Failed to decline invitation";
-			errorMessage.value = errorMsg;
-		} finally {
-			isProcessing.value = false;
-			activeAction.value = null;
 		}
 	};
 </script>

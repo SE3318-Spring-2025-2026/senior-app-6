@@ -14,30 +14,31 @@
 				<div class="flex items-center gap-6">
 					<!-- Student navigation -->
 					<NuxtLink
-						v-if="authStore.user?.role === 'Student'"
+						v-if="(authStore as any).user?.role === 'Student'"
 						to="/student/dashboard"
 						class="text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
 					>
 						Dashboard
 					</NuxtLink>
 
-				<!-- Invitations link with badge -->
-				<NuxtLink
-					v-if="authStore.user?.role === 'Student'"
-					to="/student/group/invitations"
-					class="relative text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-				>
-					<span class="flex items-center gap-1">
-						Invitations
-						<!-- Pending invitation badge -->
-						<span
-							v-if="pendingInvitationCount > 0"
-							class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white dark:bg-red-500"
-						>
-							{{ pendingInvitationCount }}
+					<!-- Invitations link with badge -->
+					<NuxtLink
+						v-if="(authStore as any).user?.role === 'Student'"
+						to="/student/group/invitations"
+						class="relative text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+					>
+						<span class="flex items-center gap-1">
+							Invitations
+							<!-- Pending invitation badge -->
+							<span
+								v-if="pendingCount > 0"
+								class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white dark:bg-red-500"
+							>
+								{{ pendingCount > 9 ? "9+" : pendingCount }}
+							</span>
 						</span>
-					</span>
-				</NuxtLink>					<!-- Theme toggle -->
+					</NuxtLink>
+					<!-- Theme toggle -->
 					<UiThemeToggle />
 				</div>
 			</div>
@@ -58,27 +59,24 @@
 	const authStore = useAuthStore();
 	const { fetchInvitations, count: pendingCount } = usePendingInvitations();
 
+	let interval: ReturnType<typeof setInterval> | null = null;
 	/**
-	 * Computed property for pending invitation count badge
-	 * Acceptance criteria: Badge updates when an invitation is accepted/declined without page reload
-	 */
-	const pendingInvitationCount = computed(() => pendingCount.value);
-
-	/**
-	 * Fetch invitations on mount
-	 * This ensures the badge shows the correct count when the layout loads
+	 * Initializes the global invitation state on mount.
+	 * Establishes the centralized 30-second polling interval to keep the
+	 * navigation badge updated across all pages, preventing double-polling.
 	 */
 	onMounted(async () => {
+		// @ts-ignore
 		if (authStore.user?.role === "Student") {
 			await fetchInvitations();
 
-			// Refresh invitation count every 30 seconds for real-time badge updates
-			const interval = setInterval(async () => {
+			interval = setInterval(async () => {
 				await fetchInvitations();
 			}, 30 * 1000);
-
-			// Cleanup on unmount
-			onBeforeUnmount(() => clearInterval(interval));
 		}
+	});
+
+	onBeforeUnmount(() => {
+		if (interval) clearInterval(interval);
 	});
 </script>
