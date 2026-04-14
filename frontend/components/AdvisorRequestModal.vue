@@ -1,82 +1,7 @@
-<template>
-  <div v-if="isOpen" @click.self="closeModal" @keydown.esc="closeModal" tabindex="0" class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black/50 p-4">
-    <div class="relative w-full max-w-lg rounded-xl bg-white shadow-xl dark:bg-gray-900">
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-800">
-        <div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            Request Details
-          </h3>
-          <p v-if="requestDetail" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Sent: {{ formatDate(requestDetail.sentAt) }}
-          </p>
-        </div>
-        <button @click="closeModal" aria-label="Close modal" class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white">
-          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="p-6">
-        <div v-if="loading" class="flex justify-center py-8">
-          <div role="status" aria-label="Loading" class="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-        </div>
-
-        <div v-else-if="error" class="rounded-lg bg-red-50 p-4 text-sm text-red-600 dark:bg-red-900/50 dark:text-red-200">
-          {{ error }}
-        </div>
-
-        <div v-else-if="requestDetail" class="space-y-6">
-          <!-- Group Info -->
-          <div>
-            <h4 class="mb-2 font-medium text-gray-900 dark:text-white">Group Information</h4>
-            <div class="grid grid-cols-2 gap-4 rounded-lg bg-gray-50 p-4 text-sm dark:bg-gray-800/50">
-              <div>
-                <span class="block text-gray-500 dark:text-gray-400">Name</span>
-                <span class="font-medium text-gray-900 dark:text-white">{{ requestDetail.group.groupName }}</span>
-              </div>
-              <div class="flex flex-col items-start justify-center">
-                <span class="block text-gray-500 dark:text-gray-400">Status</span>
-                <GroupStatusBadge :status="requestDetail.group.status" class="mt-1" />
-              </div>
-            </div>
-          </div>
-
-          <!-- Members List -->
-          <div>
-            <h4 class="mb-2 font-medium text-gray-900 dark:text-white">Members ({{ requestDetail.group.members.length }})</h4>
-            <MemberList :members="requestDetail.group.members" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div v-if="!loading && requestDetail" class="flex items-center justify-end space-x-3 border-t border-gray-200 p-4 dark:border-gray-800">
-        <button 
-          @click="confirmDecline" 
-          :disabled="processing || error !== null"
-          class="rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:opacity-50 dark:border-red-900/50 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-red-900/20"
-        >
-          {{ processingDecline ? 'Processing...' : 'Decline' }}
-        </button>
-        <button 
-          @click="respond(true)" 
-          :disabled="processing || error !== null"
-          class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
-        >
-          {{ processingAccept ? 'Processing...' : 'Accept Request' }}
-        </button>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import type { AdvisorRequestDetail, AdvisorRespondRequest, AdvisorRespondResponse } from '~/types/advisor';
-import { useAuthStore } from '~/stores/auth';
+import { X, Loader2, Info, Users, Check, XCircle, AlertCircle } from 'lucide-vue-next';
+import type { AdvisorRequestDetail } from '~/types/advisor';
 import GroupStatusBadge from '~/components/ui/GroupStatusBadge.vue';
 import MemberList from '~/components/ui/MemberList.vue';
 
@@ -90,7 +15,7 @@ const emit = defineEmits<{
   (e: 'responded', requestId: string, accept: boolean): void;
 }>();
 
-const authStore = useAuthStore();
+const { getAuthToken, fetchAdvisorRequestDetail, respondToAdvisorRequest } = useApiClient();
 const requestDetail = ref<AdvisorRequestDetail | null>(null);
 const loading = ref(false);
 const processing = ref(false);
@@ -112,21 +37,13 @@ const fetchDetail = async () => {
   requestDetail.value = null;
   
   try {
-    const config = useRuntimeConfig();
-    const API_URL = config.public.apiBaseUrl || 'http://localhost:8080';
+    const token = getAuthToken();
+    if (!token) throw new Error('Authentication required');
     
-    // We are not using useApiClient here to easily catch errors since the error type is unboxed or thrown directly
-    const response = await $fetch<AdvisorRequestDetail>(`/api/advisor/requests/${props.requestId}`, {
-      baseURL: API_URL,
-      headers: {
-        Authorization: `Bearer ${authStore.token}`
-      }
-    });
-    
-    requestDetail.value = response;
+    requestDetail.value = await fetchAdvisorRequestDetail(props.requestId, token);
   } catch (e: any) {
     console.error('Error fetching detail:', e);
-    error.value = e.data?.error || 'Failed to load request details';
+    error.value = e.message || 'Failed to load request details';
   } finally {
     loading.value = false;
   }
@@ -141,27 +58,19 @@ const respond = async (accept: boolean) => {
   error.value = null;
   
   try {
-    const config = useRuntimeConfig();
-    const API_URL = config.public.apiBaseUrl || 'http://localhost:8080';
+    const token = getAuthToken();
+    if (!token) throw new Error('Authentication required');
     
-    await $fetch<AdvisorRespondResponse>(`/api/advisor/requests/${props.requestId}/respond`, {
-      method: 'PATCH',
-      baseURL: API_URL,
-      headers: {
-        Authorization: `Bearer ${authStore.token}`
-      },
-      body: { accept } as AdvisorRespondRequest
-    });
+    await respondToAdvisorRequest(props.requestId, accept, token);
     
     emit('responded', props.requestId, accept);
     closeModal();
   } catch (e: any) {
     console.error('Error responding to request:', e);
-    // Capacity guard handling
-    if (e.status === 400 && (e.data?.error?.includes('capacity') || e.data?.code === 'ADVISOR_AT_CAPACITY')) {
-      error.value = "You have reached maximum capacity.";
+    if (e.status === 400 && e.message?.toLowerCase().includes('capacity')) {
+      error.value = "You have reached your maximum advising capacity.";
     } else {
-      error.value = e.data?.error || 'An error occurred while processing the request.';
+      error.value = e.message || 'An error occurred while processing the request.';
     }
   } finally {
     processing.value = false;
@@ -171,7 +80,9 @@ const respond = async (accept: boolean) => {
 };
 
 const closeModal = () => {
-  emit('close');
+  if (!processing.value) {
+    emit('close');
+  }
 };
 
 const formatDate = (dateString: string) => {
@@ -188,10 +99,127 @@ const formatDate = (dateString: string) => {
 watch(() => props.isOpen, (newVal) => {
   if (newVal && props.requestId) {
     fetchDetail();
-  } else {
+  } else if (!newVal) {
     requestDetail.value = null;
     error.value = null;
   }
 });
 </script>
 
+<template>
+  <div 
+    v-if="isOpen" 
+    class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+    role="dialog"
+    aria-modal="true"
+  >
+    <!-- Backdrop -->
+    <div 
+      class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
+      @click="closeModal"
+    ></div>
+
+    <!-- Modal Content -->
+    <div class="relative w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl transition-all dark:border-slate-700 dark:bg-slate-900">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 p-6 dark:border-slate-800">
+        <div class="flex items-center gap-3">
+          <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+            <Info class="h-5 w-5" />
+          </div>
+          <div>
+            <h3 class="text-xl font-semibold text-slate-900 dark:text-white">
+              Request Details
+            </h3>
+            <p v-if="requestDetail" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Sent on {{ formatDate(requestDetail.sentAt) }}
+            </p>
+          </div>
+        </div>
+        <button 
+          @click="closeModal" 
+          class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+          :disabled="processing"
+        >
+          <X class="h-5 w-5" />
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="max-h-[70vh] overflow-y-auto p-6">
+        <!-- Loading State -->
+        <div v-if="loading" class="flex flex-col items-center justify-center py-12">
+          <Loader2 class="h-10 w-10 animate-spin text-blue-600 dark:text-blue-400" />
+          <p class="mt-4 text-sm font-medium text-slate-600 dark:text-slate-400">Fetching details...</p>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="error" class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
+          <AlertCircle class="mt-0.5 h-5 w-5 shrink-0" />
+          <p>{{ error }}</p>
+        </div>
+
+        <div v-else-if="requestDetail" class="space-y-8">
+          <!-- Group Info Card -->
+          <section>
+            <div class="mb-3 flex items-center gap-2">
+              <Users class="h-4 w-4 text-slate-400" />
+              <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Group Info</h4>
+            </div>
+            <div class="rounded-2xl border border-slate-100 bg-slate-50/50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
+              <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <span class="block text-xs font-medium text-slate-500 dark:text-slate-500">GROUP NAME</span>
+                  <span class="text-lg font-bold text-slate-900 dark:text-white">{{ requestDetail.group.groupName }}</span>
+                </div>
+                <div class="flex flex-col items-end">
+                  <span class="block text-xs font-medium text-slate-500 dark:text-slate-500 mb-1">STATUS</span>
+                  <GroupStatusBadge :status="requestDetail.group.status" />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Members Section -->
+          <section>
+            <div class="mb-3 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <Users class="h-4 w-4 text-slate-400" />
+                <h4 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Group Members</h4>
+              </div>
+              <span class="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                {{ requestDetail.group.members.length }}
+              </span>
+            </div>
+            
+            <div class="overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800">
+              <MemberList :members="requestDetail.group.members" />
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div v-if="!loading && requestDetail" class="grid grid-cols-2 gap-3 border-t border-slate-100 p-6 dark:border-slate-800">
+        <button 
+          @click="confirmDecline" 
+          :disabled="processing"
+          class="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50 dark:border-red-900/30 dark:bg-slate-900 dark:text-red-400 dark:hover:bg-red-900/20"
+        >
+          <XCircle v-if="!processingDecline" class="h-4 w-4" />
+          <Loader2 v-else class="h-4 w-4 animate-spin" />
+          {{ processingDecline ? 'Declining...' : 'Decline' }}
+        </button>
+        <button 
+          @click="respond(true)" 
+          :disabled="processing"
+          class="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700 hover:shadow-blue-500/40 disabled:opacity-50 dark:bg-blue-500 dark:hover:bg-blue-600"
+        >
+          <Check v-if="!processingAccept" class="h-4 w-4" />
+          <Loader2 v-else class="h-4 w-4 animate-spin" />
+          {{ processingAccept ? 'Accepting...' : 'Accept' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</template>

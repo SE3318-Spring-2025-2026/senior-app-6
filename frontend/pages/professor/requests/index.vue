@@ -1,84 +1,16 @@
-<template>
-  <div class="space-y-6">
-    <div class="flex items-center justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Advisor Requests Inbox</h1>
-      <span v-if="requests.length > 0" class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-        {{ requests.length }} Pending
-      </span>
-    </div>
-
-    <!-- Error State -->
-    <div v-if="error" class="rounded-lg bg-red-50 p-4 text-sm text-red-600 dark:bg-red-900/50 dark:text-red-200">
-      {{ error }}
-    </div>
-
-    <!-- Loading State -->
-    <div v-if="loading" class="flex justify-center py-12">
-      <div class="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="requests.length === 0" class="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 py-24 text-center dark:border-gray-800 dark:bg-gray-900">
-      <svg class="h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-      <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-white">No pending requests</h3>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">You don't have any pending advisor requests right now.</p>
-    </div>
-
-    <!-- Requests Grid -->
-    <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <div v-for="request in requests" :key="request.requestId" class="flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-900">
-        <div class="flex-1 p-6">
-          <div class="flex items-center justify-between">
-            <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-800 dark:text-gray-300">
-              {{ request.memberCount }} members
-            </span>
-            <span class="text-xs text-gray-500 dark:text-gray-400">{{ formatDate(request.sentAt) }}</span>
-          </div>
-          
-          <h3 class="mt-4 text-lg font-bold text-gray-900 dark:text-white">
-            {{ request.groupName }}
-          </h3>
-          
-          <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Term: {{ formatTermId(request.termId) }}
-          </div>
-        </div>
-        
-        <div class="border-t border-gray-200 p-4 dark:border-gray-800">
-          <button 
-            @click="openDetail(request.requestId)"
-            class="flex w-full items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
-          >
-            Review Request
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Request Detail Modal -->
-    <AdvisorRequestModal
-      :is-open="isModalOpen"
-      :request-id="selectedRequestId"
-      @close="isModalOpen = false"
-      @responded="handleResponse"
-    />
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { ArrowLeft, Inbox, Clock, Users, ChevronRight, Loader2, AlertCircle } from 'lucide-vue-next';
 import { useAuthStore } from '~/stores/auth';
 import type { AdvisorRequestItem } from '~/types/advisor';
 import AdvisorRequestModal from '~/components/AdvisorRequestModal.vue';
 
-// Use same layout as other authenticated pages if they exist
 definePageMeta({
   middleware: "auth",
   roles: ["Professor"],
 });
 
+const { getAuthToken, fetchAdvisorRequests } = useApiClient();
 const authStore = useAuthStore();
 const requests = ref<AdvisorRequestItem[]>([]);
 const loading = ref(true);
@@ -88,25 +20,18 @@ const error = ref<string | null>(null);
 const isModalOpen = ref(false);
 const selectedRequestId = ref<string | null>(null);
 
-const fetchRequests = async () => {
+const loadRequests = async () => {
   loading.value = true;
   error.value = null;
   
   try {
-    const config = useRuntimeConfig();
-    const API_URL = config.public.apiBaseUrl || 'http://localhost:8080';
+    const token = getAuthToken();
+    if (!token) throw new Error('Authentication required');
     
-    const response = await $fetch<AdvisorRequestItem[]>('/api/advisor/requests', {
-      baseURL: API_URL,
-      headers: {
-        Authorization: `Bearer ${authStore.token}`
-      }
-    });
-    
-    requests.value = response;
+    requests.value = await fetchAdvisorRequests(token);
   } catch (e: any) {
     console.error('Error fetching requests:', e);
-    error.value = 'Failed to load advisor requests. ' + (e.data?.error || '');
+    error.value = e.message || 'Failed to load advisor requests.';
     requests.value = [];
   } finally {
     loading.value = false;
@@ -118,15 +43,12 @@ const openDetail = (id: string) => {
   isModalOpen.value = true;
 };
 
-// Remove request from local state when responded
-const handleResponse = (requestId: string, accept: boolean) => {
+const handleResponse = (requestId: string) => {
   requests.value = requests.value.filter(r => r.requestId !== requestId);
-  // Optional visually show toast depending on accept value here
 };
 
 const formatTermId = (termId: string) => {
   if (!termId) return '';
-  // Format "spring-2025-abc" to "Spring 2025"
   const parts = termId.split('-');
   if (parts.length >= 2) {
     return `${parts[0].charAt(0).toUpperCase() + parts[0].slice(1)} ${parts[1]}`;
@@ -144,7 +66,111 @@ const formatDate = (dateString: string) => {
 };
 
 onMounted(() => {
-  fetchRequests();
+  loadRequests();
 });
 </script>
 
+<template>
+  <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
+    <div class="mx-auto w-full max-w-5xl space-y-6">
+      <!-- Breadcrumbs / Back Link -->
+      <NuxtLink
+        to="/professor/dashboard"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+      >
+        <ArrowLeft class="h-4 w-4" />
+        Back to Dashboard
+      </NuxtLink>
+
+      <!-- Header -->
+      <header class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
+              Requests Inbox
+            </h1>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Review and manage incoming advising requests from student groups.
+            </p>
+          </div>
+          <div v-if="!loading && requests.length > 0" class="hidden sm:block">
+            <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+              {{ requests.length }} Pending Requests
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Error State -->
+      <div v-if="error" class="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300">
+        <AlertCircle class="mt-0.5 h-5 w-5 shrink-0" />
+        <p>{{ error }}</p>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="flex flex-col items-center justify-center py-24">
+        <Loader2 class="h-10 w-10 animate-spin text-blue-600 dark:text-blue-400" />
+        <p class="mt-4 text-sm font-medium text-slate-600 dark:text-slate-400">Loading your inbox...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="requests.length === 0" class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/50 py-24 text-center dark:border-slate-700 dark:bg-slate-900/50">
+        <div class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
+          <Inbox class="h-8 w-8" />
+        </div>
+        <h3 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white">Your inbox is empty</h3>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-xs mx-auto">
+          No student groups have sent you advising requests for the current term yet.
+        </p>
+      </div>
+
+      <!-- Requests List -->
+      <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div 
+          v-for="request in requests" 
+          :key="request.requestId" 
+          class="group flex flex-col rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:border-blue-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-600"
+        >
+          <div class="flex-1 p-6">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <Users class="h-3.5 w-3.5" />
+                {{ request.memberCount }} Members
+              </div>
+              <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <Clock class="h-3.5 w-3.5" />
+                {{ formatDate(request.sentAt) }}
+              </div>
+            </div>
+            
+            <h3 class="mt-4 text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              {{ request.groupName }}
+            </h3>
+            
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Term: <span class="font-medium text-slate-700 dark:text-slate-300">{{ formatTermId(request.termId) }}</span>
+            </p>
+          </div>
+          
+          <div class="border-t border-slate-100 p-4 dark:border-slate-700/50">
+            <button 
+              @click="openDetail(request.requestId)"
+              class="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-blue-600 hover:text-white dark:bg-slate-900/50 dark:text-white dark:hover:bg-blue-600"
+            >
+              View Details
+              <ChevronRight class="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Request Detail Modal -->
+      <AdvisorRequestModal
+        :is-open="isModalOpen"
+        :request-id="selectedRequestId"
+        @close="isModalOpen = false"
+        @responded="handleResponse"
+      />
+    </div>
+  </main>
+</template>
