@@ -1,5 +1,6 @@
 package com.senior.spm.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -26,12 +27,14 @@ import com.senior.spm.exception.GitHubValidationException;
 @Service
 public class GitHubValidationService {
 
-    private static final String GITHUB_API_BASE = "https://api.github.com";
-
     private final RestTemplate restTemplate;
+    private final String githubApiBase;
 
-    public GitHubValidationService(RestTemplate restTemplate) {
+    public GitHubValidationService(
+            RestTemplate restTemplate,
+            @Value("${github.api.base-url:https://api.github.com}") String githubApiBase) {
         this.restTemplate = restTemplate;
+        this.githubApiBase = githubApiBase;
     }
 
     /**
@@ -64,7 +67,7 @@ public class GitHubValidationService {
      * unreachable.
      */
     private void callStep1OrgExists(String githubOrgName, HttpEntity<?> entity) {
-        var url = GITHUB_API_BASE + "/orgs/" + githubOrgName;
+        var url = githubApiBase + "/orgs/" + githubOrgName;
         try {
             restTemplate.exchange(url, HttpMethod.GET, entity, Void.class);
 
@@ -94,7 +97,7 @@ public class GitHubValidationService {
      * GitHub returns 403 (not 401) when the PAT lacks 'repo' scope.
      */
     private void callStep2RepoScope(String githubOrgName, HttpEntity<?> entity) {
-        var url = GITHUB_API_BASE + "/orgs/" + githubOrgName + "/repos?per_page=1";
+        var url = githubApiBase + "/orgs/" + githubOrgName + "/repos?per_page=1";
         try {
             restTemplate.exchange(url, HttpMethod.GET, entity, Void.class);
 
