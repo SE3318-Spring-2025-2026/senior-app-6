@@ -109,6 +109,25 @@ export interface SanitizationReport {
   autoRejectedRequestCount?: number;
   rejectedRequestCount?: number;
   triggeredAt: string;
+export interface BindJiraRequest {
+  jiraSpaceUrl: string;
+  jiraProjectKey: string;
+  jiraApiToken: string;
+}
+
+export interface BindGithubRequest {
+  githubOrgName: string;
+  githubPat: string;
+}
+
+export interface BindToolResponse {
+  groupId: string;
+  status: GroupDetailResponse["status"];
+  jiraSpaceUrl?: string | null;
+  jiraProjectKey?: string | null;
+  githubOrgName?: string | null;
+  jiraBound: boolean;
+  githubBound: boolean;
 }
 
 async function apiCall<T>(
@@ -345,6 +364,15 @@ export function useApiClient() {
       `/coordinator/groups/${encodeURIComponent(groupId)}/advisor`,
       "PATCH",
       { action: "ASSIGN", advisorId },
+  async function bindJiraTool(
+    groupId: string,
+    payload: BindJiraRequest,
+    token?: string
+  ): Promise<BindToolResponse> {
+    return apiCall<BindToolResponse>(
+      `/groups/${encodeURIComponent(groupId)}/jira`,
+      "POST",
+      payload,
       token
     );
   }
@@ -369,6 +397,15 @@ export function useApiClient() {
       "/coordinator/sanitize",
       "POST",
       force ? { force: true } : undefined,
+  async function bindGithubTool(
+    groupId: string,
+    payload: BindGithubRequest,
+    token?: string
+  ): Promise<BindToolResponse> {
+    return apiCall<BindToolResponse>(
+      `/groups/${encodeURIComponent(groupId)}/github`,
+      "POST",
+      payload,
       token
     );
   }
@@ -401,5 +438,7 @@ export function useApiClient() {
     assignCoordinatorAdvisor,
     removeCoordinatorAdvisor,
     runCoordinatorSanitization,
+    bindJiraTool,
+    bindGithubTool,
   };
 }
