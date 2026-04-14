@@ -3,6 +3,7 @@ package com.senior.spm.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -106,40 +107,54 @@ class InvitationConcurrencyTest {
         CountDownLatch gate = new CountDownLatch(1);
         ExecutorService executor = Executors.newFixedThreadPool(2);
 
-        Future<Boolean> futureA = executor.submit(() -> {
+        Future<AcceptAttempt> futureA = executor.submit(() -> {
             try {
                 gate.await();
                 invitationService.respondToInvitation(invAId, inviteeId, true);
-                return true;
+                return AcceptAttempt.success();
             } catch (Exception e) {
-                return false;
+                return AcceptAttempt.failure(e);
             }
         });
 
-        Future<Boolean> futureB = executor.submit(() -> {
+        Future<AcceptAttempt> futureB = executor.submit(() -> {
             try {
                 gate.await();
                 invitationService.respondToInvitation(invBId, inviteeId, true);
-                return true;
+                return AcceptAttempt.success();
             } catch (Exception e) {
-                return false;
+                return AcceptAttempt.failure(e);
             }
         });
 
         // Release both threads simultaneously
         gate.countDown();
 
-        boolean resultA = futureA.get(10, TimeUnit.SECONDS);
-        boolean resultB = futureB.get(10, TimeUnit.SECONDS);
+        AcceptAttempt resultA = futureA.get(10, TimeUnit.SECONDS);
+        AcceptAttempt resultB = futureB.get(10, TimeUnit.SECONDS);
 
         executor.shutdown();
+        assertThat(executor.awaitTermination(5, TimeUnit.SECONDS))
+                .as("Executor should shut down cleanly after both accept attempts finish")
+                .isTrue();
 
         // Exactly one must succeed and one must fail
-        assertThat(resultA ^ resultB)
+        assertThat(resultA.succeeded() ^ resultB.succeeded())
                 .as("Exactly one of the two concurrent accepts must succeed")
                 .isTrue();
 
-        // The DB uq_gm_student constraint guarantees at most one membership row per student
+        List<Throwable> failures = new ArrayList<>();
+        if (!resultA.succeeded()) {
+            failures.add(resultA.failure());
+        }
+        if (!resultB.succeeded()) {
+            failures.add(resultB.failure());
+        }
+        assertThat(failures)
+                .as("The losing concurrent accept must fail instead of being silently ignored")
+                .hasSize(1)
+                .allSatisfy(error -> assertThat(error).isNotNull());
+
         List<GroupMembership> memberships = groupMembershipRepository.findAll()
                 .stream()
                 .filter(m -> m.getStudent().getId().equals(inviteeId))
@@ -148,9 +163,28 @@ class InvitationConcurrencyTest {
         assertThat(memberships)
                 .as("Student must have exactly one GroupMembership row regardless of race outcome")
                 .hasSize(1);
+
+        List<InvitationStatus> finalStatuses = groupInvitationRepository.findByInviteeId(inviteeId)
+                .stream()
+                .map(GroupInvitation::getStatus)
+                .toList();
+
+        assertThat(finalStatuses)
+                .as("Concurrent accept must leave one accepted invite and auto-deny the competing invite")
+                .containsExactlyInAnyOrder(InvitationStatus.ACCEPTED, InvitationStatus.AUTO_DENIED);
     }
 
     // ── Seed helpers ─────────────────────────────────────────────────────────────
+
+    private record AcceptAttempt(boolean succeeded, Throwable failure) {
+        static AcceptAttempt success() {
+            return new AcceptAttempt(true, null);
+        }
+
+        static AcceptAttempt failure(Throwable failure) {
+            return new AcceptAttempt(false, failure);
+        }
+    }
 
     private void seedConfig(String key, String value) {
         SystemConfig cfg = new SystemConfig();
