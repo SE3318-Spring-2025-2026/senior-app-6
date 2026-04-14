@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -79,6 +80,11 @@ class P3AdvisorLifecycleIntegrationTest {
         activeTerm.setConfigKey("active_term_id");
         activeTerm.setConfigValue(TERM_ID);
         systemConfigRepository.save(activeTerm);
+    }
+
+    @AfterEach
+    void cleanUp() {
+        resetDatabase();
     }
 
     @Test
