@@ -65,6 +65,47 @@ export interface RubricCriterionResponse {
   weight: number;
 }
 
+export interface CoordinatorGroupSummary {
+  id: string;
+  groupName: string;
+  termId?: string;
+  status: string;
+  memberCount: number;
+  jiraBound: boolean;
+  githubBound: boolean;
+}
+
+export interface CoordinatorGroupMemberActionRequest {
+  studentId: string;
+  action: "ADD" | "REMOVE";
+}
+
+export type AdvisorRequestStatus =
+  | "PENDING"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "AUTO_REJECTED"
+  | "CANCELLED";
+
+export interface AdvisorCapacityResponse {
+  advisorId: string;
+  name: string;
+  mail: string;
+  currentGroupCount: number;
+  capacity: number;
+  atCapacity?: boolean | null;
+}
+
+export interface AdvisorRequestResponse {
+  requestId: string;
+  groupId?: string;
+  advisorId?: string;
+  advisorName?: string;
+  status: AdvisorRequestStatus;
+  sentAt?: string;
+  respondedAt?: string | null;
+}
+
 export interface GithubLoginRequest {
   code: string;
   studentId: string;
@@ -77,16 +118,6 @@ export interface GithubLoginResponse {
     githubUsername: string;
     role: string;
   };
-}
-
-export interface CoordinatorGroupSummary {
-  id: string;
-  groupName: string;
-  termId?: string;
-  status: string;
-  memberCount: number;
-  jiraBound: boolean;
-  githubBound: boolean;
 }
 
 export interface CoordinatorAdvisor {
@@ -149,59 +180,6 @@ export interface RespondInvitationResponse {
   invitationId: string;
   status: InvitationStatus;
   respondedAt: string;
-}
-
-export interface CoordinatorGroupSummary {
-  id: string;
-  groupName: string;
-  termId?: string;
-  status: string;
-  memberCount: number;
-  jiraBound: boolean;
-  githubBound: boolean;
-}
-
-export interface CoordinatorAdvisor {
-  advisorId: string;
-  name: string;
-  mail: string;
-  currentGroupCount: number;
-  capacity: number;
-  atCapacity: boolean;
-}
-
-export interface AdvisorOverrideResponse {
-  groupId: string;
-  status: "ADVISOR_ASSIGNED" | "TOOLS_BOUND";
-  advisorId: string | null;
-}
-
-export interface SanitizationReport {
-  disbandedCount: number;
-  autoRejectedRequestCount?: number;
-  rejectedRequestCount?: number;
-  triggeredAt: string;
-}
-
-export interface BindJiraRequest {
-  jiraSpaceUrl: string;
-  jiraProjectKey: string;
-  jiraApiToken: string;
-}
-
-export interface BindGithubRequest {
-  githubOrgName: string;
-  githubPat: string;
-}
-
-export interface BindToolResponse {
-  groupId: string;
-  status: GroupDetailResponse["status"];
-  jiraSpaceUrl?: string | null;
-  jiraProjectKey?: string | null;
-  githubOrgName?: string | null;
-  jiraBound: boolean;
-  githubBound: boolean;
 }
 
 async function apiCall<T>(
@@ -412,11 +390,59 @@ export function useApiClient() {
     return apiCall<GroupDetailResponse>("/groups/my", "GET", undefined, token);
   }
 
-  async function fetchCoordinatorGroups(token?: string): Promise<CoordinatorGroupSummary[]> {
-    return apiCall<CoordinatorGroupSummary[]>("/coordinator/groups", "GET", undefined, token);
+  async function fetchAvailableAdvisors(token?: string): Promise<AdvisorCapacityResponse[]> {
+    return apiCall<AdvisorCapacityResponse[]>("/advisors", "GET", undefined, token);
   }
 
-  async function fetchCoordinatorGroup(groupId: string, token?: string): Promise<GroupDetailResponse> {
+  async function sendAdvisorRequest(
+    groupId: string,
+    advisorId: string,
+    token?: string
+  ): Promise<AdvisorRequestResponse> {
+    return apiCall<AdvisorRequestResponse>(
+      `/groups/${encodeURIComponent(groupId)}/advisor-request`,
+      "POST",
+      { advisorId },
+      token
+    );
+  }
+
+  async function fetchAdvisorRequest(
+    groupId: string,
+    token?: string
+  ): Promise<AdvisorRequestResponse> {
+    return apiCall<AdvisorRequestResponse>(
+      `/groups/${encodeURIComponent(groupId)}/advisor-request`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function cancelAdvisorRequest(
+    groupId: string,
+    token?: string
+  ): Promise<AdvisorRequestResponse> {
+    return apiCall<AdvisorRequestResponse>(
+      `/groups/${encodeURIComponent(groupId)}/advisor-request`,
+      "DELETE",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchCoordinatorGroups(
+    token?: string,
+    termId?: string
+  ): Promise<CoordinatorGroupSummary[]> {
+    const query = termId ? `?termId=${encodeURIComponent(termId)}` : "";
+    return apiCall<CoordinatorGroupSummary[]>(`/coordinator/groups${query}`, "GET", undefined, token);
+  }
+
+  async function fetchCoordinatorGroupDetail(
+    groupId: string,
+    token?: string
+  ): Promise<GroupDetailResponse> {
     return apiCall<GroupDetailResponse>(
       `/coordinator/groups/${encodeURIComponent(groupId)}`,
       "GET",
@@ -479,6 +505,31 @@ export function useApiClient() {
     );
   }
 
+  async function updateCoordinatorGroupMembers(
+    groupId: string,
+    payload: CoordinatorGroupMemberActionRequest,
+    token?: string
+  ): Promise<GroupDetailResponse> {
+    return apiCall<GroupDetailResponse>(
+      `/coordinator/groups/${encodeURIComponent(groupId)}/members`,
+      "PATCH",
+      payload,
+      token
+    );
+  }
+
+  async function disbandCoordinatorGroup(
+    groupId: string,
+    token?: string
+  ): Promise<GroupDetailResponse> {
+    return apiCall<GroupDetailResponse>(
+      `/coordinator/groups/${encodeURIComponent(groupId)}/disband`,
+      "PATCH",
+      undefined,
+      token
+    );
+  }
+
   async function bindGithubTool(
     groupId: string,
     payload: BindGithubRequest,
@@ -537,12 +588,18 @@ export function useApiClient() {
     registerProfessor,
     createGroup,
     fetchMyGroup,
+    fetchAvailableAdvisors,
+    sendAdvisorRequest,
+    fetchAdvisorRequest,
+    cancelAdvisorRequest,
     fetchCoordinatorGroups,
-    fetchCoordinatorGroup,
+    fetchCoordinatorGroupDetail,
     fetchCoordinatorAdvisors,
     assignCoordinatorAdvisor,
     removeCoordinatorAdvisor,
     runCoordinatorSanitization,
+    updateCoordinatorGroupMembers,
+    disbandCoordinatorGroup,
     bindJiraTool,
     bindGithubTool,
     fetchPendingInvitations,

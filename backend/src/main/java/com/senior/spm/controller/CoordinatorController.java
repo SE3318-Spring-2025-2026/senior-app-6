@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.senior.spm.controller.response.AdvisorCapacityResponse;
@@ -192,9 +193,11 @@ public class CoordinatorController {
      * REST Endpoint: {@code GET /api/coordinator/groups}
      */
     @GetMapping("/groups")
-    public ResponseEntity<List<GroupSummaryResponse>> listGroups() {
+    public ResponseEntity<List<GroupSummaryResponse>> listGroups(
+            @RequestParam(required = false) String termId
+    ) {
         try {
-            List<GroupSummaryResponse> groups = groupService.getGroupSummariesForActiveTerm();
+            List<GroupSummaryResponse> groups = groupService.getGroupSummaries(termId);
             return ResponseEntity.status(HttpStatus.OK).body(groups);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

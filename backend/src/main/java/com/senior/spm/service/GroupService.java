@@ -341,8 +341,22 @@ public class GroupService {
     // New method implemented to satisfy PR #84 / DFD 2.6 requirements
     @Transactional(readOnly = true)
     public List<GroupSummaryResponse> getGroupSummariesForActiveTerm() {
-        String termId = termConfigService.getActiveTermId();
-        List<ProjectGroup> groups = projectGroupRepository.findByTermId(termId);
+        return getGroupSummaries(null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<GroupSummaryResponse> getGroupSummaries(String termId) {
+        List<ProjectGroup> groups;
+
+        if (termId == null || termId.isBlank()) {
+            String activeTermId = termConfigService.getActiveTermId();
+            groups = projectGroupRepository.findByTermId(activeTermId);
+        } else if ("ALL".equalsIgnoreCase(termId.trim())) {
+            groups = projectGroupRepository.findAll();
+        } else {
+            groups = projectGroupRepository.findByTermId(termId.trim());
+        }
+
         return groups.stream()
             .map(this::toGroupSummaryResponse)
             .collect(Collectors.toList());
