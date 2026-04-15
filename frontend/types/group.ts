@@ -24,6 +24,9 @@ export interface GroupDetailResponse {
   groupName: string
   termId?: string
   status: GroupStatus
+  advisorId?: string | null
+  advisorName?: string | null
+  advisorMail?: string | null
   members: GroupMember[]
   createdAt?: string
   jiraSpaceUrl?: string

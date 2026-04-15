@@ -79,6 +79,59 @@ export interface GithubLoginResponse {
   };
 }
 
+export interface CoordinatorGroupSummary {
+  id: string;
+  groupName: string;
+  termId?: string;
+  status: string;
+  memberCount: number;
+  jiraBound: boolean;
+  githubBound: boolean;
+}
+
+export interface CoordinatorAdvisor {
+  advisorId: string;
+  name: string;
+  mail: string;
+  currentGroupCount: number;
+  capacity: number;
+  atCapacity: boolean;
+}
+
+export interface AdvisorOverrideResponse {
+  groupId: string;
+  status: "ADVISOR_ASSIGNED" | "TOOLS_BOUND";
+  advisorId: string | null;
+}
+
+export interface SanitizationReport {
+  disbandedCount: number;
+  autoRejectedRequestCount?: number;
+  rejectedRequestCount?: number;
+  triggeredAt: string;
+}
+
+export interface BindJiraRequest {
+  jiraSpaceUrl: string;
+  jiraProjectKey: string;
+  jiraApiToken: string;
+}
+
+export interface BindGithubRequest {
+  githubOrgName: string;
+  githubPat: string;
+}
+
+export interface BindToolResponse {
+  groupId: string;
+  status: GroupDetailResponse["status"];
+  jiraSpaceUrl?: string | null;
+  jiraProjectKey?: string | null;
+  githubOrgName?: string | null;
+  jiraBound: boolean;
+  githubBound: boolean;
+}
+
 async function apiCall<T>(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" = "GET",
@@ -287,6 +340,86 @@ export function useApiClient() {
     return apiCall<GroupDetailResponse>("/groups/my", "GET", undefined, token);
   }
 
+  async function fetchCoordinatorGroups(token?: string): Promise<CoordinatorGroupSummary[]> {
+    return apiCall<CoordinatorGroupSummary[]>("/coordinator/groups", "GET", undefined, token);
+  }
+
+  async function fetchCoordinatorGroup(groupId: string, token?: string): Promise<GroupDetailResponse> {
+    return apiCall<GroupDetailResponse>(
+      `/coordinator/groups/${encodeURIComponent(groupId)}`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchCoordinatorAdvisors(token?: string): Promise<CoordinatorAdvisor[]> {
+    return apiCall<CoordinatorAdvisor[]>("/coordinator/advisors", "GET", undefined, token);
+  }
+
+  async function assignCoordinatorAdvisor(
+    groupId: string,
+    advisorId: string,
+    token?: string
+  ): Promise<AdvisorOverrideResponse> {
+    return apiCall<AdvisorOverrideResponse>(
+      `/coordinator/groups/${encodeURIComponent(groupId)}/advisor`,
+      "PATCH",
+      { action: "ASSIGN", advisorId },
+      token
+    );
+  }
+
+  async function bindJiraTool(
+    groupId: string,
+    payload: BindJiraRequest,
+    token?: string
+  ): Promise<BindToolResponse> {
+    return apiCall<BindToolResponse>(
+      `/groups/${encodeURIComponent(groupId)}/jira`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
+  async function removeCoordinatorAdvisor(
+    groupId: string,
+    token?: string
+  ): Promise<AdvisorOverrideResponse> {
+    return apiCall<AdvisorOverrideResponse>(
+      `/coordinator/groups/${encodeURIComponent(groupId)}/advisor`,
+      "PATCH",
+      { action: "REMOVE" },
+      token
+    );
+  }
+
+  async function runCoordinatorSanitization(
+    force: boolean,
+    token?: string
+  ): Promise<SanitizationReport> {
+    return apiCall<SanitizationReport>(
+      "/coordinator/sanitize",
+      "POST",
+      force ? { force: true } : undefined,
+      token
+    );
+  }
+
+  async function bindGithubTool(
+    groupId: string,
+    payload: BindGithubRequest,
+    token?: string
+  ): Promise<BindToolResponse> {
+    return apiCall<BindToolResponse>(
+      `/groups/${encodeURIComponent(groupId)}/github`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -309,5 +442,13 @@ export function useApiClient() {
     registerProfessor,
     createGroup,
     fetchMyGroup,
+    fetchCoordinatorGroups,
+    fetchCoordinatorGroup,
+    fetchCoordinatorAdvisors,
+    assignCoordinatorAdvisor,
+    removeCoordinatorAdvisor,
+    runCoordinatorSanitization,
+    bindJiraTool,
+    bindGithubTool,
   };
 }

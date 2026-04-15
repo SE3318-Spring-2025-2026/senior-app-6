@@ -13,9 +13,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.senior.spm.controller.request.AddGroupToCommitteeRequest;
+import com.senior.spm.controller.request.AddProfessorToCommitteeRequest;
 import com.senior.spm.controller.response.AdvisorCapacityResponse;
 import com.senior.spm.controller.request.AdvisorOverrideRequest;
 import com.senior.spm.controller.response.AdvisorOverrideResponse;
+import com.senior.spm.controller.response.CommitteeGroupResponse;
+import com.senior.spm.controller.response.CommitteeProfessorResponse;
 import com.senior.spm.controller.response.GroupDetailResponse;
 import com.senior.spm.controller.request.CoordinatorMemberRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
@@ -29,8 +33,10 @@ import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.controller.response.GroupSummaryResponse;
 import com.senior.spm.exception.AlreadyExistsException;
+import com.senior.spm.exception.ConflictException;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.service.AdvisorService;
+import com.senior.spm.service.CommitteeService;
 import com.senior.spm.service.DeliverableService;
 import com.senior.spm.service.GroupService;
 import com.senior.spm.service.SprintService;
@@ -49,19 +55,22 @@ public class CoordinatorController {
     private final SystemStateService systemStateService;
     private final GroupService groupService;
     private final AdvisorService advisorService;
+    private final CommitteeService committeeService;
 
     public CoordinatorController(SprintService sprintService,
             DeliverableService deliverableService,
             StudentService studentService,
             SystemStateService systemStateService,
             GroupService groupService,
-            AdvisorService advisorService) {
+            AdvisorService advisorService,
+            CommitteeService committeeService) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
         this.studentService = studentService;
         this.systemStateService = systemStateService;
         this.groupService = groupService;
         this.advisorService = advisorService;
+        this.committeeService = committeeService;
     }
 
     @PostMapping("/sprints")
@@ -342,6 +351,68 @@ public class CoordinatorController {
             // REMOVE — advisorId is ignored
             AdvisorOverrideResponse result = advisorService.removeAdvisor(groupId);
             return ResponseEntity.ok(result);
+        }
+    }
+
+    // ========== COMMITTEE MANAGEMENT ENDPOINTS (Process 4) ==========
+
+    /**
+     * Adds a professor to a committee with validation.
+     * Validates that the professor is not already assigned to another committee for the same deliverable.
+     *
+     * <p>Auth: Staff JWT with role=Coordinator (enforced by SecurityConfig).
+     *
+     * <p>REST Endpoint: {@code POST /api/coordinator/committees/{committeeId}/professors}
+     *
+     * @param committeeId UUID of the target committee
+     * @param request {@link AddProfessorToCommitteeRequest} with professorId and role
+     * @return 201 with {@link CommitteeProfessorResponse}
+     *
+     *         Error responses:
+     *         - 400: validation error (professor already assigned to another committee)
+     *         - 404: committee or professor not found
+     */
+    @PostMapping("/committees/{committeeId}/professors")
+    public ResponseEntity<?> addProfessorToCommittee(
+            @PathVariable UUID committeeId,
+            @Valid @RequestBody AddProfessorToCommitteeRequest request) {
+        try {
+            CommitteeProfessorResponse result = committeeService.addProfessorToCommittee(committeeId, request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (ConflictException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
+        }
+    }
+
+    /**
+     * Adds a group to a committee with validation.
+     * Validates that the group is not already assigned to another committee for the same deliverable.
+     *
+     * <p>Auth: Staff JWT with role=Coordinator (enforced by SecurityConfig).
+     *
+     * <p>REST Endpoint: {@code POST /api/coordinator/committees/{committeeId}/groups}
+     *
+     * @param committeeId UUID of the target committee
+     * @param request {@link AddGroupToCommitteeRequest} with groupId
+     * @return 201 with {@link CommitteeGroupResponse}
+     *
+     *         Error responses:
+     *         - 400: validation error (group already assigned to another committee)
+     *         - 404: committee or group not found
+     */
+    @PostMapping("/committees/{committeeId}/groups")
+    public ResponseEntity<?> addGroupToCommittee(
+            @PathVariable UUID committeeId,
+            @Valid @RequestBody AddGroupToCommitteeRequest request) {
+        try {
+            CommitteeGroupResponse result = committeeService.addGroupToCommittee(committeeId, request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        } catch (ConflictException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
         }
     }
 
