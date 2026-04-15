@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { AlertCircle, ArrowLeft, Crown, Mail, RefreshCw, Send, ShieldAlert, Users, UserRoundPlus, XCircle } from "lucide-vue-next";
+	import { AlertCircle, ArrowLeft, Crown, Mail, RefreshCw, Send, ShieldAlert, Users, UserRoundPlus, Wrench, XCircle } from "lucide-vue-next";
 	import type { AdvisorCapacityResponse, AdvisorRequestResponse } from "~/composables/useApiClient";
 	import type { GroupDetailResponse, GroupMember } from "~/types/group";
 	import { useAuthStore } from "~/stores/auth";
@@ -310,14 +310,40 @@
             </p>
           </div>
 
-          <button
-            type="button"
-            class="inline-flex items-center justify-center gap-2 self-start rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
-            @click="loadGroup"
-          >
-            <RefreshCw class="h-4 w-4" />
-            Refresh
-          </button>
+          <div class="flex items-center gap-2 self-start">
+            <NuxtLink
+              v-if="group"
+              to="/student/group/invitations"
+              class="relative inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+            >
+              <Mail class="h-4 w-4" />
+              Invitations
+              <span
+                v-if="pendingInvitationCount > 0"
+                class="absolute -right-1.5 -top-1.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-blue-600 px-1 text-xs font-semibold text-white dark:bg-blue-500"
+              >
+                {{ pendingInvitationCount }}
+              </span>
+            </NuxtLink>
+
+            <NuxtLink
+              v-if="isLeader"
+              to="/student/group/tools"
+              class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+            >
+              <Wrench class="h-4 w-4" />
+              Tool Binding
+            </NuxtLink>
+
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+              @click="loadGroup"
+            >
+              <RefreshCw class="h-4 w-4" />
+              Refresh
+            </button>
+          </div>
         </div>
       </header>
 
@@ -646,29 +672,6 @@
           <UiMemberList :members="group.members" />
         </section>
 
-        <NuxtLink
-          to="/student/group/invitations"
-          class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700/60"
-        >
-          <div class="flex items-center gap-3">
-            <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/50">
-              <Mail class="h-5 w-5 text-blue-700 dark:text-blue-300" />
-            </div>
-            <div>
-              <p class="font-semibold text-slate-900 dark:text-white">Group Invitations</p>
-              <p class="text-sm text-slate-600 dark:text-slate-400">
-                Review pending invitations from other team leaders
-              </p>
-            </div>
-          </div>
-          <span
-            v-if="pendingInvitationCount > 0"
-            class="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white dark:bg-blue-500"
-          >
-            {{ pendingInvitationCount }}
-          </span>
-          <span v-else class="text-sm text-slate-400 dark:text-slate-500">No pending</span>
-        </NuxtLink>
       </template>
     </div>
   </main>
