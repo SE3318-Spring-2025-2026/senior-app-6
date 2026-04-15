@@ -157,7 +157,7 @@ public class GroupController {
      * <p>Auth: Student JWT — requester must be {@code TEAM_LEADER} of {@code groupId}.
      *
      * @param groupId UUID of the group to bind
-     * @param request {@link BindJiraRequest} containing {@code jiraSpaceUrl},
+     * @param request {@link BindJiraRequest} containing {@code jiraSpaceUrl}, {@code jiraEmail},
      *                {@code jiraProjectKey}, and {@code jiraApiToken} (all required)
      * @return 200 with {@link BindToolResponse} containing non-sensitive JIRA metadata
      *         and updated group status
@@ -177,6 +177,7 @@ public class GroupController {
         BindToolResponse response = groupService.bindJira(
             groupId,
             request.getJiraSpaceUrl(),
+            request.getJiraEmail(),
             request.getJiraProjectKey(),
             request.getJiraApiToken(),
             requesterUUID

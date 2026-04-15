@@ -15,6 +15,7 @@ public final class GroupDetailResponse implements InvitationActionResponse {
     private String status;
     private LocalDateTime createdAt;
     private String jiraSpaceUrl;
+    private String jiraEmail;
     private String jiraProjectKey;
     private Boolean jiraBound;
     private String githubOrgName;

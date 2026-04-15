@@ -109,8 +109,11 @@ export interface SanitizationReport {
   autoRejectedRequestCount?: number;
   rejectedRequestCount?: number;
   triggeredAt: string;
+}
+
 export interface BindJiraRequest {
   jiraSpaceUrl: string;
+  jiraEmail: string;
   jiraProjectKey: string;
   jiraApiToken: string;
 }
@@ -364,6 +367,10 @@ export function useApiClient() {
       `/coordinator/groups/${encodeURIComponent(groupId)}/advisor`,
       "PATCH",
       { action: "ASSIGN", advisorId },
+      token
+    );
+  }
+
   async function bindJiraTool(
     groupId: string,
     payload: BindJiraRequest,
@@ -397,6 +404,10 @@ export function useApiClient() {
       "/coordinator/sanitize",
       "POST",
       force ? { force: true } : undefined,
+      token
+    );
+  }
+
   async function bindGithubTool(
     groupId: string,
     payload: BindGithubRequest,
