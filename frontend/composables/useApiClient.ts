@@ -113,6 +113,7 @@ export interface SanitizationReport {
 
 export interface BindJiraRequest {
   jiraSpaceUrl: string;
+  jiraEmail: string;
   jiraProjectKey: string;
   jiraApiToken: string;
 }

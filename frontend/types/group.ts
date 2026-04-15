@@ -30,6 +30,7 @@ export interface GroupDetailResponse {
   members: GroupMember[]
   createdAt?: string
   jiraSpaceUrl?: string
+  jiraEmail?: string
   jiraProjectKey?: string
   jiraBound?: boolean
   githubOrgName?: string

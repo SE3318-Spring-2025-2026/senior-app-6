@@ -9,6 +9,9 @@ public class BindJiraRequest {
     @NotBlank(message = "JIRA space URL is required")
     private String jiraSpaceUrl;
 
+    @NotBlank(message = "JIRA email is required")
+    private String jiraEmail;
+
     @NotBlank(message = "JIRA project key is required")
     private String jiraProjectKey;
 

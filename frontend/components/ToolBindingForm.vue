@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircle2, Lock, Loader2 } from "lucide-vue-next";
+import { CheckCircle2, Lock, Loader2, Info } from "lucide-vue-next";
 
 defineOptions({
   name: "ToolBindingFormCard",
@@ -8,7 +8,7 @@ defineOptions({
 type ToolBindingField = {
   name: string;
   label: string;
-  type?: "text" | "url" | "password";
+  type?: "text" | "url" | "password" | "email";
   placeholder?: string;
   autocomplete?: string;
   helpText?: string;
@@ -137,8 +137,17 @@ function handleSubmit() {
         :key="field.name"
         class="block space-y-1.5"
       >
-        <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+        <span class="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
           {{ field.label }}
+          <span
+            v-if="field.helpText"
+            class="group relative inline-flex cursor-default"
+          >
+            <Info class="h-3.5 w-3.5 shrink-0 text-slate-400 dark:text-slate-500" />
+            <span class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-64 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-normal leading-relaxed text-slate-600 opacity-0 shadow-md transition-opacity group-hover:opacity-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              {{ field.helpText }}
+            </span>
+          </span>
         </span>
 
         <input
@@ -155,9 +164,6 @@ function handleSubmit() {
           @input="updateFieldValue(field.name, ($event.target as HTMLInputElement).value)"
         />
 
-        <p v-if="field.helpText" class="text-xs text-slate-500 dark:text-slate-400">
-          {{ field.helpText }}
-        </p>
         <p v-if="fieldErrors[field.name]" class="text-xs text-red-600 dark:text-red-400">
           {{ fieldErrors[field.name] }}
         </p>

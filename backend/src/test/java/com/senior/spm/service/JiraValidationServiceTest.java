@@ -1,11 +1,17 @@
 package com.senior.spm.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,131 +40,213 @@ class JiraValidationServiceTest {
     @InjectMocks
     private JiraValidationService service;
 
-    private static final String JIRA_URL = "https://myteam.atlassian.net";
+    private static final String JIRA_URL   = "https://myteam.atlassian.net";
+    private static final String JIRA_EMAIL = "user@example.com";
     private static final String PROJECT_KEY = "SPM";
-    private static final String API_TOKEN = "test-api-token";
-    private static final String EXPECTED_URL = JIRA_URL + "/rest/api/3/project/" + PROJECT_KEY;
+    private static final String API_TOKEN  = "test-api-token";
 
-    // ── Happy path ───────────────────────────────────────────────────────────
+    // Service uses /rest/api/3/project/search?keys={KEY} (uppercased)
+    private static final String EXPECTED_URL = JIRA_URL + "/rest/api/3/project/search?keys=" + PROJECT_KEY;
 
-    @Test
-    void validate_success_whenJiraReturns200() {
-        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
-                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
-
-        assertThatNoException().isThrownBy(() -> service.validate(JIRA_URL, PROJECT_KEY, API_TOKEN));
+    /** Helper: build the ResponseEntity the search endpoint returns (raw Map matches Map.class token). */
+    @SuppressWarnings("rawtypes")
+    private static ResponseEntity<Map> searchResponse(int total) {
+        return ResponseEntity.ok(Map.of("total", total, "values", List.of()));
     }
 
-    // ── 401 / 403 — invalid token ─────────────────────────────────────────
+    // ── Happy path — Basic Auth (email provided) ──────────────────────────────
+
+    @Test
+    void validate_success_whenSearchReturnsProjects_withEmail() {
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(searchResponse(1));
+
+        assertThatNoException().isThrownBy(
+                () -> service.validate(JIRA_URL, JIRA_EMAIL, PROJECT_KEY, API_TOKEN));
+    }
+
+    // ── Happy path — Bearer fallback (null email) ─────────────────────────────
+
+    @Test
+    void validate_success_whenNullEmail_fallsBackToBearer() {
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(searchResponse(1));
+
+        assertThatNoException().isThrownBy(
+                () -> service.validate(JIRA_URL, null, PROJECT_KEY, API_TOKEN));
+    }
+
+    // ── Project not found — search returns total: 0 ───────────────────────────
+
+    @Test
+    void validate_throwsProjectNotFound_whenSearchReturnsTotal0() {
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(searchResponse(0));
+
+        assertThatThrownBy(() -> service.validate(JIRA_URL, JIRA_EMAIL, PROJECT_KEY, API_TOKEN))
+                .isInstanceOf(JiraValidationException.class)
+                .hasMessageContaining("Project key 'SPM' not found");
+    }
+
+    // ── 401 / 403 — invalid token ─────────────────────────────────────────────
 
     @Test
     void validate_throwsInvalidToken_whenJiraReturns401() {
-        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
 
-        assertThatThrownBy(() -> service.validate(JIRA_URL, PROJECT_KEY, API_TOKEN))
+        assertThatThrownBy(() -> service.validate(JIRA_URL, JIRA_EMAIL, PROJECT_KEY, API_TOKEN))
                 .isInstanceOf(JiraValidationException.class)
                 .hasMessage("JIRA validation failed: API token is invalid or expired");
     }
 
     @Test
     void validate_throwsInvalidToken_whenJiraReturns403() {
-        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.FORBIDDEN));
 
-        assertThatThrownBy(() -> service.validate(JIRA_URL, PROJECT_KEY, API_TOKEN))
+        assertThatThrownBy(() -> service.validate(JIRA_URL, JIRA_EMAIL, PROJECT_KEY, API_TOKEN))
                 .isInstanceOf(JiraValidationException.class)
                 .hasMessage("JIRA validation failed: API token is invalid or expired");
     }
 
-    // ── 404 — project key not found ──────────────────────────────────────
-
-    @Test
-    void validate_throwsProjectNotFound_whenJiraReturns404() {
-        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
-                .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
-
-        assertThatThrownBy(() -> service.validate(JIRA_URL, PROJECT_KEY, API_TOKEN))
-                .isInstanceOf(JiraValidationException.class)
-                .hasMessage("JIRA validation failed: Project key 'SPM' not found");
-    }
-
-    // ── Other 4xx — unreachable / misconfigured URL ──────────────────────
+    // ── Other 4xx — unreachable / misconfigured URL ───────────────────────────
 
     @Test
     void validate_throwsUnreachable_whenJiraReturnsOther4xx() {
-        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
-        assertThatThrownBy(() -> service.validate(JIRA_URL, PROJECT_KEY, API_TOKEN))
+        assertThatThrownBy(() -> service.validate(JIRA_URL, JIRA_EMAIL, PROJECT_KEY, API_TOKEN))
                 .isInstanceOf(JiraValidationException.class)
                 .hasMessage("JIRA validation failed: JIRA space URL is unreachable");
     }
 
-    // ── Timeout / network failure ─────────────────────────────────────────
+    // ── Timeout / network failure ─────────────────────────────────────────────
 
     @Test
-    void validate_throwsUnreachable_whenTimeout() {
-        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
+    void validate_throwsUnreachable_whenNetworkTimeout() {
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
                 .thenThrow(new ResourceAccessException("Connection timed out"));
 
-        assertThatThrownBy(() -> service.validate(JIRA_URL, PROJECT_KEY, API_TOKEN))
+        assertThatThrownBy(() -> service.validate(JIRA_URL, JIRA_EMAIL, PROJECT_KEY, API_TOKEN))
                 .isInstanceOf(JiraValidationException.class)
                 .hasMessage("JIRA validation failed: JIRA space URL is unreachable");
     }
 
-    // ── URL normalisation ─────────────────────────────────────────────────
+    // ── URL normalisation ─────────────────────────────────────────────────────
 
     @Test
-    void validate_handlesTrailingSlash_inJiraUrl() {
-        // Trailing slash in jiraSpaceUrl must be stripped before appending the path.
-        // "https://myteam.atlassian.net/" → exchange must be called with
-        // "https://myteam.atlassian.net/rest/api/3/project/SPM" (single slash, not double).
-        String urlWithSlash = JIRA_URL + "/";
-        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
-                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+    void validate_stripsTrailingSlash_fromJiraUrl() {
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(searchResponse(1));
 
-        assertThatNoException().isThrownBy(() -> service.validate(urlWithSlash, PROJECT_KEY, API_TOKEN));
-        verify(restTemplate).exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class));
+        assertThatNoException().isThrownBy(
+                () -> service.validate(JIRA_URL + "/", JIRA_EMAIL, PROJECT_KEY, API_TOKEN));
+        verify(restTemplate).exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class));
     }
 
     @Test
     void validate_stripsTrailingWhitespace_fromJiraUrl() {
-        String urlWithSpaces = JIRA_URL + "   ";
-        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
-                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(searchResponse(1));
 
-        assertThatNoException().isThrownBy(() -> service.validate(urlWithSpaces, PROJECT_KEY, API_TOKEN));
-        verify(restTemplate).exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class));
+        assertThatNoException().isThrownBy(
+                () -> service.validate(JIRA_URL + "   ", JIRA_EMAIL, PROJECT_KEY, API_TOKEN));
+        verify(restTemplate).exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class));
     }
 
-    // ── Exception hierarchy — GlobalExceptionHandler relies on this ───────
+    // ── Project key normalisation ─────────────────────────────────────────────
 
     @Test
-    void validate_throwsExternalToolValidationException_onFailure() {
-        // JiraValidationException must extend ExternalToolValidationException so that
-        // GlobalExceptionHandler.handleExternalToolValidation() catches it and returns 422.
-        // If this hierarchy breaks, failures silently become 500s instead of 422s.
-        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
-                .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
+    void validate_uppercasesProjectKey_beforeBuildingUrl() {
+        String expectedUrl = JIRA_URL + "/rest/api/3/project/search?keys=SPM";
+        when(restTemplate.exchange(eq(expectedUrl), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(searchResponse(1));
 
-        assertThatThrownBy(() -> service.validate(JIRA_URL, PROJECT_KEY, API_TOKEN))
-                .isInstanceOf(ExternalToolValidationException.class);
+        assertThatNoException().isThrownBy(
+                () -> service.validate(JIRA_URL, JIRA_EMAIL, "spm", API_TOKEN));
+        verify(restTemplate).exchange(eq(expectedUrl), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class));
     }
 
-    // ── Authorization header ──────────────────────────────────────────────
+    // ── Authorization header — Basic Auth ─────────────────────────────────────
 
     @SuppressWarnings("unchecked")
     @Test
-    void validate_setsBearerHeader() {
-        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
-                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+    void validate_setsBasicAuthHeader_whenEmailProvided() {
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(searchResponse(1));
 
-        service.validate(JIRA_URL, PROJECT_KEY, API_TOKEN);
+        service.validate(JIRA_URL, JIRA_EMAIL, PROJECT_KEY, API_TOKEN);
 
-        ArgumentCaptor<HttpEntity<Void>> captor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), captor.capture(), eq(Void.class));
-        String authHeader = captor.getValue().getHeaders().getFirst("Authorization");
-        org.assertj.core.api.Assertions.assertThat(authHeader).isEqualTo("Bearer " + API_TOKEN);
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), captor.capture(), eq(Map.class));
+
+        String expectedBase64 = Base64.getEncoder()
+                .encodeToString((JIRA_EMAIL + ":" + API_TOKEN).getBytes(StandardCharsets.UTF_8));
+        assertThat(captor.getValue().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
+                .isEqualTo("Basic " + expectedBase64);
+    }
+
+    // ── Authorization header — Bearer fallback ────────────────────────────────
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void validate_setsBearerHeader_whenEmailIsNull() {
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(searchResponse(1));
+
+        service.validate(JIRA_URL, null, PROJECT_KEY, API_TOKEN);
+
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), captor.capture(), eq(Map.class));
+
+        assertThat(captor.getValue().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
+                .isEqualTo("Bearer " + API_TOKEN);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void validate_setsBearerHeader_whenEmailIsBlank() {
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(searchResponse(1));
+
+        service.validate(JIRA_URL, "   ", PROJECT_KEY, API_TOKEN);
+
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), captor.capture(), eq(Map.class));
+
+        assertThat(captor.getValue().getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
+                .isEqualTo("Bearer " + API_TOKEN);
+    }
+
+    // ── Accept header ─────────────────────────────────────────────────────────
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void validate_setsAcceptJsonHeader() {
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(searchResponse(1));
+
+        service.validate(JIRA_URL, JIRA_EMAIL, PROJECT_KEY, API_TOKEN);
+
+        ArgumentCaptor<HttpEntity<?>> captor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate).exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), captor.capture(), eq(Map.class));
+
+        assertThat(captor.getValue().getHeaders().getFirst(HttpHeaders.ACCEPT))
+                .contains("application/json");
+    }
+
+    // ── Exception hierarchy — GlobalExceptionHandler maps this to 422 ─────────
+
+    @Test
+    void validate_throwsExternalToolValidationException_onAnyFailure() {
+        // JiraValidationException must extend ExternalToolValidationException so that
+        // GlobalExceptionHandler.handleExternalToolValidation() catches it and maps to 422.
+        when(restTemplate.exchange(eq(EXPECTED_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Map.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
+
+        assertThatThrownBy(() -> service.validate(JIRA_URL, JIRA_EMAIL, PROJECT_KEY, API_TOKEN))
+                .isInstanceOf(ExternalToolValidationException.class);
     }
 }
