@@ -1,6 +1,6 @@
 package com.senior.spm.converter;
 
-import com.senior.spm.service.SymmetricEncryptionService;
+import com.senior.spm.service.EncryptionService;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
@@ -8,9 +8,9 @@ import jakarta.persistence.Converter;
 @Converter
 public class AccessTokenEncryptionConverter implements AttributeConverter<String, String> {
 
-    private final SymmetricEncryptionService encryptionService;
+    private final EncryptionService encryptionService;
 
-    public AccessTokenEncryptionConverter(SymmetricEncryptionService encryptionService) {
+    public AccessTokenEncryptionConverter(EncryptionService encryptionService) {
         this.encryptionService = encryptionService;
     }
 
