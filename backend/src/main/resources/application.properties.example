@@ -12,7 +12,6 @@ jwt.expiration=604800000
 # Must be a Base64-encoded value that decodes to exactly 32 bytes (256 bits).
 # Generate a key with: openssl rand -base64 32
 encryption.key=
-encryption.secret=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 
