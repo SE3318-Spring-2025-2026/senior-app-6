@@ -43,6 +43,8 @@ public class GitHubValidationService {
      */
     public void validate(String githubOrgName, String githubPat) {
         var headers = new HttpHeaders();
+        // GitHub REST API requires a User-Agent header
+        headers.set(HttpHeaders.USER_AGENT, "SPM-Senior-App");
         // GitHub REST API v3 accepts a PAT as a Bearer token.
         headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + githubPat);
         var entity = new HttpEntity<>(headers);
