@@ -93,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-	import { computed, onMounted, onBeforeUnmount, ref } from "vue";
+	import { computed, onMounted, ref } from "vue";
 	import { ArrowLeft, MailOpen, MailX } from "lucide-vue-next";
 	import { usePendingInvitations } from "~/composables/usePendingInvitations";
 
@@ -146,11 +146,6 @@
 		}
 	};
 
-	/**
-	 * Handle when invitation is accepted or declined
-	 * Acceptance criteria: Navigation badge updates without page reload
-	 * This happens automatically through the composable state update
-	 */
 	/**
 	 * Executes the API call to accept an invitation and updates the timestamp.
 	 * Acceptance criteria: Navigation badge updates automatically without page reload
