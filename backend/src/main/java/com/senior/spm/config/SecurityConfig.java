@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.filter.JwtAuthenticationFilter;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 public class SecurityConfig {
 
@@ -50,6 +50,9 @@ public class SecurityConfig {
                                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
                                 // P3: Professor-only endpoints live under /api/advisor/**
                                 .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
+                                // P3: Student-facing advisor request endpoints.
+                                .requestMatchers("/api/advisors").hasRole("STUDENT")
+                                .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")
                                 .anyRequest().authenticated())
                 .exceptionHandling(
                         ex -> ex.accessDeniedHandler(
