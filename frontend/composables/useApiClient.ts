@@ -5,6 +5,7 @@
 
 import { useAuthStore } from '~/stores/auth';
 import type { GroupDetailResponse, CreateGroupResponse, CreateGroupRequest } from '~/types/group';
+import type { AdvisorRequestItem, AdvisorRequestDetail, AdvisorRespondResponse } from '~/types/advisor';
 
 export interface ApiError {
   status: number;
@@ -566,6 +567,18 @@ export function useApiClient() {
     );
   }
 
+  async function fetchAdvisorRequests(token?: string): Promise<AdvisorRequestItem[]> {
+    return apiCall<AdvisorRequestItem[]>("/advisor/requests", "GET", undefined, token);
+  }
+
+  async function fetchAdvisorRequestDetail(requestId: string, token?: string): Promise<AdvisorRequestDetail> {
+    return apiCall<AdvisorRequestDetail>(`/advisor/requests/${encodeURIComponent(requestId)}`, "GET", undefined, token);
+  }
+
+  async function respondToAdvisorRequest(requestId: string, accept: boolean, token?: string): Promise<AdvisorRespondResponse> {
+    return apiCall<AdvisorRespondResponse>(`/advisor/requests/${encodeURIComponent(requestId)}/respond`, "PATCH", { accept }, token);
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -604,5 +617,8 @@ export function useApiClient() {
     bindGithubTool,
     fetchPendingInvitations,
     respondToInvitation,
+    fetchAdvisorRequests,
+    fetchAdvisorRequestDetail,
+    respondToAdvisorRequest,
   };
 }
