@@ -1,7 +1,8 @@
 <script setup lang="ts">
-	import { AlertCircle, Crown, RefreshCw, ShieldAlert, Users, UserRoundPlus } from "lucide-vue-next";
+	import { AlertCircle, Crown, Mail, RefreshCw, ShieldAlert, Users, UserRoundPlus } from "lucide-vue-next";
 	import type { GroupDetailResponse, GroupMember } from "~/types/group";
 	import { useAuthStore } from "~/stores/auth";
+	import { usePendingInvitations } from "~/composables/usePendingInvitations";
 
 	definePageMeta({
 		middleware: "auth",
@@ -84,7 +85,11 @@
 		}
 	}
 
-	onMounted(loadGroup);
+	const { fetchInvitations, count: pendingInvitationCount } = usePendingInvitations();
+
+	onMounted(async () => {
+		await Promise.all([loadGroup(), fetchInvitations()]);
+	});
 </script>
 
 <template>
@@ -166,6 +171,30 @@
             </NuxtLink>
           </div>
         </section>
+
+        <NuxtLink
+          to="/student/group/invitations"
+          class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700/60"
+        >
+          <div class="flex items-center gap-3">
+            <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/50">
+              <Mail class="h-5 w-5 text-blue-700 dark:text-blue-300" />
+            </div>
+            <div>
+              <p class="font-semibold text-slate-900 dark:text-white">Group Invitations</p>
+              <p class="text-sm text-slate-600 dark:text-slate-400">
+                Review invitations from team leaders
+              </p>
+            </div>
+          </div>
+          <span
+            v-if="pendingInvitationCount > 0"
+            class="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white dark:bg-blue-500"
+          >
+            {{ pendingInvitationCount }}
+          </span>
+          <span v-else class="text-sm text-slate-400 dark:text-slate-500">No pending</span>
+        </NuxtLink>
       </template>
 
       <template v-else-if="group">
@@ -230,18 +259,31 @@
                   Leader View
                 </h2>
                 <p class="mt-2 text-sm text-blue-900 dark:text-blue-200">
-                  You can review your roster here today. Invitation management and tool setup are planned next.
+                  Manage your group from here. Send invitations to teammates and connect your project tools below.
                 </p>
               </div>
             </div>
 
-            <div class="mt-5 rounded-xl border border-blue-200 bg-white/80 p-4 dark:border-blue-800 dark:bg-slate-900/50">
-              <p class="text-sm font-medium text-slate-900 dark:text-white">
-                Coming next
-              </p>
-              <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Invite teammates and connect project tools once the next student group flows are delivered.
-              </p>
+            <div class="mt-5 flex flex-col gap-2 sm:flex-row">
+              <NuxtLink
+                to="/student/group/invitations"
+                class="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-300 bg-white/80 px-4 py-2 text-sm font-medium text-blue-800 transition hover:bg-blue-50 dark:border-blue-700 dark:bg-slate-900/50 dark:text-blue-200 dark:hover:bg-blue-950/40"
+              >
+                <Mail class="h-4 w-4" />
+                Invitations
+                <span
+                  v-if="pendingInvitationCount > 0"
+                  class="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-blue-600 px-1 text-xs font-semibold text-white"
+                >
+                  {{ pendingInvitationCount }}
+                </span>
+              </NuxtLink>
+              <NuxtLink
+                to="/student/group/tools"
+                class="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-300 bg-white/80 px-4 py-2 text-sm font-medium text-blue-800 transition hover:bg-blue-50 dark:border-blue-700 dark:bg-slate-900/50 dark:text-blue-200 dark:hover:bg-blue-950/40"
+              >
+                Tool Binding
+              </NuxtLink>
             </div>
           </article>
 
@@ -273,6 +315,30 @@
 
           <UiMemberList :members="group.members" />
         </section>
+
+        <NuxtLink
+          to="/student/group/invitations"
+          class="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700/60"
+        >
+          <div class="flex items-center gap-3">
+            <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-950/50">
+              <Mail class="h-5 w-5 text-blue-700 dark:text-blue-300" />
+            </div>
+            <div>
+              <p class="font-semibold text-slate-900 dark:text-white">Group Invitations</p>
+              <p class="text-sm text-slate-600 dark:text-slate-400">
+                Review pending invitations from other team leaders
+              </p>
+            </div>
+          </div>
+          <span
+            v-if="pendingInvitationCount > 0"
+            class="inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full bg-blue-600 px-1.5 text-xs font-semibold text-white dark:bg-blue-500"
+          >
+            {{ pendingInvitationCount }}
+          </span>
+          <span v-else class="text-sm text-slate-400 dark:text-slate-500">No pending</span>
+        </NuxtLink>
       </template>
     </div>
   </main>
