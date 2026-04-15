@@ -9,7 +9,7 @@
 					{{ invitation.groupName }}
 				</h3>
 				<p class="text-sm text-slate-600 dark:text-slate-400">
-					Invited by {{ invitation.senderName || "a team member" }}
+					Team Leader: {{ invitation.teamLeaderStudentId }}
 				</p>
 			</div>
 			<span
@@ -91,7 +91,7 @@
 		if (isProcessing.value) return;
 		isProcessing.value = true;
 		activeAction.value = "accept";
-		emit("accept", props.invitation.id);
+		emit("accept", props.invitation.invitationId);
 		setTimeout(() => {
 			isProcessing.value = false;
 			activeAction.value = null;
@@ -102,7 +102,7 @@
 		if (isProcessing.value) return;
 		isProcessing.value = true;
 		activeAction.value = "decline";
-		emit("decline", props.invitation.id);
+		emit("decline", props.invitation.invitationId);
 		setTimeout(() => {
 			isProcessing.value = false;
 			activeAction.value = null;

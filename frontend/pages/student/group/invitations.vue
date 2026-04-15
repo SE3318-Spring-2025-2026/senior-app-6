@@ -3,6 +3,14 @@
 		class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8"
 	>
 		<div class="mx-auto w-full max-w-4xl space-y-6">
+			<NuxtLink
+				to="/student/group"
+				class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+			>
+				<ArrowLeft class="h-4 w-4" />
+				Back to group hub
+			</NuxtLink>
+
 			<!-- Header -->
 			<header
 				class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg"
@@ -69,7 +77,7 @@
 			<div v-else class="space-y-4">
 				<InvitationCard
 					v-for="invitation in pendingInvitations"
-					:key="invitation.id"
+					:key="invitation.invitationId"
 					:invitation="invitation"
 					@accept="handleAccept"
 					@decline="handleDecline"
@@ -86,7 +94,7 @@
 
 <script setup lang="ts">
 	import { computed, onMounted, onBeforeUnmount, ref } from "vue";
-	import { MailOpen, MailX } from "lucide-vue-next";
+	import { ArrowLeft, MailOpen, MailX } from "lucide-vue-next";
 	import { usePendingInvitations } from "~/composables/usePendingInvitations";
 
 	// Define page metadata for authentication middleware

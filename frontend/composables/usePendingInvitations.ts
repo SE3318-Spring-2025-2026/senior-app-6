@@ -55,7 +55,7 @@ export const usePendingInvitations = () => {
 			await apiClient.respondToInvitation(invitationId, "ACCEPT", token);
 
 			// Remove from pending list
-			pendingInvitations.value = pendingInvitations.value.filter((inv) => inv.id !== invitationId);
+			pendingInvitations.value = pendingInvitations.value.filter((inv) => inv.invitationId !== invitationId);
 		} catch (err: unknown) {
 			const errorMessage = err instanceof Error ? err.message : "Failed to accept invitation";
 			error.value = errorMessage;
@@ -75,7 +75,7 @@ export const usePendingInvitations = () => {
 			await apiClient.respondToInvitation(invitationId, "DECLINE", token);
 
 			// Remove from pending list
-			pendingInvitations.value = pendingInvitations.value.filter((inv) => inv.id !== invitationId);
+			pendingInvitations.value = pendingInvitations.value.filter((inv) => inv.invitationId !== invitationId);
 		} catch (err: unknown) {
 			const errorMessage = err instanceof Error ? err.message : "Failed to decline invitation";
 			error.value = errorMessage;
