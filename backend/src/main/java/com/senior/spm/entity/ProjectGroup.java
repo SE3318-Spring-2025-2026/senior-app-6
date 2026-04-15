@@ -49,6 +49,9 @@ public class ProjectGroup {
     private String jiraSpaceUrl;
 
     @Column(length = 100, nullable = true)
+    private String jiraEmail;
+
+    @Column(length = 100, nullable = true)
     private String jiraProjectKey;
 
     @Column(length = 1024, nullable = true)
@@ -79,6 +82,13 @@ public class ProjectGroup {
         TOOLS_PENDING,
         TOOLS_BOUND,
         ADVISOR_ASSIGNED,
-        DISBANDED
+        DISBANDED;
+
+        public boolean locksRoster() {
+            return switch (this) {
+                case TOOLS_BOUND, ADVISOR_ASSIGNED -> true;
+                case FORMING, TOOLS_PENDING, DISBANDED -> false;
+            };
+        }
     }
 }

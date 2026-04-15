@@ -1,5 +1,8 @@
 package com.senior.spm.service;
 
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
+
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -35,13 +38,29 @@ public class JiraValidationService {
      *                                 404 → project key not found,
      *                                 timeout/network → unreachable)
      */
+    @Deprecated // FIXED BY EFE: Kept for backward compatibility if you don't have email. Jira Cloud will reject this.
     public void validate(String jiraSpaceUrl, String jiraProjectKey, String jiraApiToken) {
+        validate(jiraSpaceUrl, null, jiraProjectKey, jiraApiToken);
+    }
+
+    /**
+     * EFE'S FIX: Jira Cloud REQUIRES an email for Basic Auth. Bearer tokens do not work.
+     * @param jiraEmail Required for Jira Cloud. If null, falls back to Bearer token (for Jira Server).
+     */
+    public void validate(String jiraSpaceUrl, String jiraEmail, String jiraProjectKey, String jiraApiToken) {
         var url = jiraSpaceUrl.strip().replaceAll("/+$", "") + "/rest/api/3/project/" + jiraProjectKey;
 
         var headers = new HttpHeaders();
-        // JIRA Cloud accepts a Bearer token; on-prem may need Basic – Bearer covers
-        // both cases here.
-        headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + jiraApiToken);
+        
+        // EFE'S FIX: Use Basic Auth if email is provided, else fallback to Bearer.
+        if (jiraEmail != null && !jiraEmail.isBlank()) {
+            String authString = jiraEmail + ":" + jiraApiToken;
+            String base64Auth = Base64.getEncoder().encodeToString(authString.getBytes(StandardCharsets.UTF_8));
+            headers.set(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth);
+        } else {
+            headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + jiraApiToken);
+        }
+        
         var entity = new HttpEntity<>(headers);
 
         try {

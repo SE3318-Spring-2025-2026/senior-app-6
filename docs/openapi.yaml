@@ -262,9 +262,11 @@ components:
 
     BindJiraRequest:
       type: object
-      required: [jiraSpaceUrl, jiraProjectKey, jiraApiToken]
+      required: [jiraSpaceUrl, jiraEmail, jiraProjectKey, jiraApiToken]
       properties:
         jiraSpaceUrl:
+          type: string
+        jiraEmail:
           type: string
         jiraProjectKey:
           type: string
