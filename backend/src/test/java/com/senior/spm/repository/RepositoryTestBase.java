@@ -8,7 +8,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import com.senior.spm.entity.AdvisorRequest;
-import com.senior.spm.service.SymmetricEncryptionService;
+import com.senior.spm.service.EncryptionService;
 import com.senior.spm.entity.GroupInvitation;
 import com.senior.spm.entity.GroupMembership;
 import com.senior.spm.entity.ProjectGroup;
@@ -17,8 +17,8 @@ import com.senior.spm.entity.StaffUser;
 import com.senior.spm.entity.Student;
 
 /**
- * Shared factory methods for building test entities.
- * All data is in-memory (H2); each test rolls back after completion.
+ * Shared factory methods for building test entities. All data is in-memory
+ * (H2); each test rolls back after completion.
  */
 // Provides encryption.secret so AccessTokenEncryptionConverter can initialize in @DataJpaTest context
 @TestPropertySource(properties = "encryption.secret=dGVzdC1BRVMta2V5LWZvci11bml0LXRlc3RzLW9ubHk=")
@@ -27,7 +27,7 @@ abstract class RepositoryTestBase {
     // AccessTokenEncryptionConverter (on Student.accessToken) depends on this service.
     // @DataJpaTest doesn't load @Service beans, so we mock it to satisfy the dependency.
     @MockitoBean
-    SymmetricEncryptionService symmetricEncryptionService;
+    EncryptionService symmetricEncryptionService;
 
     @Autowired
     TestEntityManager em;
@@ -106,7 +106,9 @@ abstract class RepositoryTestBase {
         return em.persistAndFlush(sw);
     }
 
-    /** Clears the 1st-level cache so JPQL bulk updates are visible on re-fetch. */
+    /**
+     * Clears the 1st-level cache so JPQL bulk updates are visible on re-fetch.
+     */
     protected void clearCache() {
         em.flush();
         em.getEntityManager().clear();
