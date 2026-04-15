@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -45,8 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Black-box integration tests for AdvisorController (P3-API-02 & P3-API-03).
  *
- * Tests compile and run now. All will fail with 404 until AdvisorController is
- * implemented. Once the controller is wired, all tests should pass green.
+ * All 20 tests pass green against the full Spring Boot context and H2 in-memory DB.
  *
  * Endpoints covered:
  *   GET  /api/advisor/requests
@@ -58,6 +58,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@TestPropertySource(locations = "classpath:test.properties")
 class AdvisorControllerIntegrationTest {
 
     @Autowired MockMvc mockMvc;
