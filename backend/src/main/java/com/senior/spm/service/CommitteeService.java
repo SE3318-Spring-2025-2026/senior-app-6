@@ -7,15 +7,16 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.senior.spm.controller.request.AddGroupToCommitteeRequest;
-import com.senior.spm.controller.request.AddProfessorToCommitteeRequest;
+import com.senior.spm.controller.request.AddGroupsToCommitteeRequest;
+import com.senior.spm.controller.request.AddProfessorsToCommitteeRequest;
 import com.senior.spm.controller.response.CommitteeDetailResponse;
 import com.senior.spm.controller.response.CommitteeGroupResponse;
 import com.senior.spm.controller.response.CommitteeProfessorResponse;
 import com.senior.spm.entity.Committee;
 import com.senior.spm.entity.CommitteeProfessor;
+import com.senior.spm.entity.CommitteeProfessor.ProfessorRole;
 import com.senior.spm.entity.ProjectGroup;
-import com.senior.spm.entity.StaffUser;
+import com.senior.spm.entity.ProjectGroup.GroupStatus;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.repository.CommitteeRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
@@ -32,80 +33,71 @@ public class CommitteeService {
     private final ProjectGroupRepository projectGroupRepository;
     private final CommitteeValidationService committeeValidationService;
 
-    /**
-     * Adds a professor to a committee with validation.
-     *
-     * @param committeeId the committee ID
-     * @param request the request containing professorId and role
-     * @return the created CommitteeProfessorResponse
-     * @throws NotFoundException if committee or professor not found
-     * @throws ConflictException if professor is already assigned to another committee for same deliverable
-     */
     @Transactional
-    public CommitteeProfessorResponse addProfessorToCommittee(UUID committeeId, AddProfessorToCommitteeRequest request) {
-        Committee committee = committeeRepository.findById(committeeId)
+    public List<CommitteeProfessorResponse> addProfessorsToCommittee(UUID committeeId, AddProfessorsToCommitteeRequest request) {
+        var committee = committeeRepository.findById(committeeId)
                 .orElseThrow(() -> new NotFoundException("Committee not found: " + committeeId));
 
-        StaffUser professor = staffUserRepository.findById(request.getProfessorId())
-                .orElseThrow(() -> new NotFoundException("Professor not found: " + request.getProfessorId()));
+        var advisorCount = request.getProfessors().stream()
+                .filter(p -> p.getRole() == ProfessorRole.ADVISOR).count();
+        if (advisorCount != 1) {
+            throw new IllegalArgumentException("Exactly one ADVISOR is required");
+        }
 
-        // Validate no scheduling conflict
-        committeeValidationService.validateProfessorNotAssignedToOtherCommittee(
-                request.getProfessorId(), committee.getDeliverable().getId());
+        var deliverableId = committee.getDeliverable().getId();
+        var responses = new ArrayList<CommitteeProfessorResponse>();
 
-        // Create and save CommitteeProfessor
-        CommitteeProfessor committeeProfessor = new CommitteeProfessor();
-        committeeProfessor.setCommittee(committee);
-        committeeProfessor.setProfessor(professor);
-        committeeProfessor.setRole(request.getRole());
+        for (var entry : request.getProfessors()) {
+            var professor = staffUserRepository.findById(entry.getProfessorId())
+                    .orElseThrow(() -> new NotFoundException("Professor not found: " + entry.getProfessorId()));
 
-        committee.getProfessors().add(committeeProfessor);
+            committeeValidationService.validateProfessorNotAssignedToOtherCommittee(
+                    entry.getProfessorId(), deliverableId);
+
+            var committeeProfessor = new CommitteeProfessor();
+            committeeProfessor.setCommittee(committee);
+            committeeProfessor.setProfessor(professor);
+            committeeProfessor.setRole(entry.getRole());
+            committee.getProfessors().add(committeeProfessor);
+
+            responses.add(new CommitteeProfessorResponse(
+                    committeeProfessor.getId(), professor.getId(), professor.getMail(), professor.getMail(), committeeProfessor.getRole()));
+        }
+
         committeeRepository.save(committee);
+        return responses;
+    }
 
-        return new CommitteeProfessorResponse(
-                committeeProfessor.getId(),
-                professor.getId(),
-                professor.getMail(), // StaffUser has no name field, using mail as identifier
-                professor.getMail(),
-                committeeProfessor.getRole()
-        );
+    @Transactional
+    public List<CommitteeGroupResponse> addGroupsToCommittee(UUID committeeId, AddGroupsToCommitteeRequest request) {
+        var committee = committeeRepository.findById(committeeId)
+                .orElseThrow(() -> new NotFoundException("Committee not found: " + committeeId));
+
+        var deliverableId = committee.getDeliverable().getId();
+        var responses = new ArrayList<CommitteeGroupResponse>();
+
+        for (var groupId : request.getGroupIds()) {
+            var group = projectGroupRepository.findById(groupId)
+                    .orElseThrow(() -> new NotFoundException("Group not found: " + groupId));
+
+            if (group.getStatus() != GroupStatus.ADVISOR_ASSIGNED) {
+                throw new IllegalArgumentException("Group " + groupId + " has not completed advisor association");
+            }
+
+            committeeValidationService.validateGroupNotAssignedToOtherCommittee(groupId, deliverableId);
+
+            committee.getGroups().add(group);
+            responses.add(new CommitteeGroupResponse(
+                    group.getId(), group.getId(), group.getGroupName(), group.getStatus().name()));
+        }
+
+        committeeRepository.save(committee);
+        return responses;
     }
 
     /**
-     * Adds a group to a committee with validation.
-     *
-     * @param committeeId the committee ID
-     * @param request the request containing groupId
-     * @return the created CommitteeGroupResponse
-     * @throws NotFoundException if committee or group not found
-     * @throws ConflictException if group is already assigned to another committee for same deliverable
-     */
-    @Transactional
-    public CommitteeGroupResponse addGroupToCommittee(UUID committeeId, AddGroupToCommitteeRequest request) {
-        Committee committee = committeeRepository.findById(committeeId)
-                .orElseThrow(() -> new NotFoundException("Committee not found: " + committeeId));
-
-        ProjectGroup group = projectGroupRepository.findById(request.getGroupId())
-                .orElseThrow(() -> new NotFoundException("Group not found: " + request.getGroupId()));
-
-        // Validate no duplicate assignment
-        committeeValidationService.validateGroupNotAssignedToOtherCommittee(
-                request.getGroupId(), committee.getDeliverable().getId());
-
-        // Add group to committee
-        committee.getGroups().add(group);
-        committeeRepository.save(committee);
-
-        return new CommitteeGroupResponse(
-                group.getId(),
-                group.getId(),
-                group.getGroupName(),
-                group.getStatus().name()
-        );
-    }
-
-    /**
-     * Fetches detailed information for a specific committee, including assigned professors and bounded student groups.
+     * Fetches detailed information for a specific committee, including assigned
+     * professors and bounded student groups.
      *
      * @param id the committee ID
      * @return the fully populated CommitteeDetailResponse
