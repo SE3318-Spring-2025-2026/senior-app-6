@@ -18,7 +18,6 @@ import com.senior.spm.controller.request.AddProfessorToCommitteeRequest;
 import com.senior.spm.controller.response.AdvisorCapacityResponse;
 import com.senior.spm.controller.request.AdvisorOverrideRequest;
 import com.senior.spm.controller.response.AdvisorOverrideResponse;
-import com.senior.spm.controller.response.CommitteeDetailResponse;
 import com.senior.spm.controller.response.CommitteeGroupResponse;
 import com.senior.spm.controller.response.CommitteeProfessorResponse;
 import com.senior.spm.controller.response.GroupDetailResponse;
@@ -356,29 +355,6 @@ public class CoordinatorController {
     }
 
     // ========== COMMITTEE MANAGEMENT ENDPOINTS (Process 4) ==========
-
-    /**
-     * Fetches detailed information for a specific committee, including assigned professors (ADVISOR and JURY roles) and bounded student groups.
-     *
-     * <p>Auth: Staff JWT with role=Coordinator (enforced by SecurityConfig).
-     *
-     * <p>REST Endpoint: {@code GET /api/coordinator/committees/{committeeId}}
-     *
-     * @param committeeId UUID of the target committee
-     * @return 200 with {@link CommitteeDetailResponse}
-     *
-     *         Error responses:
-     *         - 404: committee not found
-     */
-    @GetMapping("/committees/{committeeId}")
-    public ResponseEntity<?> getCommitteeDetail(@PathVariable UUID committeeId) {
-        try {
-            CommitteeDetailResponse result = committeeService.getCommitteeDetails(committeeId);
-            return ResponseEntity.ok(result);
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
-        }
-    }
 
     /**
      * Adds a professor to a committee with validation.
