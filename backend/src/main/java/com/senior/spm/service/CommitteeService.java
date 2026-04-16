@@ -1,5 +1,7 @@
 package com.senior.spm.service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -7,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.senior.spm.controller.request.AddGroupToCommitteeRequest;
 import com.senior.spm.controller.request.AddProfessorToCommitteeRequest;
+import com.senior.spm.controller.response.CommitteeDetailResponse;
 import com.senior.spm.controller.response.CommitteeGroupResponse;
 import com.senior.spm.controller.response.CommitteeProfessorResponse;
 import com.senior.spm.entity.Committee;
@@ -98,6 +101,51 @@ public class CommitteeService {
                 group.getId(),
                 group.getGroupName(),
                 group.getStatus().name()
+        );
+    }
+
+    /**
+     * Fetches detailed information for a specific committee, including assigned professors and bounded student groups.
+     *
+     * @param id the committee ID
+     * @return the fully populated CommitteeDetailResponse
+     * @throws NotFoundException if the committee does not exist
+     */
+    @Transactional(readOnly = true)
+    public CommitteeDetailResponse getCommitteeDetails(UUID id) {
+        Committee committee = committeeRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Committee not found: " + id));
+
+        // Map professors
+        List<CommitteeProfessorResponse> professorResponses = new ArrayList<>();
+        for (CommitteeProfessor cp : committee.getProfessors()) {
+            professorResponses.add(new CommitteeProfessorResponse(
+                    cp.getId(),
+                    cp.getProfessor().getId(),
+                    cp.getProfessor().getMail(),
+                    cp.getProfessor().getMail(),
+                    cp.getRole()
+            ));
+        }
+
+        // Map groups
+        List<CommitteeGroupResponse> groupResponses = new ArrayList<>();
+        for (ProjectGroup group : committee.getGroups()) {
+            groupResponses.add(new CommitteeGroupResponse(
+                    group.getId(),
+                    group.getId(),
+                    group.getGroupName(),
+                    group.getStatus().name()
+            ));
+        }
+
+        return new CommitteeDetailResponse(
+                committee.getId(),
+                committee.getCommitteeName(),
+                committee.getTermId(),
+                committee.getDeliverable().getId(),
+                professorResponses,
+                groupResponses
         );
     }
 }
