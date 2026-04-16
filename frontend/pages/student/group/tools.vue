@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from "zod";
-import { AlertCircle, FolderGit2, Loader2, ShieldCheck } from "lucide-vue-next";
+import { AlertCircle, ArrowLeft, FolderGit2, Loader2, ShieldCheck } from "lucide-vue-next";
 import type { BindGithubRequest, BindJiraRequest } from "~/composables/useApiClient";
 import type { GroupDetailResponse } from "~/types/group";
 import { useAuthStore } from "~/stores/auth";
@@ -180,6 +180,14 @@ async function handleGithubSubmit(payload: Record<string, string>) {
 <template>
   <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
     <div class="mx-auto w-full max-w-6xl space-y-6">
+      <NuxtLink
+        to="/student/group"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+      >
+        <ArrowLeft class="h-4 w-4" />
+        Back to group hub
+      </NuxtLink>
+
       <header class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg">
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>

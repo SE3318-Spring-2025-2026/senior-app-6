@@ -62,9 +62,9 @@ const respond = async (accept: boolean) => {
     if (!token) throw new Error('Authentication required');
     
     await respondToAdvisorRequest(props.requestId, accept, token);
-    
+
     emit('responded', props.requestId, accept);
-    closeModal();
+    emit('close');
   } catch (e: any) {
     console.error('Error responding to request:', e);
     if (e.status === 400 && e.message?.toLowerCase().includes('capacity')) {
