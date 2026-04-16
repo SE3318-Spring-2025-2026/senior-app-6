@@ -31,7 +31,6 @@ import com.senior.spm.controller.response.GroupSummaryResponse;
 import com.senior.spm.exception.AlreadyExistsException;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.service.AdvisorService;
-import com.senior.spm.service.CommitteeService;
 import com.senior.spm.service.DeliverableService;
 import com.senior.spm.service.GroupService;
 import com.senior.spm.service.SprintService;
@@ -50,22 +49,19 @@ public class CoordinatorController {
     private final SystemStateService systemStateService;
     private final GroupService groupService;
     private final AdvisorService advisorService;
-    private final CommitteeService committeeService;
 
     public CoordinatorController(SprintService sprintService,
             DeliverableService deliverableService,
             StudentService studentService,
             SystemStateService systemStateService,
             GroupService groupService,
-            AdvisorService advisorService,
-            CommitteeService committeeService) {
+            AdvisorService advisorService) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
         this.studentService = studentService;
         this.systemStateService = systemStateService;
         this.groupService = groupService;
         this.advisorService = advisorService;
-        this.committeeService = committeeService;
     }
 
     @PostMapping("/sprints")
