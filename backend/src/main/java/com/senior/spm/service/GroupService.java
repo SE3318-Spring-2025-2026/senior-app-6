@@ -315,6 +315,12 @@ public class GroupService {
             .collect(Collectors.toList());
 
         response.setMembers(memberResponses);
+
+        if (group.getAdvisor() != null) {
+            response.setAdvisorId(group.getAdvisor().getId());
+            response.setAdvisorMail(group.getAdvisor().getMail());
+        }
+
         return response;
     }
 

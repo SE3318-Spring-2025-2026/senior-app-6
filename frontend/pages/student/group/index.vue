@@ -70,6 +70,13 @@
 
 	const isLeader = computed(() => state.value === "leader");
 	const hasPendingAdvisorRequest = computed(() => activeAdvisorRequest.value?.status === "PENDING");
+	// True only when the group actually has an advisor currently assigned.
+	// If the coordinator removed the advisor, advisorId becomes null even if the
+	// latest request still carries status ACCEPTED — that's the stale case.
+	const isAdvisorAssigned = computed(() => !!group.value?.advisorId);
+	const isAcceptedRequestStale = computed(() =>
+		activeAdvisorRequest.value?.status === "ACCEPTED" && !isAdvisorAssigned.value,
+	);
 	const canSendAdvisorRequest = computed(() => (
 		isLeader.value &&
 		group.value?.status === "TOOLS_BOUND" &&
@@ -543,7 +550,14 @@
               </div>
 
               <div
-                v-if="activeAdvisorRequest"
+                v-if="isAcceptedRequestStale"
+                class="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+              >
+                Your previously assigned advisor was removed by the coordinator. You can send a new request below.
+              </div>
+
+              <div
+                v-else-if="activeAdvisorRequest"
                 class="mt-5 rounded-xl border border-slate-200 bg-white/80 p-4 dark:border-slate-700 dark:bg-slate-900/50"
               >
                 <div class="flex items-center justify-between gap-3">
@@ -586,7 +600,7 @@
               </div>
 
               <div
-                v-else
+                v-else-if="!isAcceptedRequestStale"
                 class="mt-5 rounded-xl border border-slate-200 bg-white/80 p-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-400"
               >
                 No advisor request has been submitted yet.
@@ -594,12 +608,19 @@
 
               <template v-if="state === 'leader'">
                 <div
-                  v-if="group.status !== 'TOOLS_BOUND'"
+                  v-if="group.status === 'FORMING' || group.status === 'TOOLS_PENDING'"
                   class="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
                 >
                   Your group must be in
                   <span class="font-semibold">TOOLS_BOUND</span>
                   status before requesting an advisor.
+                </div>
+
+                <div
+                  v-else-if="group.status === 'ADVISOR_ASSIGNED'"
+                  class="mt-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-900 dark:border-green-800 dark:bg-green-950/40 dark:text-green-200"
+                >
+                  Your group already has an assigned advisor.
                 </div>
 
                 <div

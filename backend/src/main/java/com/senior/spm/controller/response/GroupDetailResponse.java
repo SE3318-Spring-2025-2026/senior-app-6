@@ -21,6 +21,8 @@ public final class GroupDetailResponse implements InvitationActionResponse {
     private String githubOrgName;
     private Boolean githubBound;
     private List<MemberResponse> members;
+    private UUID advisorId;
+    private String advisorMail;
 
     @Data
     public static class MemberResponse {
