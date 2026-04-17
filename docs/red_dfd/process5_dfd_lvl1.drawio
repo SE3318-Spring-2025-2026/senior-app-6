@@ -1,0 +1,282 @@
+<mxfile host="65bd71144e">
+    <diagram name="Page-1" id="P5Lvl1DFD-SprintTracking-Endpoints">
+        <mxGraphModel dx="1015" dy="678" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title-1" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;&lt;b&gt;P5 Level 1 DFD: Sprint Tracking, Scrum Grading &amp;amp; AI Validation — API Endpoints&lt;/b&gt;&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry width="1050" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend-1" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;span style=&quot;background-color: #dae8fc; border: 1px solid #6c8ebf; padding: 2px 5px;&quot;&gt; External Actors &lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;background-color: #ffe6cc; border: 1px solid #d79b00; padding: 2px 5px;&quot;&gt; Sub-Processes &lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;background-color: #d5e8d4; border: 1px solid #82b366; padding: 2px 5px;&quot;&gt; Data Stores &lt;/span&gt;&lt;br&gt;&lt;br&gt;&lt;span style=&quot;background-color: #e1d5e7; border: 1px solid #9673a6; padding: 2px 5px;&quot;&gt; External APIs &lt;/span&gt;&lt;/div&gt;" style="rounded=1;html=1;fillColor=#ffffff;strokeColor=#cccccc;align=left;verticalAlign=top;spacingLeft=10;spacingTop=10;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="1240" y="10" width="120" height="165" as="geometry"/>
+                </mxCell>
+                <mxCell id="sys-boundary" value="System Boundary" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#FF0000;strokeWidth=2;dashed=1;align=right;verticalAlign=top;spacingRight=10;spacingTop=10;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+                    <mxGeometry x="330" y="50" width="680" height="760" as="geometry"/>
+                </mxCell>
+                <mxCell id="actor-advisor" value="&lt;b&gt;ADVISOR / JURY&lt;/b&gt;" style="rounded=1;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="620" width="160" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="api-jira" value="&lt;b&gt;External: JIRA API&lt;/b&gt;" style="rounded=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="90" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="api-github" value="&lt;b&gt;External: GitHub API&lt;/b&gt;" style="rounded=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="250" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="api-ai" value="&lt;b&gt;External: AI Service&lt;/b&gt;" style="rounded=1;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="430" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="ds-d3" value="D3: Groups &amp;amp; Committees" style="shape=partialRectangle;right=0;left=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontColor=#333333;fontStyle=1;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="1030" y="80" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="ds-d5" value="D5: Sprint &amp;amp; Grading Logs" style="shape=partialRectangle;right=0;left=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontFamily=Helvetica;fontColor=#333333;fontStyle=1;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="1030" y="450" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5-1" value="&lt;b&gt;5.1&lt;/b&gt;&lt;br&gt;Fetch Active Sprint Stories" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="470" y="70" width="170" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5-2" value="&lt;b&gt;5.2&lt;/b&gt;&lt;br&gt;Match GitHub Branches &amp;amp; Verify PR" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="470" y="230" width="170" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5-3" value="&lt;b&gt;5.3&lt;/b&gt;&lt;br&gt;AI PR Review Validation" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="650" y="350" width="170" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5-4" value="&lt;b&gt;5.4&lt;/b&gt;&lt;br&gt;AI Issue-Diff Validation" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="470" y="410" width="170" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5-6" value="&lt;b&gt;5.5&lt;/b&gt;&lt;br&gt;Advisor Scrum Grading&lt;br&gt;(Point A &amp;amp; B)" style="ellipse;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontFamily=Helvetica;fontColor=#333333;whiteSpace=wrap;textShadow=0;" parent="1" vertex="1">
+                    <mxGeometry x="470" y="610" width="170" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;" parent="1" source="api-jira" target="p5-1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1-lbl" value="Active Stories, Assignees,&lt;br&gt;Story Points, Descriptions" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e1" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="42" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;entryX=0.444;entryY=0.98;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.376;exitY=0.967;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="p5-1" target="api-jira" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="534" y="170"/>
+                            <mxPoint x="131" y="170"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e2-lbl" value="Sprint Data Request" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e2" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint y="14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;dashed=0;" parent="1" source="ds-d3" target="p5-1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e3-lbl" value="Group Tool Credentials" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e3" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.806;exitY=0.867;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="p5-1" target="ds-d5" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="607" y="150"/>
+                            <mxPoint x="1180" y="150"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e4-lbl" value="Issue Keys, Assignees,&lt;br&gt;Story Points, Descriptions" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e4" connectable="0" vertex="1">
+                    <mxGeometry x="-0.5" relative="1" as="geometry">
+                        <mxPoint x="5" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;dashed=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" parent="1" source="ds-d3" target="p5-2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1080" y="130"/>
+                            <mxPoint x="1080" y="190"/>
+                            <mxPoint x="555" y="190"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e6-lbl" value="GitHub Credentials" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e6" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint y="14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;" parent="1" source="api-github" target="p5-2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e7-lbl" value="PR Diffs, PR Comments,&lt;br&gt;Merge Status" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e7" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="12" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0;exitY=0;exitDx=0;exitDy=0;" parent="1" source="p5-2" target="api-github" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="495" y="230"/>
+                            <mxPoint x="140" y="230"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e8-lbl" value="Branch Lookup Request" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e8" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="-42" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;" parent="1" source="p5-2" target="ds-d5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e10-lbl" value="PR Comments, File Diffs,&lt;br&gt;Merge Status, Issue Keys" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e10" connectable="0" vertex="1">
+                    <mxGeometry x="-0.4" relative="1" as="geometry">
+                        <mxPoint x="5" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" parent="1" source="api-ai" target="p5-3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e12-lbl" value="PR Review Validation Result —&lt;br&gt;PASS/WARN/FAIL" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e12" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="98" y="-15" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;" parent="1" source="p5-3" target="ds-d5" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1100" y="395"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e13-lbl" value="PR Review Validation Result —&lt;br&gt;PASS/WARN/FAIL" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e13" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="5" y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;" parent="1" source="api-ai" target="p5-4" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e15-lbl" value="Diff Validation Result —&lt;br&gt;PASS/WARN/FAIL" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e15" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint y="14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;entryX=0.25;entryY=1;entryDx=0;entryDy=0;exitX=0.541;exitY=1.011;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="p5-4" target="ds-d5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e16-lbl" value="Diff Validation Result" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e16" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="38" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f1-d5-52" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" source="ds-d5" target="p5-2" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1170" y="450"/>
+                            <mxPoint x="1170" y="243"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f1-d5-52-lbl" value="Issue Keys" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e-f1-d5-52" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint y="-14" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f2-d5-53" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=1;entryDx=0;entryDy=0;" parent="1" source="ds-d5" target="p5-3" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="960" y="475"/>
+                            <mxPoint x="960" y="427"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f2-d5-53-lbl" value="PR Comments,&lt;br&gt;Reviewer GitHub IDs" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e-f2-d5-53" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="-20" y="-16" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f2-d5-54" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="ds-d5" target="p5-4" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1030" y="500"/>
+                            <mxPoint x="870" y="500"/>
+                            <mxPoint x="870" y="455"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f2-d5-54-lbl" value="File Diffs,&lt;br&gt;Issue Descriptions" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e-f2-d5-54" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="-7" y="-30" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f2-53-ai" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="p5-3" target="api-ai" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="735" y="340"/>
+                            <mxPoint x="140" y="340"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f2-53-ai-lbl" value="PR Comments for&lt;br&gt;Review Validation" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e-f2-53-ai" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="-60" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f2-54-ai" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" parent="1" source="p5-4" target="api-ai" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e-f2-54-ai-lbl" value="File Diffs + Issue Desc.&lt;br&gt;for Diff Validation" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e-f2-54-ai" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="-15" y="-5" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f5-d5-55" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="ds-d5" target="p5-6" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1120" y="550"/>
+                            <mxPoint x="555" y="550"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e-f5-d5-55-lbl" value="Story Completion, AI Validation Results&lt;br&gt;&lt;font color=&quot;#666666&quot;&gt;[GET /sprints/{sprintId}/groups/{groupId}/validation]&lt;/font&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e-f5-d5-55" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="-74" y="10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=1.006;exitY=0.617;exitDx=0;exitDy=0;exitPerimeter=0;" parent="1" source="actor-advisor" target="p5-6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e19-lbl" value="POST /sprints/{sprintId}/groups/{groupId}/grade&lt;br&gt;{pointA_grade, pointB_grade}" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e19" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="41" y="-37" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;" parent="1" source="p5-6" target="ds-d5" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="1160" y="655"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e21-lbl" value="Scrum Grade Record" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e21" connectable="0" vertex="1">
+                    <mxGeometry x="-0.5" relative="1" as="geometry">
+                        <mxPoint x="10" y="-10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#545B64;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" parent="1" source="p5-6" target="actor-advisor" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="555" y="720"/>
+                            <mxPoint x="140" y="720"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e22-lbl" value="200 SprintGradeResponse | 403 | 404&lt;br&gt;200 SprintValidationResult[] | 404" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=#ffffff;fontFamily=Helvetica;fontSize=11;" parent="e22" connectable="0" vertex="1">
+                    <mxGeometry x="-0.3" relative="1" as="geometry">
+                        <mxPoint x="-49" y="10" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

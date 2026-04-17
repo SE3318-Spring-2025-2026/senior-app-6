@@ -1,5 +1,22 @@
 # Local Development Setup
 
+## Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Backend | Spring Boot | 3.x |
+| Language | Java | 21 |
+| Build | Maven | via `mvnw` wrapper |
+| Frontend | Nuxt 3 (Vue 3) | 3.x |
+| Styling | Tailwind CSS | 3.x |
+| State | Pinia | latest |
+| Package manager | Bun (or npm) | Bun 1.x / Node.js 18+ |
+| Database | MySQL | 8.0 |
+| Auth | JWT (JJWT) + GitHub OAuth2 | — |
+| ORM | Spring Data JPA (Hibernate) | — |
+
+---
+
 ## Prerequisites
 
 - Java 21
