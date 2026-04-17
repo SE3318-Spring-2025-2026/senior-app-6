@@ -165,7 +165,21 @@ export interface BindToolResponse {
   githubBound: boolean;
 }
 
-export type InvitationStatus = "PENDING" | "ACCEPTED" | "DECLINED" | "AUTO_DENIED";
+export type InvitationStatus = "PENDING" | "ACCEPTED" | "DECLINED" | "AUTO_DENIED" | "CANCELLED";
+
+export interface StudentSearchResult {
+  studentId: string;
+  githubUsername: string | null;
+}
+
+export interface SentGroupInvitation {
+  invitationId: string;
+  groupId: string;
+  targetStudentId: string;
+  status: InvitationStatus;
+  sentAt: string;
+  respondedAt?: string | null;
+}
 
 export interface GroupInvitation {
   invitationId: string;
@@ -579,6 +593,53 @@ export function useApiClient() {
     return apiCall<AdvisorRespondResponse>(`/advisor/requests/${encodeURIComponent(requestId)}/respond`, "PATCH", { accept }, token);
   }
 
+  /**
+   * Search for ungrouped students by studentId substring (min 3 chars)
+   */
+  async function searchStudents(q: string, token?: string): Promise<StudentSearchResult[]> {
+    return apiCall<StudentSearchResult[]>(`/students/search?q=${encodeURIComponent(q)}`, "GET", undefined, token);
+  }
+
+  /**
+   * Send a group invitation to a target student (Team Leader only)
+   */
+  async function sendGroupInvitation(
+    groupId: string,
+    targetStudentId: string,
+    token?: string
+  ): Promise<SentGroupInvitation> {
+    return apiCall<SentGroupInvitation>(
+      `/groups/${encodeURIComponent(groupId)}/invitations`,
+      "POST",
+      { targetStudentId },
+      token
+    );
+  }
+
+  /**
+   * Fetch all outbound invitations sent by the group (Team Leader only)
+   */
+  async function fetchGroupInvitations(groupId: string, token?: string): Promise<SentGroupInvitation[]> {
+    return apiCall<SentGroupInvitation[]>(
+      `/groups/${encodeURIComponent(groupId)}/invitations`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  /**
+   * Cancel a pending outbound invitation (Team Leader only)
+   */
+  async function cancelGroupInvitation(invitationId: string, token?: string): Promise<SentGroupInvitation> {
+    return apiCall<SentGroupInvitation>(
+      `/invitations/${encodeURIComponent(invitationId)}`,
+      "DELETE",
+      undefined,
+      token
+    );
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -620,5 +681,9 @@ export function useApiClient() {
     fetchAdvisorRequests,
     fetchAdvisorRequestDetail,
     respondToAdvisorRequest,
+    searchStudents,
+    sendGroupInvitation,
+    fetchGroupInvitations,
+    cancelGroupInvitation,
   };
 }
