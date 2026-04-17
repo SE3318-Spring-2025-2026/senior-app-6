@@ -13,6 +13,8 @@ import com.senior.spm.entity.Committee;
 @Repository
 public interface CommitteeRepository extends JpaRepository<Committee, UUID> {
 
+    List<Committee> findByTermId(String termId);
+
     boolean existsByCommitteeNameAndTermId(String committeeName, String termId);
 
     @Query("SELECT COUNT(c) > 0 FROM Committee c JOIN c.professors cp WHERE cp.professor.id = :professorId AND c.deliverable.id = :deliverableId")

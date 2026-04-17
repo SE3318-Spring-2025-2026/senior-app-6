@@ -55,6 +55,16 @@ public class CommitteeService {
         var saved = committeeRepository.save(committee);
         return new CommitteeSummaryResponse(saved.getId(), saved.getCommitteeName(), saved.getTermId(), deliverable.getId());
     }
+
+    @Transactional(readOnly = true)
+    public List<CommitteeSummaryResponse> getCommittees(String termId) {
+        var committees = (termId != null) ? committeeRepository.findByTermId(termId) : committeeRepository.findAll();
+
+        return committees.stream()
+                .map(c -> new CommitteeSummaryResponse(c.getId(), c.getCommitteeName(), c.getTermId(), c.getDeliverable().getId()))
+                .toList();
+    }
+
     @Transactional
     public List<CommitteeProfessorResponse> addProfessorsToCommittee(UUID committeeId, AddProfessorsToCommitteeRequest request) {
         var committee = committeeRepository.findById(committeeId)

@@ -44,6 +44,13 @@ public class CommitteeController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         }
     }
+
+    @GetMapping
+    public ResponseEntity<?> getCommittees(@RequestParam(required = false) String termId) {
+        var result = committeeService.getCommittees(termId);
+        return ResponseEntity.ok(result);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getCommitteeDetail(@PathVariable UUID id) {
         try {
