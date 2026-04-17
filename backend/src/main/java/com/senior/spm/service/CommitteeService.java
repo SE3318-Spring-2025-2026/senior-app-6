@@ -9,16 +9,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.senior.spm.controller.request.AddGroupsToCommitteeRequest;
 import com.senior.spm.controller.request.AddProfessorsToCommitteeRequest;
+import com.senior.spm.controller.request.CreateCommitteeRequest;
 import com.senior.spm.controller.response.CommitteeDetailResponse;
 import com.senior.spm.controller.response.CommitteeGroupResponse;
 import com.senior.spm.controller.response.CommitteeProfessorResponse;
+import com.senior.spm.controller.response.CommitteeSummaryResponse;
 import com.senior.spm.entity.Committee;
 import com.senior.spm.entity.CommitteeProfessor;
 import com.senior.spm.entity.CommitteeProfessor.ProfessorRole;
 import com.senior.spm.entity.ProjectGroup;
 import com.senior.spm.entity.ProjectGroup.GroupStatus;
+import com.senior.spm.exception.AlreadyExistsException;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.repository.CommitteeRepository;
+import com.senior.spm.repository.DeliverableRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.StaffUserRepository;
 
@@ -31,8 +35,26 @@ public class CommitteeService {
     private final CommitteeRepository committeeRepository;
     private final StaffUserRepository staffUserRepository;
     private final ProjectGroupRepository projectGroupRepository;
+    private final DeliverableRepository deliverableRepository;
     private final CommitteeValidationService committeeValidationService;
 
+    @Transactional
+    public CommitteeSummaryResponse createCommittee(CreateCommitteeRequest request) {
+        if (committeeRepository.existsByCommitteeNameAndTermId(request.getCommitteeName(), request.getTermId())) {
+            throw new AlreadyExistsException("Committee with this name already exists for the given term");
+        }
+
+        var deliverable = deliverableRepository.findById(request.getDeliverableId())
+                .orElseThrow(() -> new NotFoundException("Deliverable not found: " + request.getDeliverableId()));
+
+        var committee = new Committee();
+        committee.setCommitteeName(request.getCommitteeName());
+        committee.setTermId(request.getTermId());
+        committee.setDeliverable(deliverable);
+
+        var saved = committeeRepository.save(committee);
+        return new CommitteeSummaryResponse(saved.getId(), saved.getCommitteeName(), saved.getTermId(), deliverable.getId());
+    }
     @Transactional
     public List<CommitteeProfessorResponse> addProfessorsToCommittee(UUID committeeId, AddProfessorsToCommitteeRequest request) {
         var committee = committeeRepository.findById(committeeId)
