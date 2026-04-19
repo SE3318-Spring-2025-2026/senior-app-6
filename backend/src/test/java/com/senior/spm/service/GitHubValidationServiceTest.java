@@ -8,10 +8,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
@@ -31,8 +31,12 @@ class GitHubValidationServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
-    @InjectMocks
     private GitHubValidationService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new GitHubValidationService(restTemplate, "https://api.github.com");
+    }
 
     private static final String ORG_NAME = "my-org";
     private static final String PAT = "ghp_testtoken";

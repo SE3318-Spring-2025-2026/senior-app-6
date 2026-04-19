@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from "zod";
-import { AlertCircle, FolderGit2, Loader2, ShieldCheck } from "lucide-vue-next";
+import { AlertCircle, ArrowLeft, FolderGit2, Loader2, ShieldCheck } from "lucide-vue-next";
 import type { BindGithubRequest, BindJiraRequest } from "~/composables/useApiClient";
 import type { GroupDetailResponse } from "~/types/group";
 import { useAuthStore } from "~/stores/auth";
@@ -32,6 +32,7 @@ const githubFieldErrors = ref<Record<string, string>>({});
 
 const jiraSchema = z.object({
   jiraSpaceUrl: z.string().trim().url("Enter a valid JIRA space URL."),
+  jiraEmail: z.string().trim().email("Enter a valid Atlassian account email."),
   jiraProjectKey: z.string().trim().min(1, "JIRA project key is required."),
   jiraApiToken: z.string().trim().min(1, "JIRA API token is required."),
 });
@@ -56,6 +57,7 @@ const isTeamLeader = computed(() =>
 
 const jiraFormValues = computed(() => ({
   jiraSpaceUrl: group.value?.jiraSpaceUrl ?? "",
+  jiraEmail: group.value?.jiraEmail ?? "",
   jiraProjectKey: group.value?.jiraProjectKey ?? "",
   jiraApiToken: "",
 }));
@@ -115,6 +117,7 @@ async function handleJiraSubmit(payload: Record<string, string>) {
     const fields = result.error.flatten().fieldErrors;
     jiraFieldErrors.value = {
       jiraSpaceUrl: fields.jiraSpaceUrl?.[0] ?? "",
+      jiraEmail: fields.jiraEmail?.[0] ?? "",
       jiraProjectKey: fields.jiraProjectKey?.[0] ?? "",
       jiraApiToken: fields.jiraApiToken?.[0] ?? "",
     };
@@ -177,6 +180,14 @@ async function handleGithubSubmit(payload: Record<string, string>) {
 <template>
   <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
     <div class="mx-auto w-full max-w-6xl space-y-6">
+      <NuxtLink
+        to="/student/group"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+      >
+        <ArrowLeft class="h-4 w-4" />
+        Back to group hub
+      </NuxtLink>
+
       <header class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg">
         <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
@@ -233,7 +244,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
       </div>
 
       <section v-else-if="group && isTeamLeader" class="space-y-6">
-        <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+        <div class="grid gap-6 xl:grid-cols-2">
           <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
               <ShieldCheck class="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
@@ -251,7 +262,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
               Binding checklist
             </h2>
             <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
-              <li>Enter the JIRA workspace URL, project key, and API token.</li>
+              <li>Enter the JIRA workspace URL, Atlassian account email, project key, and API token.</li>
               <li>Enter the GitHub organization name and a PAT with repository access.</li>
               <li>Watch each form switch into a locked state after a successful bind.</li>
             </ul>
@@ -270,6 +281,15 @@ async function handleGithubSubmit(payload: Record<string, string>) {
                 type: 'url',
                 placeholder: 'https://your-team.atlassian.net',
                 autocomplete: 'url',
+                helpText: 'Your Atlassian site base URL. Open Jira in your browser — it is the part before /jira in the address bar (e.g. https://yourteam.atlassian.net).',
+              },
+              {
+                name: 'jiraEmail',
+                label: 'Atlassian Account Email',
+                type: 'email',
+                placeholder: 'you@example.com',
+                autocomplete: 'email',
+                helpText: 'The exact email of your Atlassian account. To verify: click your profile picture in Jira → Manage account → Profile. Use whatever email is shown there.',
               },
               {
                 name: 'jiraProjectKey',
@@ -277,6 +297,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
                 type: 'text',
                 placeholder: 'SPM',
                 autocomplete: 'off',
+                helpText: 'The short uppercase code for your project. Find it in the Jira board URL: .../projects/PROJECTKEY/boards — the all-caps part is your key.',
               },
               {
                 name: 'jiraApiToken',
@@ -285,6 +306,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
                 placeholder: 'Enter a JIRA API token',
                 autocomplete: 'new-password',
                 lockedPlaceholder: 'Stored securely after validation',
+                helpText: 'Generate one at id.atlassian.com → Security → API tokens → Create API token. Must be created while logged in as the same email above.',
               },
             ]"
             :model-value="jiraFormValues"
@@ -307,6 +329,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
                 type: 'text',
                 placeholder: 'senior-project-team',
                 autocomplete: 'organization',
+                helpText: 'Your GitHub organization name — not your personal username. Find it in the org URL: github.com/ORG-NAME. Ask your team lead if you are unsure which org to use.',
               },
               {
                 name: 'githubPat',
@@ -314,8 +337,8 @@ async function handleGithubSubmit(payload: Record<string, string>) {
                 type: 'password',
                 placeholder: 'Enter a GitHub PAT',
                 autocomplete: 'new-password',
-                helpText: 'Use a token with the required repository scope.',
                 lockedPlaceholder: 'Stored securely after validation',
+                helpText: 'Generate at github.com → Settings → Developer settings → Personal access tokens → Tokens (classic). Select the repo scope. The token must have access to the organization above.',
               },
             ]"
             :model-value="githubFormValues"

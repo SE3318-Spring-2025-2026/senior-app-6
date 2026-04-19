@@ -871,7 +871,7 @@ class GroupServiceTest {
         when(encryptionService.encrypt("raw-jira-token")).thenReturn("enc-jira-token");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
 
-        groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "SPM", "raw-jira-token", STUDENT_ID);
+        groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "test@example.com", "SPM", "raw-jira-token", STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());
@@ -893,7 +893,7 @@ class GroupServiceTest {
         when(encryptionService.encrypt(any())).thenReturn("enc-jira-token");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
 
-        groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "SPM", "raw-token", STUDENT_ID);
+        groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "test@example.com", "SPM", "raw-token", STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());
@@ -913,11 +913,11 @@ class GroupServiceTest {
         when(groupMembershipRepository.findByGroupIdAndStudentId(GROUP_ID, STUDENT_ID))
                 .thenReturn(Optional.of(member));
 
-        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "key", "token", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", STUDENT_ID))
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessageContaining("Team Leader");
 
-        verify(jiraValidationService, never()).validate(any(), any(), any());
+        verify(jiraValidationService, never()).validate(any(), any(), any(), any());
         verify(projectGroupRepository, never()).save(any());
     }
 
@@ -927,10 +927,10 @@ class GroupServiceTest {
         when(groupMembershipRepository.findByGroupIdAndStudentId(GROUP_ID, STUDENT_ID))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "key", "token", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", STUDENT_ID))
                 .isInstanceOf(ForbiddenException.class);
 
-        verify(jiraValidationService, never()).validate(any(), any(), any());
+        verify(jiraValidationService, never()).validate(any(), any(), any(), any());
     }
 
     @Test
@@ -944,11 +944,11 @@ class GroupServiceTest {
                 .thenReturn(Optional.of(leader));
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
 
-        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "key", "token", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", STUDENT_ID))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("disbanded");
 
-        verify(jiraValidationService, never()).validate(any(), any(), any());
+        verify(jiraValidationService, never()).validate(any(), any(), any(), any());
         verify(projectGroupRepository, never()).save(any());
     }
 
@@ -960,7 +960,7 @@ class GroupServiceTest {
                 .thenReturn(Optional.of(leader));
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "key", "token", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", STUDENT_ID))
                 .isInstanceOf(GroupNotFoundException.class);
 
         verify(projectGroupRepository, never()).save(any());
@@ -977,9 +977,9 @@ class GroupServiceTest {
                 .thenReturn(Optional.of(leader));
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         doThrow(new JiraValidationException("JIRA validation failed: API token is invalid or expired"))
-                .when(jiraValidationService).validate(any(), any(), any());
+                .when(jiraValidationService).validate(any(), any(), any(), any());
 
-        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "key", "bad-token", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "bad-token", STUDENT_ID))
                 .isInstanceOf(JiraValidationException.class);
 
         verify(encryptionService, never()).encrypt(any());
@@ -999,7 +999,7 @@ class GroupServiceTest {
         when(encryptionService.encrypt("raw-token")).thenReturn("enc-token");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
 
-        groupService.bindJira(GROUP_ID, "url", "key", "raw-token", STUDENT_ID);
+        groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "raw-token", STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());
@@ -1019,7 +1019,7 @@ class GroupServiceTest {
         when(encryptionService.encrypt(any())).thenReturn("enc-token");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
 
-        BindToolResponse response = groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "SPM", "raw-token", STUDENT_ID);
+        BindToolResponse response = groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "test@example.com", "SPM", "raw-token", STUDENT_ID);
 
         // BindToolResponse has no field for the token — verify no field equals plaintext
         assertThat(response.getJiraSpaceUrl()).isNotEqualTo("raw-token");
@@ -1040,7 +1040,7 @@ class GroupServiceTest {
         when(encryptionService.encrypt("new-raw-token")).thenReturn("new-enc-token");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
 
-        groupService.bindJira(GROUP_ID, "url", "key", "new-raw-token", STUDENT_ID);
+        groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "new-raw-token", STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());

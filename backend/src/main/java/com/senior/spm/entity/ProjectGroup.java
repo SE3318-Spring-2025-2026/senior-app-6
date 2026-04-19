@@ -48,6 +48,9 @@ public class ProjectGroup {
     @Column(length = 500, nullable = true)
     private String jiraSpaceUrl;
 
+    @Column(length = 254, nullable = true)
+    private String jiraEmail;
+
     @Column(length = 100, nullable = true)
     private String jiraProjectKey;
 

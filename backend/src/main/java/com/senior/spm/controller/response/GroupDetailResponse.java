@@ -15,11 +15,14 @@ public final class GroupDetailResponse implements InvitationActionResponse {
     private String status;
     private LocalDateTime createdAt;
     private String jiraSpaceUrl;
+    private String jiraEmail;
     private String jiraProjectKey;
     private Boolean jiraBound;
     private String githubOrgName;
     private Boolean githubBound;
     private List<MemberResponse> members;
+    private UUID advisorId;
+    private String advisorMail;
 
     @Data
     public static class MemberResponse {

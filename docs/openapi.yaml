@@ -326,9 +326,11 @@ components:
 
     BindJiraRequest:
       type: object
-      required: [jiraSpaceUrl, jiraProjectKey, jiraApiToken]
+      required: [jiraSpaceUrl, jiraEmail, jiraProjectKey, jiraApiToken]
       properties:
         jiraSpaceUrl:
+          type: string
+        jiraEmail:
           type: string
         jiraProjectKey:
           type: string
@@ -1511,7 +1513,17 @@ paths:
   /coordinator/groups:
     get:
       tags: [Coordinator]
-      summary: List all groups for the active term
+      summary: List groups, optionally filtered by term
+      parameters:
+        - name: termId
+          in: query
+          required: false
+          description: >
+            Term identifier to filter groups. If omitted or blank, returns groups for the
+            active term only. Pass "ALL" to return groups across all terms (coordinator only).
+          schema:
+            type: string
+            example: "2024-FALL"
       responses:
         '200':
           description: Returns list of all groups

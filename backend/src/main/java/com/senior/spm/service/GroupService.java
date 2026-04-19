@@ -148,6 +148,7 @@ public class GroupService {
      *
      * @param groupId        UUID of the group to bind
      * @param jiraSpaceUrl   the JIRA space base URL (e.g., {@code https://company.atlassian.net})
+     * @param jiraEmail      the Atlassian account email used for Basic Auth (required for Jira Cloud)
      * @param jiraProjectKey the JIRA project key (e.g., {@code SPM})
      * @param jiraApiToken   the plain-text JIRA API token — encrypted before storage
      * @param requesterUUID  internal UUID of the authenticated student
@@ -158,8 +159,8 @@ public class GroupService {
      * @throws JiraValidationException         if the JIRA live call fails (→ 422)
      */
     @Transactional
-    public BindToolResponse bindJira(UUID groupId, String jiraSpaceUrl, String jiraProjectKey,
-                                     String jiraApiToken, UUID requesterUUID) {
+    public BindToolResponse bindJira(UUID groupId, String jiraSpaceUrl, String jiraEmail,
+                                     String jiraProjectKey, String jiraApiToken, UUID requesterUUID) {
         // 1. Verify requester is TEAM_LEADER of this group
         GroupMembership membership = groupMembershipRepository
             .findByGroupIdAndStudentId(groupId, requesterUUID)
@@ -178,7 +179,7 @@ public class GroupService {
         }
 
         // 3. Live validation — nothing is stored until this call returns without throwing
-        jiraValidationService.validate(jiraSpaceUrl, jiraProjectKey, jiraApiToken);
+        jiraValidationService.validate(jiraSpaceUrl, jiraEmail, jiraProjectKey, jiraApiToken);
 
         // 4. Encrypt token before persistence (NFR-7: AES-256 at rest)
         String encryptedJiraToken = encryptionService.encrypt(jiraApiToken);
@@ -192,6 +193,7 @@ public class GroupService {
 
         // 6. Persist group with JIRA fields
         group.setJiraSpaceUrl(jiraSpaceUrl);
+        group.setJiraEmail(jiraEmail);
         group.setJiraProjectKey(jiraProjectKey);
         group.setEncryptedJiraToken(encryptedJiraToken);
         group.setStatus(newStatus);
@@ -294,6 +296,7 @@ public class GroupService {
         response.setStatus(group.getStatus().toString());
         response.setCreatedAt(group.getCreatedAt());
         response.setJiraSpaceUrl(group.getJiraSpaceUrl());
+        response.setJiraEmail(group.getJiraEmail());
         response.setJiraProjectKey(group.getJiraProjectKey());
         response.setJiraBound(group.getEncryptedJiraToken() != null);
         response.setGithubOrgName(group.getGithubOrgName());
@@ -312,6 +315,12 @@ public class GroupService {
             .collect(Collectors.toList());
 
         response.setMembers(memberResponses);
+
+        if (group.getAdvisor() != null) {
+            response.setAdvisorId(group.getAdvisor().getId());
+            response.setAdvisorMail(group.getAdvisor().getMail());
+        }
+
         return response;
     }
 
@@ -338,8 +347,22 @@ public class GroupService {
     // New method implemented to satisfy PR #84 / DFD 2.6 requirements
     @Transactional(readOnly = true)
     public List<GroupSummaryResponse> getGroupSummariesForActiveTerm() {
-        String termId = termConfigService.getActiveTermId();
-        List<ProjectGroup> groups = projectGroupRepository.findByTermId(termId);
+        return getGroupSummaries(null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<GroupSummaryResponse> getGroupSummaries(String termId) {
+        List<ProjectGroup> groups;
+
+        if (termId == null || termId.isBlank()) {
+            String activeTermId = termConfigService.getActiveTermId();
+            groups = projectGroupRepository.findByTermId(activeTermId);
+        } else if ("ALL".equalsIgnoreCase(termId.trim())) {
+            groups = projectGroupRepository.findAll();
+        } else {
+            groups = projectGroupRepository.findByTermId(termId.trim());
+        }
+
         return groups.stream()
             .map(this::toGroupSummaryResponse)
             .collect(Collectors.toList());

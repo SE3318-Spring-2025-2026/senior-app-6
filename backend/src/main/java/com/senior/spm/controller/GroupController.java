@@ -171,14 +171,16 @@ public class GroupController {
      * {@code groupId}.
      *
      * @param groupId UUID of the group to bind
-     * @param request {@link BindJiraRequest} containing {@code jiraSpaceUrl},
-     * {@code jiraProjectKey}, and {@code jiraApiToken} (all required)
-     * @return 200 with {@link BindToolResponse} containing non-sensitive JIRA
-     * metadata and updated group status
+     * @param request {@link BindJiraRequest} containing {@code jiraSpaceUrl}, {@code jiraEmail},
+     *                {@code jiraProjectKey}, and {@code jiraApiToken} (all required)
+     * @return 200 with {@link BindToolResponse} containing non-sensitive JIRA metadata
+     *         and updated group status
      *
-     * Error responses: - 400: group is DISBANDED or DTO validation fails - 403:
-     * requester is not TEAM_LEADER - 404: group not found - 422: JIRA live
-     * validation failed (invalid token, unknown project key, unreachable URL)
+     *         Error responses:
+     *         - 400: group is DISBANDED or DTO validation fails
+     *         - 403: requester is not TEAM_LEADER
+     *         - 404: group not found
+     *         - 422: JIRA live validation failed (invalid token, unknown project key, unreachable URL)
      */
     @PostMapping("/{groupId}/jira")
     public ResponseEntity<BindToolResponse> bindJira(
@@ -187,11 +189,12 @@ public class GroupController {
     ) {
         UUID requesterUUID = extractStudentUUIDFromJWT();
         BindToolResponse response = groupService.bindJira(
-                groupId,
-                request.getJiraSpaceUrl(),
-                request.getJiraProjectKey(),
-                request.getJiraApiToken(),
-                requesterUUID
+            groupId,
+            request.getJiraSpaceUrl(),
+            request.getJiraEmail(),
+            request.getJiraProjectKey(),
+            request.getJiraApiToken(),
+            requesterUUID
         );
         return ResponseEntity.ok(response);
     }
