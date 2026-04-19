@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { LogOut, BookOpen, BarChart3, Inbox } from "lucide-vue-next";
+	import { LogOut, BookOpen, BarChart3, Inbox, Users } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
 
 	definePageMeta({
@@ -52,6 +52,19 @@
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             View and respond to incoming advising requests from student groups.
+          </p>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/professor/committees"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-cyan-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-600"
+        >
+          <Users class="h-8 w-8 text-cyan-600 dark:text-cyan-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+            My Committees
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            View your committees, assigned groups, and upcoming deadlines.
           </p>
         </NuxtLink>
 
