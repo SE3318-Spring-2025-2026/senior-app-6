@@ -67,6 +67,10 @@ public class ProjectGroup {
     @JoinColumn(name = "advisor_id", nullable = true, foreignKey = @ForeignKey(name = "fk_project_group_advisor"))
     private StaffUser advisor;
 
+    @ManyToOne
+    @JoinColumn(name = "committee_id", nullable = true, foreignKey = @ForeignKey(name = "fk_project_group_committee"))
+    private Committee committee;
+
     @OneToMany(mappedBy = "group")
     private List<GroupMembership> members;
 

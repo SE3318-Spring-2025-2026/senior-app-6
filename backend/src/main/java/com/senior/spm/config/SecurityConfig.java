@@ -1,11 +1,13 @@
 package com.senior.spm.config;
 
+import java.util.Collection;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,48 +37,65 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http,
+            CorsConfigurationSource corsConfigurationSource
+    ) throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(
-                        auth -> auth
-                                .requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                                .requestMatchers("/api/coordinator/**").hasRole("COORDINATOR")
-                                .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
-                                // P3: Professor-only endpoints live under /api/advisor/**
-                                .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
-                                // P3: Student-facing advisor request endpoints.
-                                .requestMatchers("/api/advisors").hasRole("STUDENT")
-                                .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")
-                                .anyRequest().authenticated())
-                .exceptionHandling(
-                        ex -> ex.accessDeniedHandler(
-                                (request, response, exception) -> {
-                                    response.setStatus(403);
-                                    response.setContentType("application/json");
-                                    var authority = (SimpleGrantedAuthority) SecurityContextHolder
-                                            .getContext()
-                                            .getAuthentication()
-                                            .getAuthorities()
-                                            .iterator().next();
-                                    var message = "Role: " + authority.getAuthority() + " does not have permission to access this resource.";
-                                    response.getWriter().write(
-                                            objectMapper.writeValueAsString(
-                                                    new ErrorMessage(message + "Exception: " + exception.getMessage())
-                                            ));
-                                }).authenticationEntryPoint((request, response, exception) -> {
-                                    response.setStatus(401);
-                                    response.setContentType("application/json");
-                                    response.getWriter().write(
-                                            objectMapper.writeValueAsString(
-                                                    new ErrorMessage("Unauthorized: " + exception.getMessage())
-                                            ));
-                                }))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+
+                        .requestMatchers("/api/admin/**")
+                        .hasAnyAuthority("ROLE_Admin", "ROLE_ADMIN")
+
+                        .requestMatchers("/api/coordinator/**", "/api/committees/**")
+                        .hasAnyAuthority("ROLE_Coordinator", "ROLE_COORDINATOR")
+
+                        .requestMatchers("/api/professor/**", "/api/professors/**", "/api/advisor/**")
+                        .hasAnyAuthority("ROLE_Professor", "ROLE_PROFESSOR")
+
+                        .requestMatchers("/api/advisors", "/api/groups/*/advisor-request")
+                        .hasAnyAuthority("ROLE_Student", "ROLE_STUDENT")
+
+                        .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler((request, response, exception) -> {
+                            response.setStatus(403);
+                            response.setContentType("application/json");
+
+                            String authorityText = "UNKNOWN";
+                            if (SecurityContextHolder.getContext().getAuthentication() != null) {
+                                Collection<? extends GrantedAuthority> authorities =
+                                        SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+                                if (authorities != null && !authorities.isEmpty()) {
+                                    authorityText = authorities.iterator().next().getAuthority();
+                                }
+                            }
+
+                            String message = "Role: " + authorityText
+                                    + " does not have permission to access this resource. "
+                                    + "Exception: " + exception.getMessage();
+
+                            response.getWriter().write(
+                                    objectMapper.writeValueAsString(new ErrorMessage(message))
+                            );
+                        })
+                        .authenticationEntryPoint((request, response, exception) -> {
+                            response.setStatus(401);
+                            response.setContentType("application/json");
+                            response.getWriter().write(
+                                    objectMapper.writeValueAsString(
+                                            new ErrorMessage("Unauthorized: " + exception.getMessage())
+                                    )
+                            );
+                        })
+                )
                 .build();
     }
 }

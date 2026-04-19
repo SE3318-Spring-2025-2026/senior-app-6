@@ -1,5 +1,7 @@
 package com.senior.spm.controller.response;
 
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,6 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ErrorMessage {
-    private String message;
+public class CommitteeGroupSummaryResponse {
+    private UUID groupId;
+    private String groupName;
+    private String status;
 }
