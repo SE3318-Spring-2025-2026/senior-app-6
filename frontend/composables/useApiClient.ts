@@ -64,6 +64,19 @@ export interface RubricCriterionResponse {
   weight: number;
 }
 
+export interface Committee {
+  id: string;
+  name: string;
+  groups?: StudentGroup[];
+}
+
+export interface StudentGroup {
+  id: string;
+  name: string;
+  advisorApproved: boolean;
+  committeeId?: string | null;
+}
+
 export interface GithubLoginRequest {
   code: string;
   studentId: string;
@@ -282,6 +295,31 @@ export function useApiClient() {
     return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", { mail }, token);
   }
 
+  async function fetchCommittees(token?: string): Promise<Committee[]> {
+    return apiCall<Committee[]>("/coordinator/committees", "GET", undefined, token);
+  }
+
+  async function fetchCommittee(committeeId: string, token?: string): Promise<Committee> {
+    return apiCall<Committee>(`/coordinator/committees/${encodeURIComponent(committeeId)}`, "GET", undefined, token);
+  }
+
+  async function fetchUnassignedGroups(token?: string): Promise<StudentGroup[]> {
+    return apiCall<StudentGroup[]>("/coordinator/groups/unassigned", "GET", undefined, token);
+  }
+
+  async function assignGroupsToCommittee(
+    committeeId: string,
+    groupIds: string[],
+    token?: string
+  ): Promise<void> {
+    return apiCall<void>(
+      `/coordinator/committees/${encodeURIComponent(committeeId)}/groups`,
+      "POST",
+      { groupIds },
+      token
+    );
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -303,5 +341,9 @@ export function useApiClient() {
     createSprintDeliverableMapping,
     publishConfig,
     registerProfessor,
+    fetchCommittees,
+    fetchCommittee,
+    fetchUnassignedGroups,
+    assignGroupsToCommittee,
   };
 }

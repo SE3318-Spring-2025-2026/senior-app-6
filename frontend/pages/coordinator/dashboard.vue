@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { LogOut, Play, FileText, ClipboardCheck, Send } from "lucide-vue-next";
+	import { LogOut, Play, FileText, ClipboardCheck, Send, Users } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
 
 	definePageMeta({
@@ -91,6 +91,19 @@
           </h3>
           <p class="mt-1 text-sm text-amber-800 dark:text-amber-300">
             Review and finalize all settings.
+          </p>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/coordinator/committee-groups"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-cyan-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-600"
+        >
+          <Users class="h-8 w-8 text-cyan-600 dark:text-cyan-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400">
+            Committee Groups
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Assign student groups to committees.
           </p>
         </NuxtLink>
       </div>
