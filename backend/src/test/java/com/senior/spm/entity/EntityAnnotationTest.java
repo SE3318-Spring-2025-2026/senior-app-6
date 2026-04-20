@@ -160,6 +160,30 @@ class EntityAnnotationTest {
         assertThat(col.length()).isEqualTo(1024);
     }
 
+    // ── CommitteeProfessor unique constraint ──────────────────────────────────
+
+    @Test
+    void committeeProfessor_hasUniqueConstraint() {
+        Table table = CommitteeProfessor.class.getAnnotation(Table.class);
+        assertThat(table.uniqueConstraints()).hasSize(1);
+    }
+
+    @Test
+    void committeeProfessor_uniqueConstraint_isNamedCorrectlyAndCoversCommitteeAndProfessor() {
+        UniqueConstraint constraint = findConstraint(CommitteeProfessor.class, "uq_committee_professor_committee_professor");
+        assertThat(constraint.columnNames()).containsExactlyInAnyOrder("committee_id", "professor_id");
+    }
+
+    // ── ProfessorRole enum completeness ───────────────────────────────────────
+
+    @Test
+    void professorRole_hasAdvisorAndJury() {
+        assertThat(CommitteeProfessor.ProfessorRole.values())
+                .containsExactlyInAnyOrder(
+                        CommitteeProfessor.ProfessorRole.ADVISOR,
+                        CommitteeProfessor.ProfessorRole.JURY);
+    }
+
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private UniqueConstraint findConstraint(Class<?> entityClass, String name) {
