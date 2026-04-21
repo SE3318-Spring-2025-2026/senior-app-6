@@ -32,6 +32,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class SprintTrackingLog {
 
+    public enum AiValidationResult { PENDING, PASS, WARN, FAIL, SKIPPED }
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -56,7 +58,7 @@ public class SprintTrackingLog {
     @Column
     private Long prNumber;
 
-    // null = no branch found, false = open/unmerged, true = merged
+    // null = no matching branch found; false = branch exists but PR is open/unmerged; true = PR merged
     @Column
     private Boolean prMerged;
 

@@ -14,7 +14,7 @@ public interface ScrumGradeRepository extends JpaRepository<ScrumGrade, UUID> {
 
     Optional<ScrumGrade> findByGroupIdAndSprintId(UUID groupId, UUID sprintId);
 
-    boolean existsByGroupIdAndSprintId(UUID groupId, UUID sprintId);
-
     List<ScrumGrade> findByAdvisorIdAndSprintId(UUID advisorId, UUID sprintId);
+
+    boolean existsByGroupIdAndSprintId(UUID groupId, UUID sprintId);
 }

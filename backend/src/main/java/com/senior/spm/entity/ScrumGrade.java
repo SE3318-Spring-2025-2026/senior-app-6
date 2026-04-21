@@ -3,8 +3,6 @@ package com.senior.spm.entity;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -34,6 +32,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ScrumGrade {
 
+    public enum ScrumGradeValue { A, B, C, D, F }
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -50,12 +50,10 @@ public class ScrumGrade {
     @JoinColumn(name = "advisor_id", nullable = false, foreignKey = @ForeignKey(name = "fk_sg_advisor"))
     private StaffUser advisor;
 
-    @JsonProperty("pointA_grade")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ScrumGradeValue pointAGrade;
 
-    @JsonProperty("pointB_grade")
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ScrumGradeValue pointBGrade;

@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.senior.spm.entity.SprintTrackingLog;
 
@@ -15,7 +16,9 @@ public interface SprintTrackingLogRepository extends JpaRepository<SprintTrackin
 
     List<SprintTrackingLog> findBySprintId(UUID sprintId);
 
-    void deleteBySprintId(UUID sprintId);
-
+    @Transactional
     void deleteByGroupIdAndSprintId(UUID groupId, UUID sprintId);
+
+    @Transactional
+    void deleteBySprintId(UUID sprintId);
 }
