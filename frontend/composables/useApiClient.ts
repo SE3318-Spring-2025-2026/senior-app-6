@@ -442,11 +442,11 @@ export function useApiClient() {
   }
 
   async function fetchCommittees(token?: string): Promise<Committee[]> {
-    return apiCall<Committee[]>("/coordinator/committees", "GET", undefined, token);
+    return apiCall<Committee[]>("/committees", "GET", undefined, token);
   }
 
   async function fetchCommittee(committeeId: string, token?: string): Promise<Committee> {
-    return apiCall<Committee>(`/coordinator/committees/${encodeURIComponent(committeeId)}`, "GET", undefined, token);
+    return apiCall<Committee>(`/committees/${encodeURIComponent(committeeId)}`, "GET", undefined, token);
   }
 
   async function fetchUnassignedGroups(token?: string): Promise<StudentGroup[]> {
