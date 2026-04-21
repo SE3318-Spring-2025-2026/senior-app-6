@@ -32,6 +32,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ScrumGrade {
 
+    public enum ScrumGradeValue { A, B, C, D, F }
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

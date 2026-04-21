@@ -32,6 +32,8 @@ import lombok.Setter;
 @NoArgsConstructor
 public class SprintTrackingLog {
 
+    public enum AiValidationResult { PENDING, PASS, WARN, FAIL, SKIPPED }
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;

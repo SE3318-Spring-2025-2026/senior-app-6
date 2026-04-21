@@ -13,12 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.TestPropertySource;
 
-import com.senior.spm.entity.AiValidationResult;
 import com.senior.spm.entity.ProjectGroup;
 import com.senior.spm.entity.ScrumGrade;
-import com.senior.spm.entity.ScrumGradeValue;
+import com.senior.spm.entity.ScrumGrade.ScrumGradeValue;
 import com.senior.spm.entity.Sprint;
 import com.senior.spm.entity.SprintTrackingLog;
+import com.senior.spm.entity.SprintTrackingLog.AiValidationResult;
 import com.senior.spm.entity.StaffUser;
 
 @DataJpaTest
