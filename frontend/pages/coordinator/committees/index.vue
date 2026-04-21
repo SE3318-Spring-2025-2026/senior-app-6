@@ -193,7 +193,7 @@ async function loadCommittees() {
 
 async function handleCreateCommittee() {
   if (!newCommitteeName.value.trim()) return;
-  
+
   isCreating.value = true;
   createError.value = null;
   createErrorToast.value = null;
@@ -206,7 +206,7 @@ async function handleCreateCommittee() {
     const payload = {
       name: newCommitteeName.value.trim(),
       committeeName: newCommitteeName.value.trim(),
-      termId: selectedCreateTermId.value.trim() || undefined,
+      termId: selectedCreateTermId.value.trim(),
     };
 
     const newCommittee = await createCommittee(payload, token);
@@ -410,12 +410,13 @@ onMounted(loadCommittees);
 
             <div>
               <label for="committeeTerm" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Term ID (optional)
+                Term ID
               </label>
               <input
                 id="committeeTerm"
                 v-model="selectedCreateTermId"
                 type="text"
+								required
                 class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400 dark:focus:ring-blue-400"
                 placeholder="e.g. 2025-FALL"
                 list="knownCommitteeTerms"
