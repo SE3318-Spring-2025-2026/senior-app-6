@@ -32,3 +32,76 @@ Verifies that student upload is rejected with `400 Bad Request` when the request
 ## Purpose
 
 These integration tests were added because the student upload endpoint does not return the inserted count in its response body. Therefore, database-level verification was necessary to fully validate the requirement.
+
+---
+
+## Other Test Classes
+
+### Config
+| Class | Summary |
+|---|---|
+| `GlobalExceptionHandlerTest` | Exception-to-HTTP-status mappings |
+| `RestTemplateConfigTest` | RestTemplate bean configuration |
+
+### Entity
+| Class | Summary |
+|---|---|
+| `EntityAnnotationTest` | JPA annotations and constraints on all entities |
+
+### Repository
+| Class | Summary |
+|---|---|
+| `AdvisorRequestRepositoryTest` | Custom queries on `AdvisorRequestRepository` |
+| `GroupInvitationRepositoryTest` | Custom queries on `GroupInvitationRepository` |
+| `GroupMembershipRepositoryTest` | Custom queries on `GroupMembershipRepository` |
+| `ProjectGroupRepositoryTest` | Custom queries on `ProjectGroupRepository` |
+
+### Service
+| Class | Summary |
+|---|---|
+| `AdvisorServiceTest` | Core advisor assignment and capacity logic |
+| `AdvisorServiceBrowseRequestTest` | Advisor list and request-browsing scenarios |
+| `EncryptionServiceTest` | AES-256 encrypt/decrypt correctness |
+| `GitHubValidationServiceTest` | GitHub PAT validation (mocked) |
+| `GitHubValidationWireMockTest` | GitHub PAT validation against WireMock stub |
+| `GroupServiceTest` | Group creation, disband, and membership rules |
+| `InvitationServiceTest` | Invitation send, accept, and deny flows |
+| `InvitationServiceEdgeCaseTest` | Edge cases: capacity, roster-lock, status guards |
+| `InvitationServicePersistenceTest` | Database-level state after invitation operations |
+| `InvitationConcurrencyTest` | Race-condition safety on concurrent invitation accepts |
+| `InvitationLifecycleQaIntegrationTest` | Full invitation lifecycle end-to-end |
+| `JiraValidationServiceTest` | Jira PAT validation (mocked) |
+| `JiraValidationWireMockTest` | Jira PAT validation against WireMock stub |
+| `SanitizationServiceTest` | Scheduled sanitization job and optimistic-lock handling |
+| `TermConfigServiceTest` | Active term ID and max team size config reads |
+
+### Controller / API
+| Class | Summary |
+|---|---|
+| `AdvisorControllerIntegrationTest` | Advisor endpoints — happy path and error flows |
+| `CommitteeGroupAssignmentIntegrationTest` | Committee group assignment validation and batch binding flows |
+| `CoordinatorGroupOverrideIntegrationTest` | Coordinator force-add and advisor override scenarios |
+| `CoordinatorControllerIntegrationTest` | Coordinator setup flow and student upload scenarios |
+| `GroupCreationIntegrationTest` | Group creation and tool-binding flows |
+| `InvitationControllerIntegrationTest` | Invitation API at HTTP level |
+| `InvitationControllerSecurityTest` | RBAC enforcement on invitation endpoints |
+| `CapacityGuardSanitizationIntegrationTest` | Capacity guard and sanitization race conditions |
+| `P3AdvisorLifecycleIntegrationTest` | Full P3 advisor request lifecycle via API |
+| `P3RbacSecurityTest` | Role-based access control for all P3 endpoints |
+
+### DTO
+| Class | Summary |
+|---|---|
+| `InvitationResponseSerializationTest` | JSON serialization of invitation response DTOs |
+
+---
+
+## Postman / E2E Tests
+
+Collections are located in `tests/postman/`. Set `baseUrl = http://localhost:8080` and run via Postman Runner.
+
+| Collection | Summary |
+|---|---|
+| `Coordinator QA Tests` | Auth, student upload, deliverable management, rubric |
+| `Coordinator QA Tests - Part 2 (Sprints & Publish)` | Sprint creation, sprint mapping, publish flow |
+| `auth-and-rbac-tests` | Login and RBAC enforcement across all roles |

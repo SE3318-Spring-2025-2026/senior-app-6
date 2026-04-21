@@ -3,6 +3,7 @@ package com.senior.spm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.repository.StudentRepository;
+import com.senior.spm.service.GithubService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +20,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.springframework.test.context.TestPropertySource;
+
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestPropertySource(locations = "classpath:test.properties")
 class CoordinatorControllerIntegrationTest {
 
     @Autowired
@@ -31,6 +35,8 @@ class CoordinatorControllerIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    private GithubService githubService;
 
     @BeforeEach
     void cleanDatabase() {

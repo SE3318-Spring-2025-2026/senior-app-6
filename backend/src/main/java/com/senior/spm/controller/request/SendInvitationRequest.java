@@ -1,0 +1,11 @@
+package com.senior.spm.controller.request;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
+
+@Data
+public class SendInvitationRequest {
+
+    @NotBlank(message = "Target student ID is required")
+    private String targetStudentId;
+}

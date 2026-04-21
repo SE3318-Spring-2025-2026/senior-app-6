@@ -10,7 +10,7 @@
 	const deliverableCreateSchema = z
 		.object({
 			name: z.string().trim().min(2, "Deliverable name must be at least 2 characters."),
-			type: z.enum(deliverableTypes, { error: "Please select a valid deliverable type." }),
+			type: z.enum(deliverableTypes, { message: "Please select a valid deliverable type." }),
 			submissionDeadline: z.string().min(1, "Submission deadline is required."),
 			reviewDeadline: z.string().min(1, "Review deadline is required."),
 		})

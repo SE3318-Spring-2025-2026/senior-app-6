@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.filter.JwtAuthenticationFilter;
 
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 public class SecurityConfig {
 
@@ -44,9 +44,16 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         auth -> auth
                                 .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .requestMatchers("/api/coordinator/**").hasRole("COORDINATOR")
                                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
+                                .requestMatchers("/api/committees/**").hasRole("COORDINATOR")
+                                // P3: Student-facing advisor request endpoints.
+                                .requestMatchers("/api/advisors/").hasRole("STUDENT")
+                                // P3: Professor-only endpoints live under /api/advisor/**
+                                .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
+                                .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")
                                 .anyRequest().authenticated())
                 .exceptionHandling(
                         ex -> ex.accessDeniedHandler(

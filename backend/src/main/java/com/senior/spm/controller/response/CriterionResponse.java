@@ -1,4 +1,4 @@
-package com.senior.spm.controller.request;
+package com.senior.spm.controller.response;
 
 import java.math.BigDecimal;
 
@@ -12,12 +12,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-public class AddRubricRequest {
+public class CriterionResponse {
 
     @NotBlank
     private String criterionName;
@@ -28,5 +26,5 @@ public class AddRubricRequest {
 
     @NotNull
     @Range(min = 0, max = 100, message = "Weight percentage must be between 0 and 100")
-    private BigDecimal weightPercentage;
+    private BigDecimal weight;
 }

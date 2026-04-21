@@ -95,3 +95,34 @@ VALUES (
     NOW(),
     DATE_ADD(NOW(), INTERVAL 1 DAY)
 );
+
+-- Issue 55: Red Team system_config seed data
+INSERT IGNORE INTO system_config (config_key, config_value) VALUES ('active_term_id', '2026-SPRING');
+INSERT IGNORE INTO system_config (config_key, config_value) VALUES ('max_team_size', '4');
+
+-- P2: schedule window for group creation (2026-SPRING, open all year)
+INSERT IGNORE INTO schedule_window (id, term_id, type, opens_at, closes_at)
+VALUES (
+    UUID_TO_BIN('cccccccc-cccc-cccc-cccc-000000000001'),
+    '2026-SPRING',
+    'GROUP_CREATION',
+    '2026-01-01 00:00:00',
+    '2026-12-31 23:59:59'
+);
+
+-- P3: schedule window for advisor association (2026-SPRING, open all year)
+INSERT IGNORE INTO schedule_window (id, term_id, type, opens_at, closes_at)
+VALUES (
+    UUID_TO_BIN('cccccccc-cccc-cccc-cccc-000000000002'),
+    '2026-SPRING',
+    'ADVISOR_ASSOCIATION',
+    '2026-01-01 00:00:00',
+    '2026-12-31 23:59:59'
+);
+
+-- P2: additional students for invitation flow testing
+INSERT IGNORE INTO student (id, student_id)
+VALUES
+    (UUID_TO_BIN('00000000-0000-0000-0000-000000000010'), '23070006019'),
+    (UUID_TO_BIN('00000000-0000-0000-0000-000000000011'), '23070006020'),
+    (UUID_TO_BIN('00000000-0000-0000-0000-000000000012'), '23070006021');

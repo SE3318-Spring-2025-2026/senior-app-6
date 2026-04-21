@@ -10,6 +10,9 @@ import com.senior.spm.entity.RubricCriterion;
 
 @Repository
 public interface RubricCriterionRepository extends JpaRepository<RubricCriterion, UUID> {
+
+    List<RubricCriterion> findAllByDeliverableId(UUID deliverableId);
+
     List<RubricCriterion> findByDeliverableId(UUID deliverableId);
 
     void deleteByDeliverableId(UUID deliverableId);
