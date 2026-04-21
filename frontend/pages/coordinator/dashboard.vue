@@ -190,6 +190,18 @@
           </p>
         </NuxtLink>
 
+        <NuxtLink
+          to="/coordinator/committee-groups"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-cyan-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-600"
+        >
+          <Users class="h-8 w-8 text-cyan-600 dark:text-cyan-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400">
+            Committee Groups
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Assign student groups to committees.
+          </p>
+        </NuxtLink>
         <button
           type="button"
           class="group rounded-2xl border border-red-200 bg-red-50 p-6 text-left shadow-sm transition-all hover:border-red-400 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70 dark:border-red-900 dark:bg-red-950/30 dark:hover:border-red-500"
