@@ -155,6 +155,37 @@ export interface BindGithubRequest {
   githubPat: string;
 }
 
+export interface ProfessorCommitteeGroup {
+  id: string;
+  groupName: string;
+  memberCount: number;
+  advisorName?: string;
+}
+
+export interface ProfessorCommitteeDeliverable {
+  id: string;
+  name: string;
+  type: "Proposal" | "SoW" | "Demonstration";
+  submissionDeadline: string;
+  reviewDeadline: string;
+}
+
+export interface ProfessorCommitteeRubricCriterion {
+  id: string;
+  criterionName: string;
+  gradingType: "Binary" | "Soft";
+  weight: number;
+}
+
+export interface ProfessorCommittee {
+  id: string;
+  name: string;
+  role: "ADVISOR" | "JURY";
+  groups: ProfessorCommitteeGroup[];
+  deliverables?: ProfessorCommitteeDeliverable[];
+  rubricCriteria?: ProfessorCommitteeRubricCriterion[];
+}
+
 export interface BindToolResponse {
   groupId: string;
   status: GroupDetailResponse["status"];
@@ -640,6 +671,10 @@ export function useApiClient() {
     );
   }
 
+  async function fetchProfessorCommittees(token?: string): Promise<ProfessorCommittee[]> {
+    return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -685,5 +720,6 @@ export function useApiClient() {
     sendGroupInvitation,
     fetchGroupInvitations,
     cancelGroupInvitation,
+    fetchProfessorCommittees,
   };
 }
