@@ -193,7 +193,7 @@ async function loadCommittees() {
 
 async function handleCreateCommittee() {
   if (!newCommitteeName.value.trim()) return;
-  
+
   isCreating.value = true;
   createError.value = null;
   createErrorToast.value = null;
@@ -410,7 +410,7 @@ onMounted(loadCommittees);
 
             <div>
               <label for="committeeTerm" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Term ID (optional)
+                Term ID
               </label>
               <input
                 id="committeeTerm"
