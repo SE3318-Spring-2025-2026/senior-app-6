@@ -72,11 +72,14 @@ export interface Committee {
   groups?: StudentGroup[];
 }
 
-export interface StudentGroup {
-  id: string;
-  name: string;
-  advisorApproved: boolean;
-  committeeId?: string | null;
+export interface StudentGroup
+{
+	id: string;
+	name: string;
+	advisorApproved: boolean;
+	committeeId?: string | null;
+}
+
 export interface CoordinatorGroupSummary {
   id: string;
   groupName: string;
@@ -417,19 +420,6 @@ export function useApiClient() {
     );
   }
 
-  async function fetchRubric(deliverableId: string, token?: string): Promise<RubricCriterionResponse[]> {
-    return apiCall<RubricCriterionResponse[]>(`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`, "GET", undefined, token);
-  }
-
-  async function updateRubric(deliverableId: string, criteria: GradingCriterion[], token?: string): Promise<RubricCriterionResponse[]> {
-    const payload = criteria.map(c => ({
-      criterionName: c.criterionName,
-      gradingType: c.gradingType,
-      weightPercentage: c.weight,
-    }));
-    return apiCall<RubricCriterionResponse[]>(`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`, "PUT", payload, token);
-  }
-
   async function createSprintDeliverableMapping(
     sprintId: string,
     deliverableId: string,
@@ -468,11 +458,15 @@ export function useApiClient() {
     committeeId: string,
     groupIds: string[],
     token?: string
-  ): Promise<void> {
-    return apiCall<void>(
-      `/coordinator/committees/${encodeURIComponent(committeeId)}/groups`,
-      "POST",
-      { groupIds },
+	): Promise<void>
+	{
+		return apiCall<void>(
+			`/coordinator/committees/${encodeURIComponent(committeeId)}/groups`,
+			"POST",
+			{ groupIds },
+			token);
+	}
+
   async function createGroup(data: CreateGroupRequest, token?: string): Promise<CreateGroupResponse> {
     return apiCall<CreateGroupResponse>("/groups", "POST", data, token);
   }
@@ -735,7 +729,6 @@ export function useApiClient() {
     resetPassword,
     fetchDeliverables,
     fetchSprints,
-    createRubric,
     fetchRubric,
     updateRubric,
     createSprintDeliverableMapping,
