@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { AlertTriangle, LogOut, Play, FileText, ClipboardCheck, Send, ShieldX, Users, X } from "lucide-vue-next";
+	import { AlertTriangle, LogOut, Play, FileText, ClipboardCheck, Send, ShieldX, Users, X, Building } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
 	import type { SanitizationReport } from "~/composables/useApiClient";
 
@@ -165,6 +165,18 @@
           </p>
         </NuxtLink>
 
+        <NuxtLink
+          to="/coordinator/committees"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-cyan-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-600"
+        >
+          <Building class="h-8 w-8 text-cyan-600 dark:text-cyan-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400">
+            Committees
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Manage committee groups for jury evaluations.
+          </p>
+        </NuxtLink>
         <NuxtLink
           to="/coordinator/publish-config"
           class="group rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm transition-all hover:border-amber-400 hover:shadow-md dark:border-amber-800 dark:bg-amber-950/30 dark:hover:border-amber-500"
