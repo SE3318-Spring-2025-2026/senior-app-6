@@ -74,6 +74,7 @@ export interface RubricCriterionResponse {
   gradingType: "Binary" | "Soft";
   weight: number;
 }
+
 export interface CoordinatorGroupSummary {
   id: string;
   groupName: string;
@@ -445,6 +446,32 @@ export function useApiClient() {
   async function registerProfessor(mail: string, token?: string): Promise<{ resetToken: string }> {
     return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", { mail }, token);
   }
+
+  async function fetchCommittees(token?: string): Promise<Committee[]> {
+    return apiCall<Committee[]>("/committees", "GET", undefined, token);
+  }
+
+  async function fetchCommittee(committeeId: string, token?: string): Promise<Committee> {
+    return apiCall<Committee>(`/committees/${encodeURIComponent(committeeId)}`, "GET", undefined, token);
+  }
+
+  async function fetchUnassignedGroups(token?: string): Promise<StudentGroup[]> {
+    return apiCall<StudentGroup[]>("/coordinator/groups/unassigned", "GET", undefined, token);
+  }
+
+  async function assignGroupsToCommittee(
+    committeeId: string,
+    groupIds: string[],
+    token?: string
+	): Promise<void> {
+    return apiCall<void>(
+      `/committees/${encodeURIComponent(committeeId)}/groups`,
+      "POST",
+      { groupIds },
+      token
+    );
+  }
+
   async function createGroup(data: CreateGroupRequest, token?: string): Promise<CreateGroupResponse> {
     return apiCall<CreateGroupResponse>("/groups", "POST", data, token);
   }
@@ -861,10 +888,6 @@ export function useApiClient() {
     searchStudents,
     sendGroupInvitation,
     fetchGroupInvitations,
-    cancelGroupInvitation,
-    createCommittee,
-    fetchCommittees,
-    fetchCommitteeDetail,
-    assignCommitteeProfessors,
+    cancelGroupInvitation
   };
 }
