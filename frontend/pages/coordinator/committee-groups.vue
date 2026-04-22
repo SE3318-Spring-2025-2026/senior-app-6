@@ -8,7 +8,6 @@
 		Users,
 		UserCheck,
 		Plus,
-		X,
 	} from "lucide-vue-next";
 	import type { Committee, StudentGroup } from "~/composables/useApiClient";
 
@@ -17,7 +16,6 @@
 		roles: ["Coordinator"],
 	});
 
-	const router = useRouter();
 	const {
 		getAuthToken,
 		fetchCommittees,
@@ -235,6 +233,23 @@
               />
             </div>
           </label>
+
+          <div
+            v-if="committees.length === 0"
+            class="mt-4 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            <AlertCircle class="mt-0.5 h-4 w-4 shrink-0" />
+            <div>
+              <p class="font-medium">No committee found for assignment</p>
+              <p class="mt-1">Create at least one committee first, then come back to assign groups.</p>
+              <NuxtLink
+                to="/coordinator/committees"
+                class="mt-2 inline-flex items-center gap-1 text-sm font-medium text-blue-700 underline-offset-2 hover:underline dark:text-blue-300"
+              >
+                Go to Committee Management
+              </NuxtLink>
+            </div>
+          </div>
 
           <!-- Currently assigned groups indicator -->
           <div v-if="selectedCommittee" class="mt-4">
