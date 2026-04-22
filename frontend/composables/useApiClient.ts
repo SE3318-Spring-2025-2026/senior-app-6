@@ -465,7 +465,7 @@ export function useApiClient() {
     token?: string
 	): Promise<void> {
     return apiCall<void>(
-      `/coordinator/committees/${encodeURIComponent(committeeId)}/groups`,
+      `/committees/${encodeURIComponent(committeeId)}/groups`,
       "POST",
       { groupIds },
       token
