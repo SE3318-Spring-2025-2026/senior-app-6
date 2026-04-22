@@ -1,6 +1,6 @@
 package com.senior.spm.controller.response;
 
-import com.senior.spm.entity.AiValidationResult;
+import com.senior.spm.entity.SprintTrackingLog.AiValidationResult;
 
 import lombok.Builder;
 import lombok.Data;

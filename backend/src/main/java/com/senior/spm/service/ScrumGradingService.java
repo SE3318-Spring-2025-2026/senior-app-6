@@ -19,11 +19,12 @@ import com.senior.spm.controller.response.ScrumGradeResponse;
 import com.senior.spm.controller.response.SprintTrackingResponse;
 import com.senior.spm.controller.response.TrackingIssueResponse;
 import com.senior.spm.controller.request.ScrumGradeRequest;
-import com.senior.spm.entity.AiValidationResult;
 import com.senior.spm.entity.ProjectGroup;
 import com.senior.spm.entity.ScrumGrade;
+import com.senior.spm.entity.ScrumGrade.ScrumGradeValue;
 import com.senior.spm.entity.Sprint;
 import com.senior.spm.entity.SprintTrackingLog;
+import com.senior.spm.entity.SprintTrackingLog.AiValidationResult;
 import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.NotFoundException;
@@ -50,6 +51,7 @@ public class ScrumGradingService {
     // Active Sprint
     // -------------------------------------------------------------------------
 
+    @Transactional(readOnly = true)
     public ActiveSprintResponse getActiveSprint() {
         LocalDate today = LocalDate.now();
         Sprint sprint = sprintRepository
@@ -77,9 +79,7 @@ public class ScrumGradingService {
         enforceAdvisorOwnership(group, advisorId);
         Sprint sprint = findSprintOrThrow(sprintId);
 
-        Optional<ScrumGrade> existing = scrumGradeRepository.findByGroupIdAndSprintId(groupId, sprintId);
-
-        if (existing.isEmpty()) {
+        if (!scrumGradeRepository.existsByGroupIdAndSprintId(groupId, sprintId)) {
             ScrumGrade grade = new ScrumGrade();
             grade.setGroup(group);
             grade.setSprint(sprint);
@@ -90,7 +90,7 @@ public class ScrumGradingService {
             return scrumGradeRepository.save(grade);
         }
 
-        ScrumGrade grade = existing.get();
+        ScrumGrade grade = scrumGradeRepository.findByGroupIdAndSprintId(groupId, sprintId).orElseThrow();
         grade.setPointAGrade(request.getPointAGrade());
         grade.setPointBGrade(request.getPointBGrade());
         grade.setUpdatedAt(LocalDateTime.now());
@@ -101,6 +101,7 @@ public class ScrumGradingService {
     // Scrum Grade — Get
     // -------------------------------------------------------------------------
 
+    @Transactional(readOnly = true)
     public ScrumGrade getGrade(UUID advisorId, UUID groupId, UUID sprintId) {
         ProjectGroup group = findGroupOrThrow(groupId);
         enforceAdvisorOwnership(group, advisorId);
@@ -114,6 +115,7 @@ public class ScrumGradingService {
     // Advisor — Group summaries for a sprint
     // -------------------------------------------------------------------------
 
+    @Transactional(readOnly = true)
     public List<AdvisorGroupSprintSummaryResponse> getAdvisorGroupSummaries(UUID advisorId, UUID sprintId) {
         findSprintOrThrow(sprintId);
 
@@ -129,6 +131,7 @@ public class ScrumGradingService {
     // Advisor — Per-group tracking detail
     // -------------------------------------------------------------------------
 
+    @Transactional(readOnly = true)
     public SprintTrackingResponse getAdvisorGroupTracking(UUID advisorId, UUID groupId, UUID sprintId) {
         ProjectGroup group = findGroupOrThrow(groupId);
         enforceAdvisorOwnership(group, advisorId);
@@ -153,6 +156,7 @@ public class ScrumGradingService {
     // Student — Group tracking detail
     // -------------------------------------------------------------------------
 
+    @Transactional(readOnly = true)
     public SprintTrackingResponse getStudentGroupTracking(UUID studentId, UUID groupId, UUID sprintId) {
         if (groupMembershipRepository.findByGroupIdAndStudentId(groupId, studentId).isEmpty()) {
             throw new ForbiddenException("You are not a member of this group");
@@ -292,7 +296,9 @@ public class ScrumGradingService {
     }
 
     private AiValidationResult worstForIssue(SprintTrackingLog log) {
-        return worstAiResult(log.getAiPrResult(), log.getAiDiffResult());
+        AiValidationResult pr   = log.getAiPrResult()   != null ? log.getAiPrResult()   : AiValidationResult.PENDING;
+        AiValidationResult diff = log.getAiDiffResult() != null ? log.getAiDiffResult() : AiValidationResult.PENDING;
+        return worstAiResult(pr, diff);
     }
 
     private AiValidationResult worstForStudent(List<SprintTrackingLog> issues) {

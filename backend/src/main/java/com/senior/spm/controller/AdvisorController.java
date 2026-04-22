@@ -3,23 +3,32 @@ package com.senior.spm.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.senior.spm.controller.response.AdvisorCapacityResponse;
 import com.senior.spm.controller.request.AdvisorRespondRequest;
+import com.senior.spm.controller.request.ScrumGradeRequest;
+import com.senior.spm.controller.response.ActiveSprintResponse;
+import com.senior.spm.controller.response.AdvisorCapacityResponse;
+import com.senior.spm.controller.response.AdvisorGroupSprintSummaryResponse;
+import com.senior.spm.controller.response.ScrumGradeResponse;
+import com.senior.spm.controller.response.SprintTrackingResponse;
+import com.senior.spm.entity.ScrumGrade;
 import com.senior.spm.service.AdvisorService;
+import com.senior.spm.service.ScrumGradingService;
 import com.senior.spm.service.dto.AdvisorRequestDetail;
 import com.senior.spm.service.dto.AdvisorRequestSummary;
 import com.senior.spm.service.dto.AdvisorRespondResponse;
+import com.senior.spm.util.SecurityUtils;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +59,7 @@ import lombok.RequiredArgsConstructor;
 public class AdvisorController {
 
     private final AdvisorService advisorService;
+    private final ScrumGradingService scrumGradingService;
 
     // =========================================================================
     // STUDENT — Browse Advisors (GET /api/advisors)
@@ -88,8 +98,8 @@ public class AdvisorController {
      * @return 200 with list of {@link AdvisorRequestSummary}; may be empty
      */
     @GetMapping("/requests")
-    public ResponseEntity<List<AdvisorRequestSummary>> getPendingRequests() {
-        UUID professorId = extractPrincipalUUID();
+    public ResponseEntity<List<AdvisorRequestSummary>> getPendingRequests(Authentication auth) {
+        UUID professorId = SecurityUtils.extractPrincipalUUID(auth);
         List<AdvisorRequestSummary> summaries = advisorService.getPendingRequestsForAdvisor(professorId);
         return ResponseEntity.ok(summaries);
     }
@@ -111,8 +121,9 @@ public class AdvisorController {
      */
     @GetMapping("/requests/{requestId}")
     public ResponseEntity<AdvisorRequestDetail> getRequestDetail(
-            @PathVariable UUID requestId) {
-        UUID professorId = extractPrincipalUUID();
+            @PathVariable UUID requestId,
+            Authentication auth) {
+        UUID professorId = SecurityUtils.extractPrincipalUUID(auth);
         AdvisorRequestDetail detail = advisorService.getRequestDetail(requestId, professorId);
         return ResponseEntity.ok(detail);
     }
@@ -155,24 +166,67 @@ public class AdvisorController {
     @PatchMapping("/requests/{requestId}/respond")
     public ResponseEntity<AdvisorRespondResponse> respondToRequest(
             @PathVariable UUID requestId,
-            @Valid @RequestBody AdvisorRespondRequest body) {
-        UUID professorId = extractPrincipalUUID();
+            @Valid @RequestBody AdvisorRespondRequest body,
+            Authentication auth) {
+        UUID professorId = SecurityUtils.extractPrincipalUUID(auth);
         AdvisorRespondResponse response = advisorService.respondToRequest(requestId, professorId, body.getAccept());
         return ResponseEntity.ok(response);
     }
 
     // =========================================================================
-    // Helpers
+    // PROFESSOR — Sprint tracking endpoints (P5)
+    // SecurityConfig: /api/advisor/** → hasRole("PROFESSOR") covers all below
     // =========================================================================
-    /**
-     * Extracts the internal UUID of the authenticated principal from the
-     * SecurityContext. Works for both student and staff JWTs —
-     * JwtAuthenticationFilter sets the principal to
-     * {@code claims.get("id", String.class)} which is the entity's primary key
-     * UUID.
-     */
-    private UUID extractPrincipalUUID() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return UUID.fromString((String) auth.getPrincipal());
+
+    // GET /api/advisor/sprints/active
+    @GetMapping("/sprints/active")
+    public ResponseEntity<ActiveSprintResponse> getAdvisorActiveSprint() {
+        return ResponseEntity.ok(scrumGradingService.getActiveSprint());
     }
+
+    // GET /api/advisor/sprints/{sprintId}/groups
+    @GetMapping("/sprints/{sprintId}/groups")
+    public ResponseEntity<List<AdvisorGroupSprintSummaryResponse>> getAdvisorGroupSummaries(
+            @PathVariable UUID sprintId,
+            Authentication auth) {
+        UUID advisorId = SecurityUtils.extractPrincipalUUID(auth);
+        return ResponseEntity.ok(scrumGradingService.getAdvisorGroupSummaries(advisorId, sprintId));
+    }
+
+    // GET /api/advisor/sprints/{sprintId}/groups/{groupId}/tracking
+    @GetMapping("/sprints/{sprintId}/groups/{groupId}/tracking")
+    public ResponseEntity<SprintTrackingResponse> getAdvisorGroupTracking(
+            @PathVariable UUID sprintId,
+            @PathVariable UUID groupId,
+            Authentication auth) {
+        UUID advisorId = SecurityUtils.extractPrincipalUUID(auth);
+        return ResponseEntity.ok(scrumGradingService.getAdvisorGroupTracking(advisorId, groupId, sprintId));
+    }
+
+    // POST /api/advisor/sprints/{sprintId}/groups/{groupId}/grade
+    // 201 on first submission, 200 on update
+    @PostMapping("/sprints/{sprintId}/groups/{groupId}/grade")
+    public ResponseEntity<ScrumGradeResponse> submitGrade(
+            @PathVariable UUID sprintId,
+            @PathVariable UUID groupId,
+            @Valid @RequestBody ScrumGradeRequest request,
+            Authentication auth) {
+        UUID advisorId = SecurityUtils.extractPrincipalUUID(auth);
+        ScrumGrade grade = scrumGradingService.submitGrade(advisorId, groupId, sprintId, request);
+        ScrumGradeResponse response = scrumGradingService.toGradeResponse(grade);
+        HttpStatus status = grade.getUpdatedAt() == null ? HttpStatus.CREATED : HttpStatus.OK;
+        return ResponseEntity.status(status).body(response);
+    }
+
+    // GET /api/advisor/sprints/{sprintId}/groups/{groupId}/grade
+    @GetMapping("/sprints/{sprintId}/groups/{groupId}/grade")
+    public ResponseEntity<ScrumGradeResponse> getGrade(
+            @PathVariable UUID sprintId,
+            @PathVariable UUID groupId,
+            Authentication auth) {
+        UUID advisorId = SecurityUtils.extractPrincipalUUID(auth);
+        ScrumGrade grade = scrumGradingService.getGrade(advisorId, groupId, sprintId);
+        return ResponseEntity.ok(scrumGradingService.toGradeResponse(grade));
+    }
+
 }
