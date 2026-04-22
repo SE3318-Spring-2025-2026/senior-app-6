@@ -13,6 +13,7 @@ import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GitHubValidationException;
 import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.JiraValidationException;
+import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.exception.NotInGroupException;
 import com.senior.spm.exception.RequestNotFoundException;
 import com.senior.spm.exception.RequestNotPendingException;
@@ -184,5 +185,32 @@ class GlobalExceptionHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
+    }
+
+    // ── P5 exceptions ────────────────────────────────────────────────────────
+
+    @Test
+    void notFoundException_mapsTo404() {
+        var ex = new NotFoundException("No active sprint found for the current term");
+        var response = handler.handleNotFound(ex);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    void notFoundException_preservesMessage() {
+        var message = "No grade submitted yet for this group and sprint";
+        var response = handler.handleNotFound(new NotFoundException(message));
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getMessage()).isEqualTo(message);
+    }
+
+    @Test
+    void notFoundException_neverReturns500() {
+        var ex = new NotFoundException("Sprint not found");
+        var response = handler.handleNotFound(ex);
+
+        assertThat(response.getStatusCode()).isNotEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
