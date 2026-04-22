@@ -70,6 +70,15 @@ public class CommitteeService {
         var committee = committeeRepository.findById(committeeId)
                 .orElseThrow(() -> new NotFoundException("Committee not found: " + committeeId));
 
+        var uniqueProfessorCount = request.getProfessors().stream()
+                .map(p -> p.getProfessorId())
+                .distinct()
+                .count();
+
+        if (uniqueProfessorCount != request.getProfessors().size()) {
+            throw new IllegalArgumentException("Duplicate professor IDs are not allowed");
+        }
+
         var advisorCount = request.getProfessors().stream()
                 .filter(p -> p.getRole() == ProfessorRole.ADVISOR).count();
         if (advisorCount != 1) {

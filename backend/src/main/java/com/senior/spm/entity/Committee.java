@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -42,14 +43,14 @@ public class Committee {
     @JoinColumn(name = "deliverable_id", nullable = false, foreignKey = @ForeignKey(name = "fk_committee_deliverable"))
     private Deliverable deliverable;
 
-    @OneToMany(mappedBy = "committee", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "committee", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<CommitteeProfessor> professors = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "committee_group",
-        joinColumns = @JoinColumn(name = "committee_id"),
-        inverseJoinColumns = @JoinColumn(name = "group_id")
+            name = "committee_group",
+            joinColumns = @JoinColumn(name = "committee_id"),
+            inverseJoinColumns = @JoinColumn(name = "group_id")
     )
     private Set<ProjectGroup> groups = new HashSet<>();
 }
