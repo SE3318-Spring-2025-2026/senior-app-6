@@ -162,12 +162,16 @@ export interface ProfessorCommitteeRubricCriterion {
 }
 
 export interface ProfessorCommittee {
-  id: string;
-  name: string;
-  role: "ADVISOR" | "JURY";
+  committeeId: string;
+  committeeName: string;
+  professorRole: "ADVISOR" | "JURY";
   groups: ProfessorCommitteeGroup[];
-  deliverables?: ProfessorCommitteeDeliverable[];
-  rubricCriteria?: ProfessorCommitteeRubricCriterion[];
+  deliverableId?: string;
+  deliverableName?: string;
+  deliverableType?: string;
+  submissionDeadline?: string;
+  reviewDeadline?: string;
+  rubrics?: ProfessorCommitteeRubricCriterion[];
 }
 
 export interface AdvisorOverrideResponse {
