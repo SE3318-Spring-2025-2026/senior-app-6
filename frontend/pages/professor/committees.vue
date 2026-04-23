@@ -260,13 +260,13 @@
         <section
           v-for="committee in committees"
           :key="committee.id"
-          class="rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-800"
+          class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-800"
         >
           <!-- Committee header -->
           <button
             type="button"
             @click="toggleCommittee(committee.id)"
-            class="flex w-full items-center justify-between p-6 text-left transition hover:bg-slate-50 dark:hover:bg-slate-750"
+            class="flex w-full items-center justify-between p-6 text-left transition hover:bg-slate-50 dark:hover:bg-slate-700"
           >
             <div class="flex items-center gap-3">
               <div
@@ -340,7 +340,7 @@
                   <tr
                     v-for="group in committee.groups"
                     :key="group.id"
-                    class="transition hover:bg-slate-50 dark:hover:bg-slate-750"
+                    class="transition hover:bg-slate-50 dark:hover:bg-slate-700"
                   >
                     <td class="px-4 py-3 font-medium text-slate-900 dark:text-white">
                       {{ group.groupName }}
@@ -370,12 +370,12 @@
               <div
                 v-for="deliverable in deliverables"
                 :key="deliverable.id"
-                class="rounded-lg border border-slate-200 dark:border-slate-600"
+                class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-600"
               >
                 <button
                   type="button"
                   @click="toggleDeliverable(deliverable.id)"
-                  class="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-750"
+                  class="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   <div>
                     <span class="text-sm font-medium text-slate-900 dark:text-white">
