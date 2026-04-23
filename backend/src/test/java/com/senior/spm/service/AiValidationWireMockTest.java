@@ -20,6 +20,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -38,14 +39,6 @@ class AiValidationWireMockTest {
     private static final String FAKE_ENCRYPTED_KEY = "fake-encrypted-key";
     private static final String FAKE_PLAIN_KEY = "AIzaSyFakeKeyForTests";
     private static final String GEMINI_PATH = "/v1beta/models/gemini-2.5-flash-lite:generateContent";
-
-    // Returns the plain key directly — bypasses real AES decryption in tests
-    private final EncryptionService fakeEncryptionService = new EncryptionService() {
-        @Override
-        public String decrypt(String cipherText) {
-            return FAKE_PLAIN_KEY;
-        }
-    };
 
     @BeforeAll
     static void startServer() {
@@ -70,12 +63,16 @@ class AiValidationWireMockTest {
         config.setConfigValue(FAKE_ENCRYPTED_KEY);
         when(systemConfigRepository.findById("llm_api_key")).thenReturn(Optional.of(config));
 
+        EncryptionService encryptionService = mock(EncryptionService.class);
+        when(encryptionService.decrypt(any())).thenReturn(FAKE_PLAIN_KEY);
+
         // timeoutSeconds=1 keeps timeout tests fast (WireMock delay set to 2s)
         service = new AiValidationService(
                 systemConfigRepository,
-                fakeEncryptionService,
+                encryptionService,
                 RestClient.builder(),
                 wireMockServer.baseUrl(),
+                "gemini-2.5-flash-lite",
                 1
         );
     }
