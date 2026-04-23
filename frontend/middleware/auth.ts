@@ -1,4 +1,5 @@
 import { useAuthStore } from '~/stores/auth';
+import type { StaffUser } from '~/types/User';
 
 /**
  * Route middleware that enforces role-based access control.

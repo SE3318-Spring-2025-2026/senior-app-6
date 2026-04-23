@@ -9,7 +9,6 @@
 		UserCheck,
 		Plus,
 	} from "lucide-vue-next";
-	import type { Committee, StudentGroup } from "~/composables/useApiClient";
 
 	definePageMeta({
 		middleware: "auth",
@@ -41,13 +40,13 @@
 	const hasSelection = computed(() => selectedGroupIds.value.size > 0);
 
 	const selectableGroups = computed(() =>
-		unassignedGroups.value.filter((g) => g.advisorApproved)
+		unassignedGroups.value.filter((g: StudentGroup) => g.advisorApproved)
 	);
 
 	const allSelected = computed(
 		() =>
 			selectableGroups.value.length > 0 &&
-			selectableGroups.value.every((g) => selectedGroupIds.value.has(g.id))
+			selectableGroups.value.every((g: StudentGroup) => selectedGroupIds.value.has(g.id))
 	);
 
 	// Methods
@@ -65,7 +64,7 @@
 		if (allSelected.value) {
 			selectedGroupIds.value = new Set();
 		} else {
-			selectedGroupIds.value = new Set(selectableGroups.value.map((g) => g.id));
+			selectedGroupIds.value = new Set(selectableGroups.value.map((g: StudentGroup) => g.id));
 		}
 	}
 

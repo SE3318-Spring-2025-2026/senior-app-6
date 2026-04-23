@@ -1,39 +1,82 @@
+import type { GroupStatus } from "./group";
+import type { DeliverableType } from "./deliverable";
+import type { GradingType } from "./rubric";
+
+export type ProfessorRole = "ADVISOR" | "JURY";
+
 export interface CommitteeProfessorAssignment {
   professorId: string;
-  role: "ADVISOR" | "JURY";
+  role: ProfessorRole;
 }
 
-export interface StudentGroup {
+export interface CommitteeProfessorResponse {
   id: string;
-  name: string;
-  advisorApproved: boolean;
-  committeeId?: string | null;
+  professorId: string;
+  professorName: string;
+  professorMail: string;
+  role: ProfessorRole;
 }
 
-export interface Committee {
+export interface CommitteeGroupResponse {
   id: string;
-  committeeName?: string;
-  name?: string;
-  termId?: string;
-  deliverableId?: string;
-  groups?: StudentGroup[];
+  groupId: string;
+  groupName: string;
+  status: GroupStatus;
 }
 
-export interface CommitteeDetail {
+export interface CommitteeSummaryResponse {
   id: string;
-  committeeName?: string;
-  termId?: string;
-  professors: CommitteeProfessorAssignment[];
-  groupIds: string[];
+  committeeName: string;
+  termId: string;
+  deliverableId: string;
+}
+
+export interface CommitteeDetailResponse {
+  id: string;
+  committeeName: string;
+  termId: string;
+  deliverableId: string;
+  professors: CommitteeProfessorResponse[];
+  groups: CommitteeGroupResponse[];
 }
 
 export interface CreateCommitteeRequest {
   committeeName: string;
   termId: string;
-  deliverableId?: string;
-  name?: string;
+  deliverableId: string;
 }
 
-export interface AssignCommitteeProfessorsRequest {
+export interface AddProfessorsToCommitteeRequest {
   professors: CommitteeProfessorAssignment[];
+}
+
+export interface AddGroupsToCommitteeRequest {
+  groupIds: string[];
+}
+
+export interface ProfessorCommitteeGroup {
+  groupId: string;
+  groupName: string;
+  status: GroupStatus;
+}
+
+export interface ProfessorCommitteeRubricCriterion {
+  criterionName: string;
+  gradingType: GradingType;
+  weight: number;
+}
+
+export interface ProfessorCommittee {
+  committeeId: string;
+  committeeName: string;
+  termId?: string;
+  professorRole: ProfessorRole;
+  deliverableId?: string;
+  deliverableName?: string;
+  deliverableType?: DeliverableType;
+  submissionDeadline?: string;
+  reviewDeadline?: string;
+  deliverableWeight?: number;
+  groups: ProfessorCommitteeGroup[];
+  rubrics?: ProfessorCommitteeRubricCriterion[];
 }

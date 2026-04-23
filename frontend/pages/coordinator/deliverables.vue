@@ -1,7 +1,6 @@
 <script setup lang="ts">
 	import { z } from "zod";
 	import { CalendarDays, CheckCircle2, Edit, Plus, AlertCircle, Loader as LoaderIcon } from "lucide-vue-next";
-	import type { Deliverable } from "~/composables/useApiClient";
 
 	const { createDeliverable, updateDeliverable, getAuthToken, fetchDeliverables } = useApiClient();
 
@@ -159,7 +158,7 @@
 			if (!token) throw new Error("Authentication required");
 
 			const updated = await updateDeliverable(activeEditId.value, result.data, token);
-			deliverables.value = deliverables.value.map((item) =>
+			deliverables.value = deliverables.value.map((item: Deliverable) =>
 				item.id === updated.id
 					? { ...item, submissionDeadline: updated.submissionDeadline, reviewDeadline: updated.reviewDeadline }
 					: item

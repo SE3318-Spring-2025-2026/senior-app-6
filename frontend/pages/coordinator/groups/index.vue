@@ -1,6 +1,6 @@
 <script setup lang="ts">
 	import { AlertCircle, ArrowLeft, ArrowUpDown, Loader as LoaderIcon, Search, Users } from "lucide-vue-next";
-	import type { CoordinatorGroupSummary } from "~/composables/useApiClient";
+import type { GroupSummaryResponse } from "~/types/group";
 
 	definePageMeta({
 		middleware: "auth",
@@ -9,7 +9,7 @@
 
 	const { fetchCoordinatorGroups, getAuthToken } = useApiClient();
 
-	const groups = ref<CoordinatorGroupSummary[]>([]);
+	const groups = ref<GroupSummaryResponse[]>([]);
 	const isLoading = ref(true);
 	const fetchError = ref<string | null>(null);
 	const selectedTerm = ref("ALL");
@@ -26,7 +26,7 @@
 	};
 
 	const availableTerms = computed(() => {
-		const terms = Array.from(new Set(groups.value.map((group) => group.termId)));
+		const terms: string[] = Array.from(new Set(groups.value.map((group: GroupSummaryResponse) => group.termId)));
 		return terms.sort((a, b) => b.localeCompare(a));
 	});
 
@@ -34,7 +34,7 @@
 		if (selectedTerm.value === "ALL") {
 			return groups.value;
 		}
-		return groups.value.filter((group) => group.termId === selectedTerm.value);
+		return groups.value.filter((group: GroupSummaryResponse) => group.termId === selectedTerm.value);
 	});
 
 	const sortedGroups = computed(() => {

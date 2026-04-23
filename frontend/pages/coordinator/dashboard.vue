@@ -1,7 +1,6 @@
 <script setup lang="ts">
 	import { AlertTriangle, LogOut, Play, FileText, ClipboardCheck, Send, ShieldX, Users, X, Building } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
-	import type { SanitizationReport } from "~/composables/useApiClient";
 
 	definePageMeta({
 		middleware: "auth",
