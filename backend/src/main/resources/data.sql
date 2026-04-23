@@ -100,6 +100,7 @@ VALUES (
 INSERT IGNORE INTO system_config (config_key, config_value) VALUES ('active_term_id', '2026-SPRING');
 INSERT IGNORE INTO system_config (config_key, config_value) VALUES ('max_team_size', '4');
 
+
 -- P2: schedule window for group creation (2026-SPRING, open all year)
 INSERT IGNORE INTO schedule_window (id, term_id, type, opens_at, closes_at)
 VALUES (
@@ -126,3 +127,20 @@ VALUES
     (UUID_TO_BIN('00000000-0000-0000-0000-000000000010'), '23070006019'),
     (UUID_TO_BIN('00000000-0000-0000-0000-000000000011'), '23070006020'),
     (UUID_TO_BIN('00000000-0000-0000-0000-000000000012'), '23070006021');
+
+
+    INSERT IGNORE INTO staff_user (
+    id,
+    first_login,
+    mail,
+    password_hash,
+    role
+)
+VALUES (
+    UUID_TO_BIN('00000000-0000-0000-0000-000000000005'),
+    FALSE,
+    'professorb@test.com',
+    '$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq',
+    'PROFESSOR'
+);
+
