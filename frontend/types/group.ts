@@ -13,6 +13,8 @@ export interface MemberResponse {
   joinedAt: string
 }
 
+export type GroupMember = MemberResponse;
+
 export interface CreateGroupRequest {
   groupName: string
 }

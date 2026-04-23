@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { ArrowLeft, Loader as LoaderIcon, Plus, AlertCircle, CheckCircle2, Search, Building, Users, UserCheck } from "lucide-vue-next";
-import type { CommitteeDetailResponse, CommitteeSummaryResponse, CreateCommitteeRequest } from "~/types/committee";
+import type { CommitteeDetailResponse, CommitteeProfessorAssignment, CommitteeSummaryResponse, CreateCommitteeRequest } from "~/types/committee";
 import type { AdvisorCapacityResponse } from "~/types/advisor";
 import type { Deliverable } from "~/types/deliverable";
 
@@ -16,7 +16,7 @@ const {
   getAuthToken,
   fetchCoordinatorAdvisors,
   fetchCommitteeDetail,
-  assignCommitteeProfessors,
+  addCommitteeProfessors,
   fetchDeliverables,
 } = useApiClient();
 
@@ -147,7 +147,7 @@ async function handleAssignProfessors() {
   }
 
   const juryProfessorIds = selectedJuryIds.value.filter((id) => id !== selectedAdvisorId.value);
-  const professors = [
+  const professors: CommitteeProfessorAssignment[] = [
     { professorId: selectedAdvisorId.value, role: "ADVISOR" as const },
     ...juryProfessorIds.map((professorId) => ({ professorId, role: "JURY" as const })),
   ];
@@ -160,7 +160,7 @@ async function handleAssignProfessors() {
     const token = getAuthToken();
     if (!token) throw new Error("Authentication required. Please log in.");
 
-    await assignCommitteeProfessors(selectedCommittee.value.id, { professors }, token);
+    await addCommitteeProfessors(selectedCommittee.value.id, { professors: professors }, token);
     assignmentSuccess.value = "Professor assignments saved successfully.";
 
     const refreshedDetail = await fetchCommitteeDetail(selectedCommittee.value.id, token);

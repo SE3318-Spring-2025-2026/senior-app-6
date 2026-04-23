@@ -22,6 +22,7 @@ import type {
   AddProfessorsToCommitteeRequest,
   AddGroupsToCommitteeRequest,
   ProfessorCommittee,
+	CommitteeProfessorAssignment,
 } from '~/types/committee';
 import type {
   Deliverable,
@@ -502,34 +503,8 @@ export function useApiClient() {
     );
   }
 
-  async function assignCommitteeProfessors(
-    committeeId: string,
-    payload: AssignCommitteeProfessorsRequest,
-    token?: string
-  ): Promise<void> {
-    await apiCall<void>(
-      `/committees/${encodeURIComponent(committeeId)}/professors`,
-      "POST",
-      payload,
-      token
-    );
-  }
-
   async function fetchProfessorCommittees(token?: string): Promise<ProfessorCommittee[]> {
     return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
-  }
-
-  async function assignGroupsToCommittee(
-    committeeId: string,
-    groupIds: string[],
-    token?: string
-  ): Promise<void> {
-    await apiCall<void>(
-      `/committees/${encodeURIComponent(committeeId)}/groups`,
-      "POST",
-      { groupIds },
-      token
-    );
   }
 
   async function fetchUnassignedGroups(token?: string): Promise<StudentGroup[]> {
@@ -582,14 +557,12 @@ export function useApiClient() {
     publishConfig,
     registerProfessor,
     createCommittee,
-		assignCommitteeProfessors,
     fetchCommittees,
     fetchCommittee: fetchCommitteeDetail,
     fetchCommitteeDetail,
 		fetchUnassignedGroups,
     addCommitteeProfessors,
     addCommitteeGroups,
-    assignGroupsToCommittee,
     fetchProfessorCommittees,
     createGroup,
     fetchMyGroup,
