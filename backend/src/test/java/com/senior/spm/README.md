@@ -79,6 +79,7 @@ These integration tests were added because the student upload endpoint does not 
 | Class | Summary |
 |---|---|
 | `AdvisorControllerIntegrationTest` | Advisor endpoints — happy path and error flows |
+| `CommitteeControllerIntegrationTest` | Committee professor assignment validation, advisor rules, conflict checks, and persistence flows |
 | `CommitteeGroupAssignmentIntegrationTest` | Committee group assignment validation and batch binding flows |
 | `CoordinatorGroupOverrideIntegrationTest` | Coordinator force-add and advisor override scenarios |
 | `CoordinatorControllerIntegrationTest` | Coordinator setup flow and student upload scenarios |

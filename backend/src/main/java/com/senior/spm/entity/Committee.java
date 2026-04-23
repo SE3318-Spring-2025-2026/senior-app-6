@@ -49,9 +49,9 @@ public class Committee {
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "committee_group",
-        joinColumns = @JoinColumn(name = "committee_id"),
-        inverseJoinColumns = @JoinColumn(name = "group_id")
+            name = "committee_group",
+            joinColumns = @JoinColumn(name = "committee_id"),
+            inverseJoinColumns = @JoinColumn(name = "group_id")
     )
     private Set<ProjectGroup> groups = new HashSet<>();
 
