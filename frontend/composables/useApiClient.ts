@@ -140,10 +140,9 @@ export interface CoordinatorAdvisor {
 }
 
 export interface ProfessorCommitteeGroup {
-  id: string;
+  groupId: string;
   groupName: string;
-  memberCount: number;
-  advisorName?: string;
+	status: string;
 }
 
 export interface ProfessorCommitteeDeliverable {
@@ -155,7 +154,6 @@ export interface ProfessorCommitteeDeliverable {
 }
 
 export interface ProfessorCommitteeRubricCriterion {
-  id: string;
   criterionName: string;
   gradingType: "Binary" | "Soft";
   weight: number;
@@ -164,13 +162,16 @@ export interface ProfessorCommitteeRubricCriterion {
 export interface ProfessorCommittee {
   committeeId: string;
   committeeName: string;
+	termId?: string;
   professorRole: "ADVISOR" | "JURY";
-  groups: ProfessorCommitteeGroup[];
+
   deliverableId?: string;
   deliverableName?: string;
   deliverableType?: ProfessorCommitteeDeliverable["type"];
   submissionDeadline?: string;
   reviewDeadline?: string;
+	deliverableWeight?: number;
+  groups: ProfessorCommitteeGroup[];
   rubrics?: ProfessorCommitteeRubricCriterion[];
 }
 

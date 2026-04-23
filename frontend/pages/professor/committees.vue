@@ -340,17 +340,14 @@
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                   <tr
                     v-for="group in committee.groups"
-                    :key="group.id"
+                    :key="group.groupId"
                     class="transition hover:bg-slate-50 dark:hover:bg-slate-700"
                   >
                     <td class="px-4 py-3 font-medium text-slate-900 dark:text-white">
                       {{ group.groupName }}
                     </td>
                     <td class="px-4 py-3 text-slate-600 dark:text-slate-400">
-                      {{ group.memberCount }}
-                    </td>
-                    <td class="px-4 py-3 text-slate-600 dark:text-slate-400">
-                      {{ group.advisorName || '—' }}
+                      {{ group.status }}
                     </td>
                   </tr>
                 </tbody>
@@ -442,7 +439,6 @@
                     <div v-else class="mt-2 space-y-1.5">
                       <div
                         v-for="criterion in rubricsByDeliverable[deliverable.id]"
-                        :key="criterion.id"
                         class="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 dark:bg-slate-700/50"
                       >
                         <span class="text-sm text-slate-900 dark:text-white">
