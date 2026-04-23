@@ -63,6 +63,21 @@ public class ProjectGroup {
     @Column(length = 1024, nullable = true)
     private String encryptedGithubPat;
 
+    @Column(length = 255, nullable = true)
+    private String githubRepoName;
+
+    @Column(nullable = true)
+    private Boolean githubTokenValid;
+
+    @Column(nullable = true)
+    private java.time.LocalDateTime githubPatExpiresAt;
+
+    @Column(nullable = true)
+    private Boolean jiraTokenValid;
+
+    @Column(nullable = true)
+    private java.time.LocalDate jiraTokenExpiresAt;
+
     @ManyToOne
     @JoinColumn(name = "advisor_id", nullable = true, foreignKey = @ForeignKey(name = "fk_project_group_advisor"))
     private StaffUser advisor;

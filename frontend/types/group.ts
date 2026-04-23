@@ -35,6 +35,11 @@ export interface GroupDetailResponse {
   jiraBound?: boolean
   githubOrgName?: string
   githubBound?: boolean
+  githubRepoName?: string
+  githubTokenValid?: boolean | null
+  githubPatExpiresAt?: string | null
+  jiraTokenValid?: boolean | null
+  jiraTokenExpiresAt?: string | null
 }
 
 export interface CreateGroupResponse {
@@ -44,4 +49,18 @@ export interface CreateGroupResponse {
   status: GroupStatus
   members: GroupMember[]
   createdAt?: string
+}
+
+export interface BindGithubRequest {
+  githubOrgName: string;
+  githubPat: string;
+  githubRepoName: string;
+}
+
+export interface BindJiraRequest {
+  jiraSpaceUrl: string;
+  jiraEmail: string;
+  jiraProjectKey: string;
+  jiraApiToken: string;
+  jiraTokenExpiresAt?: string;
 }

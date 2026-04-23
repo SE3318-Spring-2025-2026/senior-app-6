@@ -11,4 +11,7 @@ public class BindGithubRequest {
 
     @NotBlank(message = "GitHub PAT is required")
     private String githubPat;
+
+    @NotBlank(message = "GitHub repository name is required")
+    private String githubRepoName;
 }
