@@ -84,6 +84,42 @@ const githubFormValues = computed(() => ({
   githubRepoName: group.value?.githubRepoName ?? "",
 }));
 
+const githubTokenInvalid = computed(() => group.value?.githubTokenValid === false);
+const jiraTokenInvalid = computed(() => group.value?.jiraTokenValid === false);
+
+const githubPatExpiringSoon = computed(() => {
+  if (githubTokenInvalid.value) return false;
+  const exp = group.value?.githubPatExpiresAt;
+  if (!exp) return false;
+  return new Date(exp).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
+});
+
+const jiraTokenExpiringSoon = computed(() => {
+  if (jiraTokenInvalid.value) return false;
+  const exp = group.value?.jiraTokenExpiresAt;
+  if (!exp) return false;
+  return new Date(exp).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
+});
+
+function formatDate(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString();
+}
+
+const jiraToolStatus = computed(() => {
+  if (!group.value?.jiraBound) return "unbound";
+  if (group.value.jiraTokenValid === false) return "invalid";
+  if (jiraTokenExpiringSoon.value) return "expiring";
+  return "healthy";
+});
+
+const githubToolStatus = computed(() => {
+  if (!group.value?.githubBound) return "unbound";
+  if (group.value.githubTokenValid === false) return "invalid";
+  if (githubPatExpiringSoon.value) return "expiring";
+  return "healthy";
+});
+
 async function loadGroup() {
   isLoading.value = true;
   loadError.value = null;
@@ -314,8 +350,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
               Secure binding flow
             </h2>
             <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Credentials are validated by the backend before they are stored. Successful bindings are
-              shown as locked to prevent accidental edits from the UI.
+              Credentials are validated by the backend before they are stored. You can update credentials at any time — re-binding validates the new token before overwriting the old one.
             </p>
           </div>
 
@@ -327,7 +362,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
             <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
               <li>Enter the JIRA workspace URL, Atlassian account email, project key, and API token.</li>
               <li>Enter the GitHub organization name and a PAT with repository access.</li>
-              <li>Watch each form switch into a locked state after a successful bind.</li>
+              <li>Each tool shows its current health status (Active / Expiring Soon / Token Invalid) after binding.</li>
             </ul>
           </div>
         </div>
@@ -384,7 +419,8 @@ async function handleGithubSubmit(payload: Record<string, string>) {
             :field-errors="jiraFieldErrors"
             :error-message="jiraError"
             :loading="jiraSubmitting"
-            submit-label="Bind JIRA"
+            :tool-status="jiraToolStatus"
+            :submit-label="jiraToolStatus === 'unbound' ? 'Bind JIRA' : 'Update JIRA Credentials'"
             @submit="handleJiraSubmit"
           />
 
@@ -423,7 +459,8 @@ async function handleGithubSubmit(payload: Record<string, string>) {
             :field-errors="githubFieldErrors"
             :error-message="githubError"
             :loading="githubSubmitting"
-            submit-label="Bind GitHub"
+            :tool-status="githubToolStatus"
+            :submit-label="githubToolStatus === 'unbound' ? 'Bind GitHub' : 'Update GitHub Credentials'"
             @submit="handleGithubSubmit"
           />
         </div>
@@ -443,7 +480,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
       >
         <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
              :class="toast.type === 'success' ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'">
-          <component :is="toast.type === 'success' ? 'CheckCircle' : 'AlertCircle'"
+          <component :is="toast.type === 'success' ? CheckCircle : AlertCircle"
                      class="h-5 w-5"
                      :class="toast.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" />
         </div>

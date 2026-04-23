@@ -871,7 +871,7 @@ class GroupServiceTest {
         when(encryptionService.encrypt("raw-jira-token")).thenReturn("enc-jira-token");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
 
-        groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "test@example.com", "SPM", "raw-jira-token", STUDENT_ID);
+        groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "test@example.com", "SPM", "raw-jira-token", null, STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());
@@ -893,7 +893,7 @@ class GroupServiceTest {
         when(encryptionService.encrypt(any())).thenReturn("enc-jira-token");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
 
-        groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "test@example.com", "SPM", "raw-token", STUDENT_ID);
+        groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "test@example.com", "SPM", "raw-token", null, STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());
@@ -913,7 +913,7 @@ class GroupServiceTest {
         when(groupMembershipRepository.findByGroupIdAndStudentId(GROUP_ID, STUDENT_ID))
                 .thenReturn(Optional.of(member));
 
-        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", null, STUDENT_ID))
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessageContaining("Team Leader");
 
@@ -927,7 +927,7 @@ class GroupServiceTest {
         when(groupMembershipRepository.findByGroupIdAndStudentId(GROUP_ID, STUDENT_ID))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", null, STUDENT_ID))
                 .isInstanceOf(ForbiddenException.class);
 
         verify(jiraValidationService, never()).validate(any(), any(), any(), any());
@@ -944,7 +944,7 @@ class GroupServiceTest {
                 .thenReturn(Optional.of(leader));
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
 
-        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", null, STUDENT_ID))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("disbanded");
 
@@ -960,7 +960,7 @@ class GroupServiceTest {
                 .thenReturn(Optional.of(leader));
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "token", null, STUDENT_ID))
                 .isInstanceOf(GroupNotFoundException.class);
 
         verify(projectGroupRepository, never()).save(any());
@@ -979,7 +979,7 @@ class GroupServiceTest {
         doThrow(new JiraValidationException("JIRA validation failed: API token is invalid or expired"))
                 .when(jiraValidationService).validate(any(), any(), any(), any());
 
-        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "bad-token", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "bad-token", null, STUDENT_ID))
                 .isInstanceOf(JiraValidationException.class);
 
         verify(encryptionService, never()).encrypt(any());
@@ -999,7 +999,7 @@ class GroupServiceTest {
         when(encryptionService.encrypt("raw-token")).thenReturn("enc-token");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
 
-        groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "raw-token", STUDENT_ID);
+        groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "raw-token", null, STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());
@@ -1019,7 +1019,7 @@ class GroupServiceTest {
         when(encryptionService.encrypt(any())).thenReturn("enc-token");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
 
-        BindToolResponse response = groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "test@example.com", "SPM", "raw-token", STUDENT_ID);
+        BindToolResponse response = groupService.bindJira(GROUP_ID, "https://co.atlassian.net", "test@example.com", "SPM", "raw-token", null, STUDENT_ID);
 
         // BindToolResponse has no field for the token — verify no field equals plaintext
         assertThat(response.getJiraSpaceUrl()).isNotEqualTo("raw-token");
@@ -1040,11 +1040,35 @@ class GroupServiceTest {
         when(encryptionService.encrypt("new-raw-token")).thenReturn("new-enc-token");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
 
-        groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "new-raw-token", STUDENT_ID);
+        groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "new-raw-token", null, STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());
         assertThat(captor.getValue().getEncryptedJiraToken()).isEqualTo("new-enc-token");
+    }
+
+    @Test
+    void bindJira_rebind_preservesAdvisorAssignedStatus() {
+        // Re-bind = token rotation; group lifecycle status must never regress
+        savedGroup.setId(GROUP_ID);
+        savedGroup.setStatus(GroupStatus.ADVISOR_ASSIGNED);
+        savedGroup.setEncryptedJiraToken("old-jira-token");  // already bound
+        savedGroup.setEncryptedGithubPat("enc-github-pat");  // github also bound
+
+        GroupMembership leader = teamLeaderMembership();
+        when(groupMembershipRepository.findByGroupIdAndStudentId(GROUP_ID, STUDENT_ID))
+                .thenReturn(Optional.of(leader));
+        when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
+        when(encryptionService.encrypt(any())).thenReturn("new-enc-jira");
+        when(projectGroupRepository.save(any())).thenReturn(savedGroup);
+
+        groupService.bindJira(GROUP_ID, "url", "test@example.com", "key", "new-token", null, STUDENT_ID);
+
+        ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
+        verify(projectGroupRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus())
+                .as("Re-bind must not downgrade status from ADVISOR_ASSIGNED")
+                .isEqualTo(GroupStatus.ADVISOR_ASSIGNED);
     }
 
     // ── bindGitHub ─────────────────────────────────────────────────────────────
@@ -1061,8 +1085,10 @@ class GroupServiceTest {
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         when(encryptionService.encrypt("raw-pat")).thenReturn("enc-pat");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
+        when(gitHubValidationService.validate(any(), any()))
+                .thenReturn(new GitHubValidationService.GitHubValidationResult(true, null));
 
-        groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", STUDENT_ID);
+        groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", "test-repo", STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());
@@ -1083,8 +1109,10 @@ class GroupServiceTest {
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         when(encryptionService.encrypt(any())).thenReturn("enc-pat");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
+        when(gitHubValidationService.validate(any(), any()))
+                .thenReturn(new GitHubValidationService.GitHubValidationResult(true, null));
 
-        groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", STUDENT_ID);
+        groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", "test-repo", STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());
@@ -1103,7 +1131,7 @@ class GroupServiceTest {
         when(groupMembershipRepository.findByGroupIdAndStudentId(GROUP_ID, STUDENT_ID))
                 .thenReturn(Optional.of(member));
 
-        assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "pat", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "pat", "test-repo", STUDENT_ID))
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessageContaining("Team Leader");
 
@@ -1121,7 +1149,7 @@ class GroupServiceTest {
                 .thenReturn(Optional.of(leader));
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
 
-        assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "pat", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "pat", "test-repo", STUDENT_ID))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("disbanded");
 
@@ -1141,7 +1169,7 @@ class GroupServiceTest {
         doThrow(new GitHubValidationException("GitHub validation failed: PAT is invalid or expired"))
                 .when(gitHubValidationService).validate(any(), any());
 
-        assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "bad-pat", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "bad-pat", "test-repo", STUDENT_ID))
                 .isInstanceOf(GitHubValidationException.class);
 
         verify(encryptionService, never()).encrypt(any());
@@ -1159,8 +1187,10 @@ class GroupServiceTest {
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         when(encryptionService.encrypt("raw-pat")).thenReturn("enc-pat");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
+        when(gitHubValidationService.validate(any(), any()))
+                .thenReturn(new GitHubValidationService.GitHubValidationResult(true, null));
 
-        groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", STUDENT_ID);
+        groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", "test-repo", STUDENT_ID);
 
         ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
         verify(projectGroupRepository).save(captor.capture());
@@ -1174,7 +1204,7 @@ class GroupServiceTest {
         when(groupMembershipRepository.findByGroupIdAndStudentId(GROUP_ID, STUDENT_ID))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "pat", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "pat", "test-repo", STUDENT_ID))
                 .isInstanceOf(ForbiddenException.class);
 
         verify(gitHubValidationService, never()).validate(any(), any());
@@ -1189,7 +1219,7 @@ class GroupServiceTest {
                 .thenReturn(Optional.of(leader));
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "pat", STUDENT_ID))
+        assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "pat", "test-repo", STUDENT_ID))
                 .isInstanceOf(GroupNotFoundException.class);
 
         verify(projectGroupRepository, never()).save(any());
@@ -1206,11 +1236,39 @@ class GroupServiceTest {
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         when(encryptionService.encrypt(any())).thenReturn("enc-pat");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
+        when(gitHubValidationService.validate(any(), any()))
+                .thenReturn(new GitHubValidationService.GitHubValidationResult(true, null));
 
-        BindToolResponse response = groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", STUDENT_ID);
+        BindToolResponse response = groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", "test-repo", STUDENT_ID);
 
         assertThat(response.getGithubOrgName()).isNotEqualTo("raw-pat");
         assertThat(response.getStatus()).isNotEqualTo("raw-pat");
+    }
+
+    @Test
+    void bindGitHub_rebind_preservesAdvisorAssignedStatus() {
+        // Re-bind = token rotation; group lifecycle status must never regress
+        savedGroup.setId(GROUP_ID);
+        savedGroup.setStatus(GroupStatus.ADVISOR_ASSIGNED);
+        savedGroup.setEncryptedGithubPat("old-enc-pat");    // already bound
+        savedGroup.setEncryptedJiraToken("enc-jira");       // jira also bound
+
+        GroupMembership leader = teamLeaderMembership();
+        when(groupMembershipRepository.findByGroupIdAndStudentId(GROUP_ID, STUDENT_ID))
+                .thenReturn(Optional.of(leader));
+        when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
+        when(encryptionService.encrypt(any())).thenReturn("new-enc-pat");
+        when(projectGroupRepository.save(any())).thenReturn(savedGroup);
+        when(gitHubValidationService.validate(any(), any()))
+                .thenReturn(new GitHubValidationService.GitHubValidationResult(true, null));
+
+        groupService.bindGitHub(GROUP_ID, "senior-org", "new-raw-pat", "test-repo", STUDENT_ID);
+
+        ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
+        verify(projectGroupRepository).save(captor.capture());
+        assertThat(captor.getValue().getStatus())
+                .as("Re-bind must not downgrade status from ADVISOR_ASSIGNED")
+                .isEqualTo(GroupStatus.ADVISOR_ASSIGNED);
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────
