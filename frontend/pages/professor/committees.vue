@@ -136,7 +136,7 @@
 
 			// Expand first committee by default
 			if (committeeList.length > 0) {
-				expandedCommittees.value = new Set([committeeList[0].id]);
+				expandedCommittees.value = new Set([committeeList[0].committeeId]);
 			}
 		} catch (err: unknown) {
 			const msg =
@@ -259,48 +259,49 @@
         <!-- Committee list -->
         <section
           v-for="committee in committees"
-          :key="committee.id"
-          class="rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-800"
+          :key="committee.committeeId"
+          class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-800"
         >
           <!-- Committee header -->
           <button
             type="button"
-            @click="toggleCommittee(committee.id)"
-            class="flex w-full items-center justify-between p-6 text-left transition hover:bg-slate-50 dark:hover:bg-slate-750"
+            @click="toggleCommittee(committee.committeeId)"
+            class="flex w-full items-center justify-between p-6 text-left transition hover:bg-slate-50 dark:hover:bg-slate-700"
           >
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
               <div
                 :class="[
-                  'flex h-10 w-10 items-center justify-center rounded-xl border',
-                  committee.role === 'ADVISOR'
+                  'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border',
+                  committee.professorRole === 'ADVISOR'
                     ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
                     : 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-700 dark:bg-blue-950/50 dark:text-blue-400',
                 ]"
               >
-                <UserCheck v-if="committee.role === 'ADVISOR'" class="h-5 w-5" />
-                <Scale v-else class="h-5 w-5" />
+                <!-- translate-x-0.5 visually centers the person's head since the checkmark shifts the SVG bounds right -->
+                <UserCheck v-if="committee.professorRole === 'ADVISOR'" class="h-[1.375rem] w-[1.375rem] translate-x-0.5" />
+                <Scale v-else class="h-[1.375rem] w-[1.375rem]" />
               </div>
-              <div>
-                <h3 class="text-base font-semibold text-slate-900 dark:text-white">
-                  {{ committee.name }}
+              <div class="flex flex-col justify-center">
+                <h3 class="text-base font-semibold leading-none text-slate-900 dark:text-white mt-0.5">
+                  {{ committee.committeeName }}
                 </h3>
-                <div class="mt-0.5 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
+                <div class="mt-1.5 flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400">
                   <span
                     :class="[
                       'rounded-full px-2 py-0.5 text-xs font-medium',
-                      committee.role === 'ADVISOR'
+                      committee.professorRole === 'ADVISOR'
                         ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
                         : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
                     ]"
                   >
-                    {{ committee.role }}
+                    {{ committee.professorRole }}
                   </span>
                   <span>{{ committee.groups.length }} group{{ committee.groups.length !== 1 ? 's' : '' }}</span>
                 </div>
               </div>
             </div>
             <ChevronUp
-              v-if="expandedCommittees.has(committee.id)"
+              v-if="expandedCommittees.has(committee.committeeId)"
               class="h-5 w-5 text-slate-400"
             />
             <ChevronDown v-else class="h-5 w-5 text-slate-400" />
@@ -308,7 +309,7 @@
 
           <!-- Committee detail -->
           <div
-            v-if="expandedCommittees.has(committee.id)"
+            v-if="expandedCommittees.has(committee.committeeId)"
             class="border-t border-slate-100 px-6 pb-6 dark:border-slate-700"
           >
             <!-- Groups table -->
@@ -339,17 +340,14 @@
                 <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                   <tr
                     v-for="group in committee.groups"
-                    :key="group.id"
-                    class="transition hover:bg-slate-50 dark:hover:bg-slate-750"
+                    :key="group.groupId"
+                    class="transition hover:bg-slate-50 dark:hover:bg-slate-700"
                   >
                     <td class="px-4 py-3 font-medium text-slate-900 dark:text-white">
                       {{ group.groupName }}
                     </td>
                     <td class="px-4 py-3 text-slate-600 dark:text-slate-400">
-                      {{ group.memberCount }}
-                    </td>
-                    <td class="px-4 py-3 text-slate-600 dark:text-slate-400">
-                      {{ group.advisorName || '—' }}
+                      {{ group.status }}
                     </td>
                   </tr>
                 </tbody>
@@ -370,12 +368,12 @@
               <div
                 v-for="deliverable in deliverables"
                 :key="deliverable.id"
-                class="rounded-lg border border-slate-200 dark:border-slate-600"
+                class="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-600"
               >
                 <button
                   type="button"
                   @click="toggleDeliverable(deliverable.id)"
-                  class="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-750"
+                  class="flex w-full items-center justify-between px-4 py-3 text-left transition hover:bg-slate-50 dark:hover:bg-slate-700"
                 >
                   <div>
                     <span class="text-sm font-medium text-slate-900 dark:text-white">
@@ -441,7 +439,6 @@
                     <div v-else class="mt-2 space-y-1.5">
                       <div
                         v-for="criterion in rubricsByDeliverable[deliverable.id]"
-                        :key="criterion.id"
                         class="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 dark:bg-slate-700/50"
                       >
                         <span class="text-sm text-slate-900 dark:text-white">
