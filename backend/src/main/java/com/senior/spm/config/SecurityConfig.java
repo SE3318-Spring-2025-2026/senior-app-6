@@ -46,6 +46,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/api/coordinator/deliverables/**").hasAnyRole("COORDINATOR", "PROFESSOR")
                                 .requestMatchers("/api/coordinator/**").hasRole("COORDINATOR")
                                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/professors/**").hasRole("PROFESSOR")
