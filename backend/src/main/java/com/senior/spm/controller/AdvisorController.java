@@ -34,7 +34,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 /**
- * REST controller for all P3 advisor-related endpoints.
+ * REST controller for P3 and P5 advisor-related endpoints.
  *
  * <p>
  * Handles three groups of endpoints:
@@ -42,9 +42,12 @@ import lombok.RequiredArgsConstructor;
  * <li><strong>Student-facing</strong> ({@code /api/advisors},
  * {@code /api/groups/{groupId}/advisor-request}) — authenticated student JWT
  * required; role enforced at service layer.</li>
- * <li><strong>Professor-facing</strong> ({@code /api/advisor/requests/**}) —
+ * <li><strong>Professor-facing — P3</strong> ({@code /api/advisor/requests/**}) —
  *       {@code hasRole("PROFESSOR")} enforced by {@code SecurityConfig} for the
  * entire {@code /api/advisor/**} path.</li>
+ * <li><strong>Professor-facing — P5</strong> ({@code /api/advisor/sprints/**}) —
+ * sprint tracking summaries, per-group tracking detail, and scrum grade
+ * submission; also covered by the {@code /api/advisor/**} security rule.</li>
  * </ul>
  *
  * <p>
@@ -180,7 +183,7 @@ public class AdvisorController {
 
     // GET /api/advisor/sprints/active
     @GetMapping("/sprints/active")
-    public ResponseEntity<ActiveSprintResponse> getAdvisorActiveSprint() {
+    public ResponseEntity<ActiveSprintResponse> getAdvisorActiveSprint(Authentication auth) {
         return ResponseEntity.ok(scrumGradingService.getActiveSprint());
     }
 

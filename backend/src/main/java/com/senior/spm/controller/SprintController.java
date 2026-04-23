@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/sprints")
 @RequiredArgsConstructor
-public class StudentSprintController {
+public class SprintController {
 
     private final ScrumGradingService scrumGradingService;
 

@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +18,7 @@ import com.senior.spm.controller.response.InvitationActionResponse;
 import com.senior.spm.controller.response.InvitationResponse;
 import com.senior.spm.controller.request.RespondInvitationRequest;
 import com.senior.spm.service.InvitationService;
+import com.senior.spm.util.SecurityUtils;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,8 +46,8 @@ public class InvitationController {
      * @return {@link ResponseEntity} with status 200 and the authenticated student's pending invitations
      */
     @GetMapping("/pending")
-    public ResponseEntity<List<InvitationResponse>> getPendingInvitations() {
-        List<InvitationResponse> response = invitationService.getPendingInvitations(extractStudentUUIDFromJWT());
+    public ResponseEntity<List<InvitationResponse>> getPendingInvitations(Authentication auth) {
+        List<InvitationResponse> response = invitationService.getPendingInvitations(SecurityUtils.extractPrincipalUUID(auth));
         return ResponseEntity.ok(response);
     }
 
@@ -68,11 +68,12 @@ public class InvitationController {
     @PatchMapping("/{invitationId}/respond")
     public ResponseEntity<InvitationActionResponse> respondToInvitation(
         @PathVariable UUID invitationId,
-        @Valid @RequestBody RespondInvitationRequest request
+        @Valid @RequestBody RespondInvitationRequest request,
+        Authentication auth
     ) {
         InvitationActionResponse response = invitationService.respondToInvitation(
             invitationId,
-            extractStudentUUIDFromJWT(),
+            SecurityUtils.extractPrincipalUUID(auth),
             request.getAccept()
         );
         return ResponseEntity.ok(response);
@@ -91,20 +92,10 @@ public class InvitationController {
      */
     @DeleteMapping("/{invitationId}")
     public ResponseEntity<InvitationResponse> cancelInvitation(
-        @PathVariable UUID invitationId
+        @PathVariable UUID invitationId,
+        Authentication auth
     ) {
-        InvitationResponse response = invitationService.cancelInvitation(invitationId, extractStudentUUIDFromJWT());
+        InvitationResponse response = invitationService.cancelInvitation(invitationId, SecurityUtils.extractPrincipalUUID(auth));
         return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Extract the authenticated student's internal UUID from the JWT principal.
-     *
-     * @return internal student UUID stored in the security context
-     */
-    private UUID extractStudentUUIDFromJWT() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String principal = (String) authentication.getPrincipal();
-        return UUID.fromString(principal);
     }
 }

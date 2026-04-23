@@ -123,7 +123,7 @@ class ScrumGradingServiceTest {
 
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
         when(sprintRepository.findById(SPRINT_ID)).thenReturn(Optional.of(sprint));
-        when(scrumGradeRepository.existsByGroupIdAndSprintId(GROUP_ID, SPRINT_ID)).thenReturn(false);
+        when(scrumGradeRepository.findByGroupIdAndSprintId(GROUP_ID, SPRINT_ID)).thenReturn(Optional.empty());
         when(scrumGradeRepository.save(any(ScrumGrade.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -152,7 +152,6 @@ class ScrumGradingServiceTest {
 
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
         when(sprintRepository.findById(SPRINT_ID)).thenReturn(Optional.of(sprint));
-        when(scrumGradeRepository.existsByGroupIdAndSprintId(GROUP_ID, SPRINT_ID)).thenReturn(true);
         when(scrumGradeRepository.findByGroupIdAndSprintId(GROUP_ID, SPRINT_ID))
                 .thenReturn(Optional.of(existing));
         when(scrumGradeRepository.save(any(ScrumGrade.class)))

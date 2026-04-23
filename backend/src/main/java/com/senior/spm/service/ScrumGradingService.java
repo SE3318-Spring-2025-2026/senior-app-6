@@ -3,6 +3,7 @@ package com.senior.spm.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,7 +58,7 @@ public class ScrumGradingService {
         Sprint sprint = sprintRepository
                 .findByStartDateLessThanEqualAndEndDateGreaterThanEqual(today, today)
                 .stream()
-                .findFirst()
+                .max(Comparator.comparing(Sprint::getStartDate))
                 .orElseThrow(() -> new NotFoundException("No active sprint found for the current term"));
 
         return ActiveSprintResponse.builder()
@@ -79,7 +80,8 @@ public class ScrumGradingService {
         enforceAdvisorOwnership(group, advisorId);
         Sprint sprint = findSprintOrThrow(sprintId);
 
-        if (!scrumGradeRepository.existsByGroupIdAndSprintId(groupId, sprintId)) {
+        Optional<ScrumGrade> existing = scrumGradeRepository.findByGroupIdAndSprintId(groupId, sprintId);
+        if (existing.isEmpty()) {
             ScrumGrade grade = new ScrumGrade();
             grade.setGroup(group);
             grade.setSprint(sprint);
@@ -90,7 +92,7 @@ public class ScrumGradingService {
             return scrumGradeRepository.save(grade);
         }
 
-        ScrumGrade grade = scrumGradeRepository.findByGroupIdAndSprintId(groupId, sprintId).orElseThrow();
+        ScrumGrade grade = existing.get();
         grade.setPointAGrade(request.getPointAGrade());
         grade.setPointBGrade(request.getPointBGrade());
         grade.setUpdatedAt(LocalDateTime.now());
