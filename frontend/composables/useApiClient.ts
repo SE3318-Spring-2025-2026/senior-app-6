@@ -168,7 +168,7 @@ export interface ProfessorCommittee {
   groups: ProfessorCommitteeGroup[];
   deliverableId?: string;
   deliverableName?: string;
-  deliverableType?: string;
+  deliverableType?: ProfessorCommitteeDeliverable["type"];
   submissionDeadline?: string;
   reviewDeadline?: string;
   rubrics?: ProfessorCommitteeRubricCriterion[];
