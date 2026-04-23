@@ -416,7 +416,7 @@ onMounted(loadCommittees);
                 id="committeeTerm"
                 v-model="selectedCreateTermId"
                 type="text"
-								required
+                required
                 class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400 dark:focus:ring-blue-400"
                 placeholder="e.g. 2025-FALL"
                 list="knownCommitteeTerms"

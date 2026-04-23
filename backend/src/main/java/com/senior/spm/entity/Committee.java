@@ -1,5 +1,6 @@
 package com.senior.spm.entity;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -43,7 +44,7 @@ public class Committee {
     @JoinColumn(name = "deliverable_id", nullable = false, foreignKey = @ForeignKey(name = "fk_committee_deliverable"))
     private Deliverable deliverable;
 
-    @OneToMany(mappedBy = "committee", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "committee", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<CommitteeProfessor> professors = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
@@ -53,4 +54,7 @@ public class Committee {
             inverseJoinColumns = @JoinColumn(name = "group_id")
     )
     private Set<ProjectGroup> groups = new HashSet<>();
+
+    @Column(nullable = true)
+    private LocalDateTime assignmentNotificationSentAt;
 }
