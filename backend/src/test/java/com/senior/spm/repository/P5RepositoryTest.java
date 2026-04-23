@@ -26,6 +26,9 @@ import com.senior.spm.entity.StaffUser;
 class P5RepositoryTest extends RepositoryTestBase {
 
     @Autowired
+    SprintRepository sprintRepo;
+
+    @Autowired
     SprintTrackingLogRepository trackingRepo;
 
     @Autowired
@@ -52,6 +55,62 @@ class P5RepositoryTest extends RepositoryTestBase {
         grade.setPointBGrade(pointB);
         grade.setGradedAt(LocalDateTime.now());
         return em.persistAndFlush(grade);
+    }
+
+    // ── SprintRepository ────────────────────────────────────────────────────────
+
+    @Test
+    void findActiveSprint_returnsSprintWhoseDateRangeCoversToday() {
+        LocalDate today = LocalDate.now();
+        Sprint active = makeSprint(today.minusDays(5), today.plusDays(9));
+        makeSprint(today.plusDays(10), today.plusDays(24)); // future sprint, must not appear
+
+        var result = sprintRepo.findByStartDateLessThanEqualAndEndDateGreaterThanEqual(today, today);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getId()).isEqualTo(active.getId());
+    }
+
+    @Test
+    void findActiveSprint_returnsEmptyWhenSprintExpiredYesterday() {
+        LocalDate today = LocalDate.now();
+        makeSprint(today.minusDays(14), today.minusDays(1)); // ended yesterday
+
+        var result = sprintRepo.findByStartDateLessThanEqualAndEndDateGreaterThanEqual(today, today);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void findActiveSprint_returnsEmptyWhenSprintStartsTomorrow() {
+        LocalDate today = LocalDate.now();
+        makeSprint(today.plusDays(1), today.plusDays(14)); // starts tomorrow
+
+        var result = sprintRepo.findByStartDateLessThanEqualAndEndDateGreaterThanEqual(today, today);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void findActiveSprint_sprintStartingTodayIsActive() {
+        LocalDate today = LocalDate.now();
+        Sprint sprint = makeSprint(today, today.plusDays(13)); // starts today
+
+        var result = sprintRepo.findByStartDateLessThanEqualAndEndDateGreaterThanEqual(today, today);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getId()).isEqualTo(sprint.getId());
+    }
+
+    @Test
+    void findActiveSprint_sprintEndingTodayIsActive() {
+        LocalDate today = LocalDate.now();
+        Sprint sprint = makeSprint(today.minusDays(13), today); // ends today
+
+        var result = sprintRepo.findByStartDateLessThanEqualAndEndDateGreaterThanEqual(today, today);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getId()).isEqualTo(sprint.getId());
     }
 
     // ── SprintTrackingLogRepository ───────────────────────────────────────────
