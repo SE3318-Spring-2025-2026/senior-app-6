@@ -132,7 +132,6 @@
 				fetchDeliverables(token),
 			]);
 			committees.value = committeeList;
-			console.log("Fetched committees:", committeeList);
 			deliverables.value = deliverableList;
 
 			// Expand first committee by default
