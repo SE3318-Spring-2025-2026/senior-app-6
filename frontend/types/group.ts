@@ -51,16 +51,3 @@ export interface CreateGroupResponse {
   createdAt?: string
 }
 
-export interface BindGithubRequest {
-  githubOrgName: string;
-  githubPat: string;
-  githubRepoName: string;
-}
-
-export interface BindJiraRequest {
-  jiraSpaceUrl: string;
-  jiraEmail: string;
-  jiraProjectKey: string;
-  jiraApiToken: string;
-  jiraTokenExpiresAt?: string;
-}

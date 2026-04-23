@@ -185,11 +185,16 @@ public class GroupService {
         String encryptedJiraToken = encryptionService.encrypt(jiraApiToken);
 
         // 5. Determine new status
-        //    GitHub already bound → TOOLS_BOUND; otherwise keep or advance to TOOLS_PENDING
-        boolean githubAlreadyBound = group.getEncryptedGithubPat() != null;
-        GroupStatus newStatus = githubAlreadyBound
-            ? GroupStatus.TOOLS_BOUND
-            : (group.getStatus() == GroupStatus.FORMING ? GroupStatus.TOOLS_PENDING : group.getStatus());
+        //    Re-bind (token rotation) must never change status — only first-time bind advances state.
+        boolean isRebind = group.getEncryptedJiraToken() != null;
+        GroupStatus newStatus;
+        if (isRebind) {
+            newStatus = group.getStatus();
+        } else {
+            boolean githubAlreadyBound = group.getEncryptedGithubPat() != null;
+            newStatus = githubAlreadyBound ? GroupStatus.TOOLS_BOUND
+                : (group.getStatus() == GroupStatus.FORMING ? GroupStatus.TOOLS_PENDING : group.getStatus());
+        }
 
         // 6. Persist group with JIRA fields
         group.setJiraSpaceUrl(jiraSpaceUrl);
@@ -270,9 +275,15 @@ public class GroupService {
         String encryptedGithubPat = encryptionService.encrypt(githubPat);
 
         // 5. Determine new status
-        //    JIRA already bound → TOOLS_BOUND; otherwise TOOLS_PENDING
-        boolean jiraAlreadyBound = group.getEncryptedJiraToken() != null;
-        GroupStatus newStatus = jiraAlreadyBound ? GroupStatus.TOOLS_BOUND : GroupStatus.TOOLS_PENDING;
+        //    Re-bind (token rotation) must never change status — only first-time bind advances state.
+        boolean isRebind = group.getEncryptedGithubPat() != null;
+        GroupStatus newStatus;
+        if (isRebind) {
+            newStatus = group.getStatus();
+        } else {
+            boolean jiraAlreadyBound = group.getEncryptedJiraToken() != null;
+            newStatus = jiraAlreadyBound ? GroupStatus.TOOLS_BOUND : GroupStatus.TOOLS_PENDING;
+        }
 
         // 6. Persist group with GitHub fields
         group.setGithubOrgName(githubOrgName);
