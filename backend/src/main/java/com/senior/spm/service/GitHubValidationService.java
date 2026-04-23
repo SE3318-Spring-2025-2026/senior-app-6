@@ -5,6 +5,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -38,13 +39,19 @@ public class GitHubValidationService {
     }
 
     /**
+     * Result record returned by validate(). Contains whether the PAT is valid
+     * and the optional expiry date extracted from the GitHub response header.
+     */
+    public record GitHubValidationResult(boolean valid, java.time.LocalDateTime tokenExpiresAt) {}
+
+    /**
      * Runs the two-step GitHub validation.
      *
      * @throws GitHubValidationException on any failure (401 → invalid PAT,
      *                                   404 → org not found,
      *                                   403 on second call → missing 'repo' scope)
      */
-    public void validate(String githubOrgName, String githubPat) {
+    public GitHubValidationResult validate(String githubOrgName, String githubPat) {
         var headers = new HttpHeaders();
         // GitHub REST API requires a User-Agent header
         headers.set(HttpHeaders.USER_AGENT, "SPM-Senior-App");
@@ -52,24 +59,38 @@ public class GitHubValidationService {
         headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + githubPat);
         var entity = new HttpEntity<>(headers);
 
-        // Step 1: verify org existence and PAT validity
-        // If this call fails for any reason, Step 2 is NOT executed (fail-fast).
-        callStep1OrgExists(githubOrgName, entity);
+        // Step 1: verify org existence and PAT validity — also extracts expiry header
+        java.time.LocalDateTime expiresAt = callStep1OrgExists(githubOrgName, entity);
 
         // Step 2: verify the PAT has 'repo' scope
         // Only reached when Step 1 succeeds (200 OK).
         callStep2RepoScope(githubOrgName, entity);
+
+        return new GitHubValidationResult(true, expiresAt);
     }
 
     /**
      * GET /orgs/{githubOrgName}
      * 401 → invalid PAT, 404 → org not found, anything else → rethrow as
-     * unreachable.
+     * unreachable. Returns the value of GitHub-Authentication-Token-Expiration header if present.
      */
-    private void callStep1OrgExists(String githubOrgName, HttpEntity<?> entity) {
+    private java.time.LocalDateTime callStep1OrgExists(String githubOrgName, HttpEntity<?> entity) {
         var url = githubApiBase + "/orgs/" + githubOrgName;
         try {
-            restTemplate.exchange(url, HttpMethod.GET, entity, Void.class);
+            ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.GET, entity, Void.class);
+            // Fine-grained PATs expose expiry via this header
+            String expiryHeader = response.getHeaders().getFirst("GitHub-Authentication-Token-Expiration");
+            if (expiryHeader != null && !expiryHeader.isBlank()) {
+                // Format: "2026-06-01 00:00:00 UTC"
+                try {
+                    String datePart = expiryHeader.replace(" UTC", "").trim();
+                    java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    return java.time.LocalDateTime.parse(datePart, formatter);
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+            return null;
 
         } catch (HttpClientErrorException ex) {
             HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());

@@ -160,7 +160,7 @@ public class GroupService {
      */
     @Transactional
     public BindToolResponse bindJira(UUID groupId, String jiraSpaceUrl, String jiraEmail,
-                                     String jiraProjectKey, String jiraApiToken, UUID requesterUUID) {
+                                      String jiraProjectKey, String jiraApiToken, java.time.LocalDate jiraTokenExpiresAt, UUID requesterUUID) {
         // 1. Verify requester is TEAM_LEADER of this group
         GroupMembership membership = groupMembershipRepository
             .findByGroupIdAndStudentId(groupId, requesterUUID)
@@ -196,6 +196,8 @@ public class GroupService {
         group.setJiraEmail(jiraEmail);
         group.setJiraProjectKey(jiraProjectKey);
         group.setEncryptedJiraToken(encryptedJiraToken);
+        group.setJiraTokenValid(true);
+        group.setJiraTokenExpiresAt(jiraTokenExpiresAt);
         group.setStatus(newStatus);
         ProjectGroup savedGroup = projectGroupRepository.save(group);
 
@@ -242,7 +244,7 @@ public class GroupService {
      */
     @Transactional
     public BindToolResponse bindGitHub(UUID groupId, String githubOrgName,
-                                       String githubPat, UUID requesterUUID) {
+                                       String githubPat, String githubRepoName, UUID requesterUUID) {
         // 1. Verify requester is TEAM_LEADER of this group
         GroupMembership membership = groupMembershipRepository
             .findByGroupIdAndStudentId(groupId, requesterUUID)
@@ -262,7 +264,7 @@ public class GroupService {
 
         // 3. Live validation — two sequential calls (org check + repo scope check)
         //    Nothing is stored if either call throws.
-        gitHubValidationService.validate(githubOrgName, githubPat);
+        GitHubValidationService.GitHubValidationResult validationResult = gitHubValidationService.validate(githubOrgName, githubPat);
 
         // 4. Encrypt PAT before persistence (NFR-7: AES-256 at rest)
         String encryptedGithubPat = encryptionService.encrypt(githubPat);
@@ -274,7 +276,10 @@ public class GroupService {
 
         // 6. Persist group with GitHub fields
         group.setGithubOrgName(githubOrgName);
+        group.setGithubRepoName(githubRepoName);
         group.setEncryptedGithubPat(encryptedGithubPat);
+        group.setGithubTokenValid(true);
+        group.setGithubPatExpiresAt(validationResult.tokenExpiresAt());
         group.setStatus(newStatus);
         ProjectGroup savedGroup = projectGroupRepository.save(group);
 
@@ -301,6 +306,11 @@ public class GroupService {
         response.setJiraBound(group.getEncryptedJiraToken() != null);
         response.setGithubOrgName(group.getGithubOrgName());
         response.setGithubBound(group.getEncryptedGithubPat() != null);
+        response.setGithubRepoName(group.getGithubRepoName());
+        response.setGithubTokenValid(group.getGithubTokenValid());
+        response.setGithubPatExpiresAt(group.getGithubPatExpiresAt());
+        response.setJiraTokenValid(group.getJiraTokenValid());
+        response.setJiraTokenExpiresAt(group.getJiraTokenExpiresAt());
 
         // Get all members of this group
         List<GroupMembership> members = groupMembershipRepository.findByGroupId(group.getId());
