@@ -9,7 +9,8 @@
 		UserCheck,
 		Plus,
 	} from "lucide-vue-next";
-	import type { Committee, StudentGroup } from "~/composables/useApiClient";
+import type { CommitteeDetailResponse, CommitteeSummaryResponse } from "~/types/committee";
+import type { GroupSummaryResponse } from "~/types/group";
 
 	definePageMeta({
 		middleware: "auth",
@@ -20,15 +21,15 @@
 		getAuthToken,
 		fetchCommittees,
 		fetchCommittee,
-		fetchUnassignedGroups,
-		assignGroupsToCommittee,
+		fetchCoordinatorGroups,
+		addCommitteeGroups,
 	} = useApiClient();
 
 	// State
-	const committees = ref<Committee[]>([]);
-	const unassignedGroups = ref<StudentGroup[]>([]);
+	const committees = ref<CommitteeSummaryResponse[]>([]);
+	const unassignedGroups = ref<GroupSummaryResponse[]>([]);
 	const selectedCommitteeId = ref("");
-	const selectedCommittee = ref<Committee | null>(null);
+	const selectedCommittee = ref<CommitteeDetailResponse | null>(null);
 	const selectedGroupIds = ref<Set<string>>(new Set());
 
 	const loading = ref(true);
@@ -41,13 +42,13 @@
 	const hasSelection = computed(() => selectedGroupIds.value.size > 0);
 
 	const selectableGroups = computed(() =>
-		unassignedGroups.value.filter((g) => g.advisorApproved)
+		unassignedGroups.value.filter((g: GroupSummaryResponse) => g.status === "ADVISOR_ASSIGNED")
 	);
 
 	const allSelected = computed(
 		() =>
 			selectableGroups.value.length > 0 &&
-			selectableGroups.value.every((g) => selectedGroupIds.value.has(g.id))
+			selectableGroups.value.every((g: GroupSummaryResponse) => selectedGroupIds.value.has(g.id))
 	);
 
 	// Methods
@@ -61,11 +62,27 @@
 		selectedGroupIds.value = next;
 	}
 
+  async function loadUnassignedGroups(token: string): Promise<GroupSummaryResponse[]> {
+    const [allGroups, committees] = await Promise.all([
+      fetchCoordinatorGroups(token),
+      fetchCommittees(undefined, token),
+    ])
+    const details = await Promise.all(
+      committees.map((c) => fetchCommittee(c.id, token).catch(() => null))
+    )
+    const assigned = new Set(
+      details.flatMap((d) => d?.groups.map((g) => g.groupId) ?? [])
+    )
+    return allGroups.filter(
+      (g) => g.status === "ADVISOR_ASSIGNED" && !assigned.has(g.id)
+    )
+  }
+
 	function toggleAll() {
 		if (allSelected.value) {
 			selectedGroupIds.value = new Set();
 		} else {
-			selectedGroupIds.value = new Set(selectableGroups.value.map((g) => g.id));
+			selectedGroupIds.value = new Set(selectableGroups.value.map((g: GroupSummaryResponse) => g.id));
 		}
 	}
 
@@ -77,8 +94,8 @@
 			if (!token) throw new Error("Authentication required");
 
 			const [committeeList, groupList] = await Promise.all([
-				fetchCommittees(token),
-				fetchUnassignedGroups(token),
+				fetchCommittees(undefined, token),
+				loadUnassignedGroups(token),
 			]);
 			committees.value = committeeList;
 			unassignedGroups.value = groupList;
@@ -125,9 +142,9 @@
 			const token = getAuthToken();
 			if (!token) throw new Error("Authentication required");
 
-			await assignGroupsToCommittee(
+			await addCommitteeGroups(
 				selectedCommitteeId.value,
-				Array.from(selectedGroupIds.value),
+				{ groupIds: Array.from(selectedGroupIds.value) },
 				token
 			);
 
@@ -136,8 +153,8 @@
 
 			// Refresh data
 			const [committeeList, groupList] = await Promise.all([
-				fetchCommittees(token),
-				fetchUnassignedGroups(token),
+				fetchCommittees(undefined, token),
+				loadUnassignedGroups(token),
 			]);
 			committees.value = committeeList;
 			unassignedGroups.value = groupList;
@@ -224,7 +241,7 @@
               >
                 <option value="" disabled>Choose a committee…</option>
                 <option v-for="c in committees" :key="c.id" :value="c.id">
-                  {{ c.name }}
+                  {{ c.committeeName }}
                 </option>
               </select>
               <ChevronDown
@@ -266,7 +283,7 @@
                 class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
               >
                 <UserCheck class="h-3 w-3" aria-hidden="true" />
-                {{ group.name }}
+                {{ group.groupName }}
               </span>
             </div>
             <p
@@ -342,7 +359,7 @@
               />
               <div class="flex-1">
                 <span class="text-sm font-medium text-slate-900 dark:text-white">
-                  {{ group.name }}
+                  {{ group.groupName }}
                 </span>
               </div>
               <span

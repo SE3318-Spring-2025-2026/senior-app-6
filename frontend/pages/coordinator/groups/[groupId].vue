@@ -12,8 +12,8 @@
 		UserPlus,
 		Users
 	} from "lucide-vue-next";
-	import type { CoordinatorAdvisor } from "~/composables/useApiClient";
-	import type { GroupDetailResponse, GroupMember } from "~/types/group";
+	import type { GroupDetailResponse, MemberResponse } from "~/types/group";
+	import type { AdvisorCapacityResponse } from "~/types/advisor";
 
 	definePageMeta({
 		middleware: "auth",
@@ -33,7 +33,7 @@
 
 	const groupId = computed(() => String(route.params.groupId || ""));
 	const group = ref<GroupDetailResponse | null>(null);
-	const advisors = ref<CoordinatorAdvisor[]>([]);
+	const advisors = ref<AdvisorCapacityResponse[]>([]);
 	const selectedAdvisorId = ref("");
 	const loading = ref(true);
 	const advisorsLoading = ref(false);
@@ -59,7 +59,7 @@
 	});
 
 	const selectedAdvisor = computed(() =>
-		advisors.value.find((advisor) => advisor.advisorId === selectedAdvisorId.value) || null
+		advisors.value.find((advisor: AdvisorCapacityResponse) => advisor.advisorId === selectedAdvisorId.value) || null
 	);
 
 	const hasAssignedAdvisor = computed(() =>
@@ -75,7 +75,7 @@
 		if (!currentGroup.advisorId) {
 			return {
 				advisorId: "",
-				name: currentGroup.advisorName || "Assigned advisor",
+				name: currentGroup.advisorMail || "Assigned advisor", // Replaced advisorName with advisorMail
 				mail: currentGroup.advisorMail || "",
 				currentGroupCount: 0,
 				capacity: 0,
@@ -84,11 +84,11 @@
 		}
 
 		return (
-			advisors.value.find((advisor) => advisor.advisorId === currentGroup.advisorId) ||
+			advisors.value.find((advisor: AdvisorCapacityResponse) => advisor.advisorId === currentGroup.advisorId) ||
 			selectedAdvisor.value ||
 			{
 				advisorId: currentGroup.advisorId,
-				name: currentGroup.advisorName || "Assigned advisor",
+				name: currentGroup.advisorMail || "Assigned advisor", // Replaced advisorName with advisorMail
 				mail: currentGroup.advisorMail || "",
 				currentGroupCount: 0,
 				capacity: 0,
@@ -177,7 +177,6 @@
 				...group.value,
 				status: response.status,
 				advisorId: response.advisorId,
-				advisorName: advisor?.name || null,
 				advisorMail: advisor?.mail || null,
 			};
 			removeConfirmationArmed.value = false;
@@ -215,7 +214,6 @@
 				...group.value,
 				status: response.status,
 				advisorId: null,
-				advisorName: null,
 				advisorMail: null,
 			};
 			selectedAdvisorId.value = "";
@@ -263,7 +261,7 @@
 		}
 	}
 
-	async function handleRemoveMember(member: GroupMember) {
+	async function handleRemoveMember(member: MemberResponse) {
 		if (!member.studentId) {
 			actionError.value = "Member student ID is missing.";
 			return;
