@@ -187,6 +187,7 @@ function handleSubmit() {
       </label>
 
       <button
+        v-if="!locked"
         type="submit"
         :disabled="loading"
         class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"

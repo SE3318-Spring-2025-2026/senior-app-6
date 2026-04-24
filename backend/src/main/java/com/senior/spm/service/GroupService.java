@@ -267,9 +267,9 @@ public class GroupService {
             throw new BusinessRuleException("This group has been disbanded");
         }
 
-        // 3. Live validation — two sequential calls (org check + repo scope check)
-        //    Nothing is stored if either call throws.
-        GitHubValidationService.GitHubValidationResult validationResult = gitHubValidationService.validate(githubOrgName, githubPat);
+        // 3. Live validation — three sequential calls (org check + repo scope check + repo existence check)
+        //    Nothing is stored if any call throws.
+        GitHubValidationService.GitHubValidationResult validationResult = gitHubValidationService.validate(githubOrgName, githubPat, githubRepoName);
 
         // 4. Encrypt PAT before persistence (NFR-7: AES-256 at rest)
         String encryptedGithubPat = encryptionService.encrypt(githubPat);

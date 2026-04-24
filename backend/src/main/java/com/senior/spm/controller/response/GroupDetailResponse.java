@@ -1,5 +1,6 @@
 package com.senior.spm.controller.response;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -22,9 +23,9 @@ public final class GroupDetailResponse implements InvitationActionResponse {
     private Boolean githubBound;
     private String githubRepoName;
     private Boolean githubTokenValid;
-    private java.time.LocalDateTime githubPatExpiresAt;
+    private LocalDateTime githubPatExpiresAt;
     private Boolean jiraTokenValid;
-    private java.time.LocalDate jiraTokenExpiresAt;
+    private LocalDate jiraTokenExpiresAt;
     private List<MemberResponse> members;
     private UUID advisorId;
     private String advisorMail;
