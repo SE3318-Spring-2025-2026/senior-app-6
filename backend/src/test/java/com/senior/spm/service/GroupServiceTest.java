@@ -1085,8 +1085,8 @@ class GroupServiceTest {
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         when(encryptionService.encrypt("raw-pat")).thenReturn("enc-pat");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
-        when(gitHubValidationService.validate(any(), any()))
-                .thenReturn(new GitHubValidationService.GitHubValidationResult(true, null));
+        when(gitHubValidationService.validate(any(), any(), any()))
+                .thenReturn(new GitHubValidationService.GitHubValidationResult(null));
 
         groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", "test-repo", STUDENT_ID);
 
@@ -1109,8 +1109,8 @@ class GroupServiceTest {
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         when(encryptionService.encrypt(any())).thenReturn("enc-pat");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
-        when(gitHubValidationService.validate(any(), any()))
-                .thenReturn(new GitHubValidationService.GitHubValidationResult(true, null));
+        when(gitHubValidationService.validate(any(), any(), any()))
+                .thenReturn(new GitHubValidationService.GitHubValidationResult(null));
 
         groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", "test-repo", STUDENT_ID);
 
@@ -1135,7 +1135,7 @@ class GroupServiceTest {
                 .isInstanceOf(ForbiddenException.class)
                 .hasMessageContaining("Team Leader");
 
-        verify(gitHubValidationService, never()).validate(any(), any());
+        verify(gitHubValidationService, never()).validate(any(), any(), any());
         verify(projectGroupRepository, never()).save(any());
     }
 
@@ -1153,7 +1153,7 @@ class GroupServiceTest {
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessageContaining("disbanded");
 
-        verify(gitHubValidationService, never()).validate(any(), any());
+        verify(gitHubValidationService, never()).validate(any(), any(), any());
         verify(projectGroupRepository, never()).save(any());
     }
 
@@ -1167,7 +1167,7 @@ class GroupServiceTest {
                 .thenReturn(Optional.of(leader));
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         doThrow(new GitHubValidationException("GitHub validation failed: PAT is invalid or expired"))
-                .when(gitHubValidationService).validate(any(), any());
+                .when(gitHubValidationService).validate(any(), any(), any());
 
         assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "bad-pat", "test-repo", STUDENT_ID))
                 .isInstanceOf(GitHubValidationException.class);
@@ -1187,8 +1187,8 @@ class GroupServiceTest {
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         when(encryptionService.encrypt("raw-pat")).thenReturn("enc-pat");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
-        when(gitHubValidationService.validate(any(), any()))
-                .thenReturn(new GitHubValidationService.GitHubValidationResult(true, null));
+        when(gitHubValidationService.validate(any(), any(), any()))
+                .thenReturn(new GitHubValidationService.GitHubValidationResult(null));
 
         groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", "test-repo", STUDENT_ID);
 
@@ -1207,7 +1207,7 @@ class GroupServiceTest {
         assertThatThrownBy(() -> groupService.bindGitHub(GROUP_ID, "org", "pat", "test-repo", STUDENT_ID))
                 .isInstanceOf(ForbiddenException.class);
 
-        verify(gitHubValidationService, never()).validate(any(), any());
+        verify(gitHubValidationService, never()).validate(any(), any(), any());
         verify(projectGroupRepository, never()).save(any());
     }
 
@@ -1236,8 +1236,8 @@ class GroupServiceTest {
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         when(encryptionService.encrypt(any())).thenReturn("enc-pat");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
-        when(gitHubValidationService.validate(any(), any()))
-                .thenReturn(new GitHubValidationService.GitHubValidationResult(true, null));
+        when(gitHubValidationService.validate(any(), any(), any()))
+                .thenReturn(new GitHubValidationService.GitHubValidationResult(null));
 
         BindToolResponse response = groupService.bindGitHub(GROUP_ID, "senior-org", "raw-pat", "test-repo", STUDENT_ID);
 
@@ -1259,8 +1259,8 @@ class GroupServiceTest {
         when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(savedGroup));
         when(encryptionService.encrypt(any())).thenReturn("new-enc-pat");
         when(projectGroupRepository.save(any())).thenReturn(savedGroup);
-        when(gitHubValidationService.validate(any(), any()))
-                .thenReturn(new GitHubValidationService.GitHubValidationResult(true, null));
+        when(gitHubValidationService.validate(any(), any(), any()))
+                .thenReturn(new GitHubValidationService.GitHubValidationResult(null));
 
         groupService.bindGitHub(GROUP_ID, "senior-org", "new-raw-pat", "test-repo", STUDENT_ID);
 

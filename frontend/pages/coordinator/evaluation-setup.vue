@@ -12,7 +12,7 @@
 
 	interface CriterionEntry {
 		criterionName: string;
-		weightPercentage: number;
+		weight: number;
 		gradingType: "Binary" | "Soft";
 	}
 
@@ -21,7 +21,7 @@
 	const deliverablesError = ref<string | null>(null);
 	const deliverableId = ref("");
 	const criteria = ref<CriterionEntry[]>([
-		{ criterionName: "Code Quality", weightPercentage: 30, gradingType: "Soft" },
+		{ criterionName: "Code Quality", weight: 30, gradingType: "Soft" },
 	]);
 	const submitting = ref(false);
 	const formErrors = ref<Record<string, string>>({});
@@ -31,11 +31,11 @@
 	const isEditMode = ref(false);
 	const rubricLoading = ref(false);
 
-	const totalWeight = computed(() => criteria.value.reduce((sum, c) => sum + (c.weightPercentage || 0), 0));
+	const totalWeight = computed(() => criteria.value.reduce((sum, c) => sum + (c.weight || 0), 0));
 	const isWeightValid = computed(() => totalWeight.value === 100);
 
 	function handleAddCriterion() {
-		criteria.value.push({ criterionName: "", weightPercentage: 0, gradingType: "Soft" });
+		criteria.value.push({ criterionName: "", weight: 0, gradingType: "Soft" });
 	}
 
 	function handleRemoveCriterion(index: number) {
@@ -50,7 +50,7 @@
 		successMessage.value = "";
 		if (!newId) {
 			isEditMode.value = false;
-			criteria.value = [{ criterionName: "Code Quality", weightPercentage: 30, gradingType: "Soft" }];
+			criteria.value = [{ criterionName: "Code Quality", weight: 30, gradingType: "Soft" }];
 			return;
 		}
 
@@ -64,17 +64,17 @@
 				isEditMode.value = true;
 				criteria.value = existingCriteria.map(c => ({
 					criterionName: c.criterionName,
-					weightPercentage: c.weight,
+					weight: c.weight,
 					gradingType: c.gradingType,
 				}));
 			} else {
 				isEditMode.value = false;
-				criteria.value = [{ criterionName: "", weightPercentage: 100, gradingType: "Soft" }];
+				criteria.value = [{ criterionName: "", weight: 100, gradingType: "Soft" }];
 			}
 		} catch {
 			// If fetch fails, default to create mode
 			isEditMode.value = false;
-			criteria.value = [{ criterionName: "", weightPercentage: 100, gradingType: "Soft" }];
+			criteria.value = [{ criterionName: "", weight: 100, gradingType: "Soft" }];
 		} finally {
 			rubricLoading.value = false;
 		}
@@ -86,7 +86,7 @@
 			.array(
 				z.object({
 					criterionName: z.string().trim().min(1, "Criterion name is required."),
-					weightPercentage: z.number().min(1, "Weight must be at least 1.").max(100, "Weight cannot exceed 100."),
+					weight: z.number().min(1, "Weight must be at least 1.").max(100, "Weight cannot exceed 100."),
 					gradingType: z.enum(gradingTypes),
 				})
 			)
@@ -263,9 +263,9 @@
                 <label class="block space-y-1">
                   <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Weight</span>
                   <NumericInput
-                    v-model.number="criterion.weightPercentage"
+                    v-model.number="criterion.weight"
                     :min="0"
-                    :max="100 - (totalWeight - (criterion.weightPercentage || 0))"
+                    :max="100 - (totalWeight - (criterion.weight || 0))"
                     class="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 outline-none transition focus:border-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400"
                   />
                 </label>

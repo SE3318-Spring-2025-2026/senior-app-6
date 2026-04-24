@@ -23,8 +23,8 @@ function handleRemove(member: GroupMember) {
 const normalizedMembers = computed(() =>
   props.members.map((member, index) => ({
     ...member,
-    key: member.id ?? member.studentId ?? `${member.role}-${index}`,
-    displayName: member.fullName?.trim() || (member.studentId ? `Student ${member.studentId}` : "Unnamed member"),
+    key: member.studentId ?? `${member.role}-${index}`,
+    displayName: (member.studentId ? `Student ${member.studentId}` : "Unnamed member"),
     secondaryText: member.studentId ?? "Student ID unavailable",
   }))
 )

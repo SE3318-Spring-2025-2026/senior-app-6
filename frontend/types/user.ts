@@ -1,4 +1,4 @@
-interface StaffUser {
+export interface StaffUser {
 	readonly userType: 'Staff';
 	id: string;
 	mail: string;
@@ -6,7 +6,7 @@ interface StaffUser {
 	firstLogin: boolean;
 }
 
-interface StudentUser {
+export interface StudentUser {
 	readonly userType: 'Student';
 	id: string;
 	studentId: string;
@@ -14,4 +14,4 @@ interface StudentUser {
 	readonly role: 'Student';
 }
 
-type User = StaffUser | StudentUser;
+export type User = StaffUser | StudentUser;

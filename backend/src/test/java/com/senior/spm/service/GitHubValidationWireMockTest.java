@@ -43,6 +43,7 @@ class GitHubValidationWireMockTest {
 
     private static final String ORG = "test-org";
     private static final String PAT = "ghp_test_token";
+    private static final String REPO = "test-repo";
 
     @BeforeEach
     void setUp() {
@@ -56,8 +57,10 @@ class GitHubValidationWireMockTest {
                 .willReturn(aResponse().withStatus(200)));
         wireMock.stubFor(get(urlEqualTo("/orgs/" + ORG + "/repos?per_page=1"))
                 .willReturn(aResponse().withStatus(200)));
+        wireMock.stubFor(get(urlEqualTo("/repos/" + ORG + "/" + REPO))
+                .willReturn(aResponse().withStatus(200)));
 
-        assertThatNoException().isThrownBy(() -> service.validate(ORG, PAT));
+        assertThatNoException().isThrownBy(() -> service.validate(ORG, PAT, REPO));
     }
 
     @Test
@@ -66,7 +69,7 @@ class GitHubValidationWireMockTest {
         wireMock.stubFor(get(urlEqualTo("/orgs/" + ORG))
                 .willReturn(aResponse().withStatus(401)));
 
-        assertThatThrownBy(() -> service.validate(ORG, PAT))
+        assertThatThrownBy(() -> service.validate(ORG, PAT, REPO))
                 .isInstanceOf(GitHubValidationException.class)
                 .hasMessageContaining("PAT is invalid or expired");
     }
@@ -77,7 +80,7 @@ class GitHubValidationWireMockTest {
         wireMock.stubFor(get(urlEqualTo("/orgs/" + ORG))
                 .willReturn(aResponse().withStatus(404)));
 
-        assertThatThrownBy(() -> service.validate(ORG, PAT))
+        assertThatThrownBy(() -> service.validate(ORG, PAT, REPO))
                 .isInstanceOf(GitHubValidationException.class)
                 .hasMessageContaining("Organization '" + ORG + "' not found");
     }
@@ -90,7 +93,7 @@ class GitHubValidationWireMockTest {
         wireMock.stubFor(get(urlEqualTo("/orgs/" + ORG + "/repos?per_page=1"))
                 .willReturn(aResponse().withStatus(403)));
 
-        assertThatThrownBy(() -> service.validate(ORG, PAT))
+        assertThatThrownBy(() -> service.validate(ORG, PAT, REPO))
                 .isInstanceOf(GitHubValidationException.class)
                 .hasMessageContaining("PAT lacks required 'repo' scope");
     }
@@ -101,7 +104,7 @@ class GitHubValidationWireMockTest {
         wireMock.stubFor(get(urlEqualTo("/orgs/" + ORG))
                 .willReturn(aResponse().withStatus(401)));
 
-        assertThatThrownBy(() -> service.validate(ORG, PAT))
+        assertThatThrownBy(() -> service.validate(ORG, PAT, REPO))
                 .isInstanceOf(ExternalToolValidationException.class);
     }
 }

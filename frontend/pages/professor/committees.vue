@@ -11,21 +11,26 @@
 		Users,
 		UserCheck,
 	} from "lucide-vue-next";
-	import type {
-		ProfessorCommittee,
-		ProfessorCommitteeDeliverable,
-		ProfessorCommitteeRubricCriterion,
-	} from "~/composables/useApiClient";
+import type { ProfessorCommittee, ProfessorCommitteeRubricCriterion } from "~/types/committee";
+import type { Deliverable } from "~/types/deliverable";
 
 	definePageMeta({
 		middleware: "auth",
 		roles: ["Professor"],
 	});
 
+interface DeadlineInfo
+{
+	deliverableName: string;
+	type: string;
+	date: Date;
+	dateStr: string
+}
+
 	const { getAuthToken, fetchProfessorCommittees, fetchDeliverables, fetchRubric } = useApiClient();
 
 	const committees = ref<ProfessorCommittee[]>([]);
-	const deliverables = ref<ProfessorCommitteeDeliverable[]>([]);
+	const deliverables = ref<Deliverable[]>([]);
 	const rubricsByDeliverable = ref<Record<string, ProfessorCommitteeRubricCriterion[]>>({});
 	const loading = ref(true);
 	const loadError = ref<string | null>(null);
@@ -38,7 +43,7 @@
 			.map((d) => {
 				const submission = new Date(d.submissionDeadline);
 				const review = new Date(d.reviewDeadline);
-				const deadlines: { deliverableName: string; type: string; date: Date; dateStr: string }[] = [];
+				const deadlines: DeadlineInfo[] = [];
 				if (submission > now) {
 					deadlines.push({
 						deliverableName: d.name,
@@ -58,7 +63,7 @@
 				return deadlines;
 			})
 			.flat()
-			.sort((a, b) => a.date.getTime() - b.date.getTime());
+			.sort((a: DeadlineInfo, b: DeadlineInfo) => a.date.getTime() - b.date.getTime());
 	});
 
 	function toggleCommittee(id: string) {
@@ -90,7 +95,6 @@
 			if (!token) return;
 			const criteria = await fetchRubric(deliverableId, token);
 			rubricsByDeliverable.value[deliverableId] = criteria.map((c) => ({
-				id: c.id,
 				criterionName: c.criterionName,
 				gradingType: c.gradingType,
 				weight: c.weight,

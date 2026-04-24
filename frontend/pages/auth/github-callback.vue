@@ -1,6 +1,7 @@
 <script setup lang="ts">
 	import { Loader2 } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
+import type { StudentUser } from "~/types/user";
 
 	const router = useRouter();
 	const route = useRoute();

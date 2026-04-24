@@ -12,6 +12,7 @@ jwt.expiration=604800000
 # Must be a Base64-encoded value that decodes to exactly 32 bytes (256 bits).
 # Generate a key with: openssl rand -base64 32
 encryption.key=
+encryption.secret=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 
@@ -21,3 +22,13 @@ springdoc.swagger-ui.enabled=true
 springdoc.swagger-ui.path=/swagger-ui.html
 springdoc.api-docs.enabled=true
 springdoc.api-docs.path=/v3/api-docs
+
+# --- LLM API (Gemini) ---
+# Base URL for the Gemini API. Do not change unless switching providers.
+llm.api.base-url=https://generativelanguage.googleapis.com
+# Gemini model to use for AI validation (e.g. gemini-2.5-flash-lite).
+llm.api.model=gemini-2.5-flash-lite
+# HTTP read/connect timeout in seconds for LLM calls.
+llm.api.timeout-seconds=10
+# The actual API key is NOT stored here — it is stored encrypted in the
+# system_config table under the key 'llm_api_key', managed via the admin API.

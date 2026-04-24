@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { z } from "zod";
 import { AlertCircle, ArrowLeft, CheckCircle, FolderGit2, Loader2, ShieldCheck, X } from "lucide-vue-next";
-import type { BindGithubRequest, BindJiraRequest } from "~/composables/useApiClient";
 import type { GroupDetailResponse } from "~/types/group";
 import { useAuthStore } from "~/stores/auth";
+import type { BindGithubRequest, BindJiraRequest } from "~/types/tools";
 
 defineOptions({
   name: "StudentGroupToolsPage",

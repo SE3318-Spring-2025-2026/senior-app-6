@@ -1,4 +1,12 @@
-import type { GroupDetailResponse, GroupStatus } from './group';
+import type { GroupStatus, MemberResponse } from './group';
+
+export interface RequestGroupDetail {
+  id: string;
+  groupName: string;
+  termId: string;
+  status: GroupStatus;
+  members: MemberResponse[];
+}
 
 export interface AdvisorRequestItem {
   requestId: string;
@@ -11,7 +19,7 @@ export interface AdvisorRequestItem {
 
 export interface AdvisorRequestDetail {
   requestId: string;
-  group: GroupDetailResponse;
+  group: RequestGroupDetail;
   sentAt: string;
 }
 
@@ -26,4 +34,34 @@ export interface AdvisorRespondResponse {
   groupStatus: GroupStatus;
 }
 
+export type AdvisorRequestStatus =
+  | "PENDING"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "AUTO_REJECTED"
+  | "CANCELLED";
 
+export interface AdvisorCapacityResponse {
+  advisorId: string;
+  name: string;
+  mail: string;
+  currentGroupCount: number;
+  capacity: number;
+  atCapacity?: boolean | null;
+}
+
+export interface AdvisorRequestResponse {
+  requestId: string;
+  groupId?: string;
+  advisorId?: string;
+  advisorName?: string;
+  status: AdvisorRequestStatus;
+  sentAt?: string;
+  respondedAt?: string | null;
+}
+
+export interface AdvisorOverrideResponse {
+  groupId: string;
+  status: GroupStatus;
+  advisorId: string | null;
+}

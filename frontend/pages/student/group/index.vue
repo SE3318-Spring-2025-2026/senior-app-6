@@ -1,7 +1,7 @@
 <script setup lang="ts">
 	import { AlertCircle, ArrowLeft, Crown, Mail, RefreshCw, Send, ShieldAlert, Users, UserRoundPlus, Wrench, XCircle } from "lucide-vue-next";
-	import type { AdvisorCapacityResponse, AdvisorRequestResponse } from "~/composables/useApiClient";
-	import type { GroupDetailResponse, GroupMember } from "~/types/group";
+	import type { AdvisorCapacityResponse, AdvisorRequestResponse } from "~/types/advisor";
+	import type { GroupDetailResponse, MemberResponse } from "~/types/group";
 	import { useAuthStore } from "~/stores/auth";
 	import { usePendingInvitations } from "~/composables/usePendingInvitations";
 
@@ -38,15 +38,13 @@
 		authStore.userInfo?.userType === "Student" ? authStore.userInfo : null
 	));
 
-	const currentMembership = computed<GroupMember | null>(() => {
+	const currentMembership = computed<MemberResponse | null>(() => {
 		if (!group.value || !currentStudent.value) {
 			return null;
 		}
 
 		return (
 			group.value.members.find((member) =>
-				member.id === currentStudent.value?.id ||
-				member.studentId === currentStudent.value?.id ||
 				member.studentId === currentStudent.value?.studentId
 			) || null
 		);
@@ -63,9 +61,9 @@
 		}).format(new Date(group.value.createdAt));
 	});
 
-	const leaderName = computed(() => {
+	const leaderText = computed(() => {
 		const leader = group.value?.members.find((member) => member.role === "TEAM_LEADER");
-		return leader?.fullName?.trim() || leader?.studentId || "Team leader";
+		return leader?.studentId || "Team leader";
 	});
 
 	const isLeader = computed(() => state.value === "leader");
@@ -463,7 +461,7 @@
                   Team Leader
                 </dt>
                 <dd class="mt-1 text-sm font-medium text-slate-900 dark:text-white">
-                  {{ leaderName }}
+                  {{ leaderText }}
                 </dd>
               </div>
               <div>

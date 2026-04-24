@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { ArrowLeft, Loader as LoaderIcon, Plus, AlertCircle, CheckCircle2, Search, Building, Users, UserCheck } from "lucide-vue-next";
-import type { CoordinatorAdvisor } from "~/composables/useApiClient";
-import type { Committee, CommitteeDetail } from "~/types/committee";
+import type { CommitteeDetailResponse, CommitteeProfessorAssignment, CommitteeSummaryResponse, CreateCommitteeRequest } from "~/types/committee";
+import type { AdvisorCapacityResponse } from "~/types/advisor";
+import type { Deliverable } from "~/types/deliverable";
 
 definePageMeta({
   middleware: "auth",
@@ -15,25 +16,28 @@ const {
   getAuthToken,
   fetchCoordinatorAdvisors,
   fetchCommitteeDetail,
-  assignCommitteeProfessors,
+  addCommitteeProfessors,
+  fetchDeliverables,
 } = useApiClient();
 
-const committees = ref<Committee[]>([]);
+const committees = ref<CommitteeSummaryResponse[]>([]);
+const deliverables = ref<Deliverable[]>([]);
 const isLoading = ref(true);
 const fetchError = ref<string | null>(null);
 
 const showCreateModal = ref(false);
 const newCommitteeName = ref("");
 const selectedCreateTermId = ref("");
+const selectedCreateDeliverableId = ref("");
 const isCreating = ref(false);
 const createError = ref<string | null>(null);
 const createSuccess = ref<string | null>(null);
 const createErrorToast = ref<string | null>(null);
 
 const showAssignmentModal = ref(false);
-const selectedCommittee = ref<Committee | null>(null);
-const committeeDetail = ref<CommitteeDetail | null>(null);
-const professorOptions = ref<CoordinatorAdvisor[]>([]);
+const selectedCommittee = ref<CommitteeSummaryResponse | null>(null);
+const committeeDetail = ref<CommitteeDetailResponse | null>(null);
+const professorOptions = ref<AdvisorCapacityResponse[]>([]);
 const detailLoading = ref(false);
 const detailError = ref<string | null>(null);
 const selectedAdvisorId = ref("");
@@ -43,12 +47,8 @@ const assignmentSuccess = ref<string | null>(null);
 const isAssigning = ref(false);
 
 const availableTermIds = computed(() => {
-  return Array.from(new Set(committees.value.map((committee) => committee.termId).filter(Boolean) as string[])).sort((a, b) => b.localeCompare(a));
+  return Array.from(new Set(committees.value.map((committee: CommitteeSummaryResponse) => committee.termId).filter(Boolean) as string[])).sort((a, b) => b.localeCompare(a));
 });
-
-function displayCommitteeName(committee: Committee): string {
-  return committee.committeeName || committee.name;
-}
 
 function parseErrorMessage(error: unknown, fallback: string): string {
   return error && typeof error === "object" && "message" in error
@@ -64,7 +64,7 @@ function parseAssignmentError(error: unknown): string {
   return rawMessage;
 }
 
-function normalizeSelectionsFromDetail(detail: CommitteeDetail) {
+function normalizeSelectionsFromDetail(detail: CommitteeDetailResponse) {
   const advisor = detail.professors.find((item) => item.role === "ADVISOR");
   selectedAdvisorId.value = advisor?.professorId || "";
   selectedJuryIds.value = detail.professors
@@ -99,7 +99,7 @@ function professorLabelById(professorId?: string): string {
   return `${match.name || match.mail} (${match.mail})`;
 }
 
-async function openAssignmentModal(committee: Committee) {
+async function openAssignmentModal(committee: CommitteeSummaryResponse) {
   showAssignmentModal.value = true;
   selectedCommittee.value = committee;
   committeeDetail.value = null;
@@ -147,7 +147,7 @@ async function handleAssignProfessors() {
   }
 
   const juryProfessorIds = selectedJuryIds.value.filter((id) => id !== selectedAdvisorId.value);
-  const professors = [
+  const professors: CommitteeProfessorAssignment[] = [
     { professorId: selectedAdvisorId.value, role: "ADVISOR" as const },
     ...juryProfessorIds.map((professorId) => ({ professorId, role: "JURY" as const })),
   ];
@@ -160,7 +160,7 @@ async function handleAssignProfessors() {
     const token = getAuthToken();
     if (!token) throw new Error("Authentication required. Please log in.");
 
-    await assignCommitteeProfessors(selectedCommittee.value.id, { professors }, token);
+    await addCommitteeProfessors(selectedCommittee.value.id, { professors: professors }, token);
     assignmentSuccess.value = "Professor assignments saved successfully.";
 
     const refreshedDetail = await fetchCommitteeDetail(selectedCommittee.value.id, token);
@@ -179,7 +179,7 @@ async function loadCommittees() {
   try {
     const token = getAuthToken();
     if (!token) throw new Error("Authentication required. Please log in.");
-    committees.value = await fetchCommittees(token);
+    committees.value = await fetchCommittees(undefined, token);
   } catch (error) {
     const message =
       error && typeof error === "object" && "message" in error
@@ -203,8 +203,8 @@ async function handleCreateCommittee() {
     const token = getAuthToken();
     if (!token) throw new Error("Authentication required. Please log in.");
 
-    const payload = {
-      name: newCommitteeName.value.trim(),
+		const payload: CreateCommitteeRequest = {
+			deliverableId: selectedCreateDeliverableId.value,
       committeeName: newCommitteeName.value.trim(),
       termId: selectedCreateTermId.value.trim(),
     };
@@ -212,15 +212,16 @@ async function handleCreateCommittee() {
     const newCommittee = await createCommittee(payload, token);
 
     // Some backend variants return only id on create; fallback to a lightweight refresh.
-    if (displayCommitteeName(newCommittee)) {
+    if (newCommittee.committeeName) {
       committees.value.push(newCommittee);
-      createSuccess.value = `Committee "${displayCommitteeName(newCommittee)}" created successfully.`;
+      createSuccess.value = `Committee "${newCommittee.committeeName}" created successfully.`;
     } else {
       await loadCommittees();
       createSuccess.value = `Committee "${newCommitteeName.value.trim()}" created successfully.`;
     }
     newCommitteeName.value = "";
     selectedCreateTermId.value = "";
+    selectedCreateDeliverableId.value = "";
     showCreateModal.value = false;
 
     // clear success toast after 3s
@@ -239,12 +240,23 @@ async function handleCreateCommittee() {
   }
 }
 
-function openCreateModal() {
+async function openCreateModal() {
   newCommitteeName.value = "";
   selectedCreateTermId.value = availableTermIds.value[0] || "";
+  selectedCreateDeliverableId.value = "";
   createError.value = null;
   createErrorToast.value = null;
   showCreateModal.value = true;
+
+  if (deliverables.value.length === 0) {
+    try {
+      const token = getAuthToken();
+      if (!token) return;
+      deliverables.value = await fetchDeliverables(token);
+    } catch (error) {
+      createError.value = parseErrorMessage(error, "Failed to load deliverables.");
+    }
+  }
 }
 
 onMounted(loadCommittees);
@@ -359,13 +371,10 @@ onMounted(loadCommittees);
                 class="transition hover:bg-slate-50 dark:hover:bg-slate-900/50"
               >
                 <td class="px-3 py-3 font-medium text-slate-900 dark:text-white">
-                  {{ displayCommitteeName(committee) }}
+                  {{ committee.committeeName }}
                 </td>
                 <td class="px-3 py-3 text-slate-700 dark:text-slate-300">
                   {{ committee.termId || 'Current' }}
-                </td>
-                <td class="px-3 py-3 text-slate-700 dark:text-slate-300">
-                  {{ committee.createdAt ? new Date(committee.createdAt).toLocaleDateString() : 'N/A' }}
                 </td>
                 <td class="px-3 py-3">
                   <button
@@ -426,6 +435,30 @@ onMounted(loadCommittees);
               </datalist>
             </div>
 
+            <div>
+              <label for="committeeDeliverable" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                Deliverable
+              </label>
+              <select
+                id="committeeDeliverable"
+                v-model="selectedCreateDeliverableId"
+                required
+                class="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-blue-400 dark:focus:ring-blue-400"
+              >
+                <option value="" disabled>Select a deliverable</option>
+                <option
+                  v-for="deliverable in deliverables"
+                  :key="deliverable.id"
+                  :value="deliverable.id"
+                >
+                  {{ deliverable.name }} ({{ deliverable.type }})
+                </option>
+              </select>
+              <p v-if="deliverables.length === 0" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                No deliverables available. Create one first in the evaluation setup.
+              </p>
+            </div>
+
             <div v-if="createError" class="rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
               {{ createError }}
             </div>
@@ -442,7 +475,7 @@ onMounted(loadCommittees);
               <button
                 type="submit"
                 class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50 dark:bg-blue-700 dark:hover:bg-blue-600"
-                :disabled="isCreating || !newCommitteeName.trim()"
+                :disabled="isCreating || !newCommitteeName.trim() || !selectedCreateDeliverableId"
               >
                 <LoaderIcon v-if="isCreating" class="h-4 w-4 animate-spin" />
                 <span>{{ isCreating ? 'Creating...' : 'Create Committee' }}</span>
@@ -462,7 +495,7 @@ onMounted(loadCommittees);
             <div>
               <h2 class="text-xl font-semibold text-slate-900 dark:text-white">Committee Assignment</h2>
               <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                {{ selectedCommittee ? displayCommitteeName(selectedCommittee) : "Selected committee" }}
+                {{ selectedCommittee ? selectedCommittee.committeeName : "Selected committee" }}
               </p>
             </div>
             <button

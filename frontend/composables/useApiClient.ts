@@ -1,271 +1,44 @@
-/**
- * Reusable API client composable for making authenticated requests to the backend
- * Note: LoginResponse and User types are defined globally in types/*.d.ts
- */
-
 import { useAuthStore } from '~/stores/auth';
-import type { GroupDetailResponse, CreateGroupResponse, CreateGroupRequest } from '~/types/group';
-import type { AdvisorRequestItem, AdvisorRequestDetail, AdvisorRespondResponse } from '~/types/advisor';
+import type { ApiError } from '~/types/api';
+import type { GithubLoginResponse, LoginResponse } from '~/types/auth';
 import type {
-  Committee,
-  CommitteeDetail,
+  GroupDetailResponse,
+  CreateGroupRequest,
+  GroupSummaryResponse,
+  CoordinatorGroupMemberActionRequest,
+} from '~/types/group';
+import type {
+  AdvisorRequestItem,
+  AdvisorRequestDetail,
+  AdvisorRespondResponse,
+  AdvisorCapacityResponse,
+  AdvisorRequestResponse,
+  AdvisorOverrideResponse,
+} from '~/types/advisor';
+import type {
+  CommitteeSummaryResponse,
+  CommitteeDetailResponse,
   CreateCommitteeRequest,
-  AssignCommitteeProfessorsRequest,
-  StudentGroup,
+  AddProfessorsToCommitteeRequest,
+  AddGroupsToCommitteeRequest,
+  ProfessorCommittee,
+	CommitteeProfessorAssignment,
 } from '~/types/committee';
-
-export type { Committee, CommitteeDetail, CreateCommitteeRequest, AssignCommitteeProfessorsRequest, StudentGroup } from '~/types/committee';
-
-export interface ApiError {
-  status: number;
-  message: string;
-}
-
-export interface Deliverable {
-  id: string;
-  name: string;
-  type: "Proposal" | "SoW" | "Demonstration";
-  submissionDeadline: string;
-  reviewDeadline: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface CreateDeliverableRequest {
-  name: string;
-  type: "Proposal" | "SoW" | "Demonstration";
-  submissionDeadline: string;
-  reviewDeadline: string;
-}
-
-export interface UpdateDeliverableRequest {
-  submissionDeadline: string;
-  reviewDeadline: string;
-}
-
-export interface Sprint {
-  id: string;
-  startDate: string;
-  endDate: string;
-  storyPointTarget?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface CreateSprintRequest {
-  startDate: string;
-  endDate: string;
-}
-
-export interface GradingCriterion {
-  criterionName: string;
-  weightPercentage: number;
-  gradingType: "Binary" | "Soft";
-}
-
-export interface CreateRubricRequest {
-  deliverableId: string;
-  criteria: GradingCriterion[];
-}
-
-export interface RubricCriterionResponse {
-  id: string;
-  criterionName: string;
-  gradingType: "Binary" | "Soft";
-  weight: number;
-}
-
-export interface CoordinatorGroupSummary {
-  id: string;
-  groupName: string;
-  termId?: string;
-  status: string;
-  memberCount: number;
-  jiraBound: boolean;
-  githubBound: boolean;
-}
-
-export interface CoordinatorGroupMemberActionRequest {
-  studentId: string;
-  action: "ADD" | "REMOVE";
-}
-
-export type AdvisorRequestStatus =
-  | "PENDING"
-  | "ACCEPTED"
-  | "REJECTED"
-  | "AUTO_REJECTED"
-  | "CANCELLED";
-
-export interface AdvisorCapacityResponse {
-  advisorId: string;
-  name: string;
-  mail: string;
-  currentGroupCount: number;
-  capacity: number;
-  atCapacity?: boolean | null;
-}
-
-export interface AdvisorRequestResponse {
-  requestId: string;
-  groupId?: string;
-  advisorId?: string;
-  advisorName?: string;
-  status: AdvisorRequestStatus;
-  sentAt?: string;
-  respondedAt?: string | null;
-}
-
-export interface GithubLoginRequest {
-  code: string;
-  studentId: string;
-}
-
-export interface GithubLoginResponse {
-  token: string;
-  userInfo: {
-    id: string;
-    githubUsername: string;
-    role: string;
-  };
-}
-
-export interface CoordinatorAdvisor {
-  advisorId: string;
-  name: string;
-  mail: string;
-  currentGroupCount: number;
-  capacity: number;
-  atCapacity: boolean;
-}
-
-export interface ProfessorCommitteeGroup {
-  groupId: string;
-  groupName: string;
-	status: string;
-}
-
-export interface ProfessorCommitteeDeliverable {
-  id: string;
-  name: string;
-  type: "Proposal" | "SoW" | "Demonstration";
-  submissionDeadline: string;
-  reviewDeadline: string;
-}
-
-export interface ProfessorCommitteeRubricCriterion {
-  criterionName: string;
-  gradingType: "Binary" | "Soft";
-  weight: number;
-}
-
-export interface ProfessorCommittee {
-  committeeId: string;
-  committeeName: string;
-	termId?: string;
-  professorRole: "ADVISOR" | "JURY";
-
-  deliverableId?: string;
-  deliverableName?: string;
-  deliverableType?: ProfessorCommitteeDeliverable["type"];
-  submissionDeadline?: string;
-  reviewDeadline?: string;
-	deliverableWeight?: number;
-  groups: ProfessorCommitteeGroup[];
-  rubrics?: ProfessorCommitteeRubricCriterion[];
-}
-
-export interface AdvisorOverrideResponse {
-  groupId: string;
-  status: "ADVISOR_ASSIGNED" | "TOOLS_BOUND";
-  advisorId: string | null;
-}
-
-export interface SanitizationReport {
-  disbandedCount: number;
-  autoRejectedRequestCount?: number;
-  rejectedRequestCount?: number;
-  triggeredAt: string;
-}
-
-export interface BindJiraRequest {
-  jiraSpaceUrl: string;
-  jiraEmail: string;
-  jiraProjectKey: string;
-  jiraApiToken: string;
-  jiraTokenExpiresAt?: string;
-}
-
-export interface BindGithubRequest {
-  githubOrgName: string;
-  githubPat: string;
-  githubRepoName: string;
-}
-
-export interface BindToolResponse {
-  groupId: string;
-  status: GroupDetailResponse["status"];
-  jiraSpaceUrl?: string | null;
-  jiraProjectKey?: string | null;
-  githubOrgName?: string | null;
-  jiraBound: boolean;
-  githubBound: boolean;
-}
-
-export type InvitationStatus = "PENDING" | "ACCEPTED" | "DECLINED" | "AUTO_DENIED" | "CANCELLED";
-
-export interface StudentSearchResult {
-  studentId: string;
-  githubUsername: string | null;
-}
-
-export interface SentGroupInvitation {
-  invitationId: string;
-  groupId: string;
-  targetStudentId: string;
-  status: InvitationStatus;
-  sentAt: string;
-  respondedAt?: string | null;
-}
-
-export interface GroupInvitation {
-  invitationId: string;
-  groupId: string;
-  groupName: string;
-  teamLeaderStudentId: string;
-  status: InvitationStatus;
-  sentAt: string;
-  respondedAt?: string;
-}
-
-export interface RespondInvitationResponse {
-  invitationId: string;
-  status: InvitationStatus;
-  respondedAt: string;
-}
-
-interface CommitteeApiGroup {
-  id?: string;
-  groupId?: string;
-  name?: string;
-  groupName?: string;
-  status?: string;
-}
-
-interface CommitteeApiProfessor {
-  professorId: string;
-  role: "ADVISOR" | "JURY";
-}
-
-interface CommitteeApiResponse {
-  id: string;
-  committeeName?: string;
-  name?: string;
-  termId?: string;
-  deliverableId?: string;
-  professors?: CommitteeApiProfessor[];
-  groups?: CommitteeApiGroup[];
-}
+import type {
+  Deliverable,
+  CreateDeliverableRequest,
+  UpdateDeliverableRequest,
+} from '~/types/deliverable';
+import type { Sprint, CreateSprintRequest } from '~/types/sprint';
+import type { GradingCriterion, RubricCriterionResponse } from '~/types/rubric';
+import type {
+  GroupInvitation,
+  SentGroupInvitation,
+  InvitationActionResponse,
+} from '~/types/invitation';
+import type { StudentSearchResult } from '~/types/student';
+import type { BindJiraRequest, BindGithubRequest, BindToolResponse } from '~/types/tools';
+import type { SanitizationReport } from '~/types/sanitization';
 
 async function apiCall<T>(
   endpoint: string,
@@ -321,32 +94,10 @@ export function useApiClient() {
     return authStore.token;
   }
 
-  function normalizeCommittee(data: CommitteeApiResponse): Committee {
-    const normalizedName = data.committeeName || data.name || "";
-    const groups = Array.isArray(data.groups)
-      ? data.groups.map((group) => ({
-          id: String(group.groupId || group.id || ""),
-          name: group.groupName || group.name || "Unnamed group",
-          advisorApproved: (group.status || "") === "ADVISOR_ASSIGNED",
-          committeeId: String(data.id),
-        }))
-      : undefined;
-
-    return {
-      id: String(data.id),
-      name: normalizedName,
-      groups,
-    };
-  }
-
   async function loginFaculty(email: string, password: string): Promise<LoginResponse> {
     return apiCall<LoginResponse>("/auth/login", "POST", { mail: email, password });
   }
 
-  /**
-   * Start GitHub OAuth flow for student login.
-   * Stores studentId in sessionStorage, generates CSRF state, and redirects to GitHub.
-   */
   function initiateGithubOAuth(studentId: string) {
     const config = useRuntimeConfig();
     const clientId = config.public.githubClientId;
@@ -356,7 +107,6 @@ export function useApiClient() {
       throw new Error("GitHub Client ID is not configured");
     }
 
-    // Generate random state for CSRF protection
     const state = crypto.randomUUID();
     sessionStorage.setItem("github_oauth_state", state);
     sessionStorage.setItem("github_student_id", studentId);
@@ -371,10 +121,6 @@ export function useApiClient() {
     window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
   }
 
-  /**
-   * Complete GitHub OAuth: send code + studentId to backend.
-   * Backend exchanges code for access token, fetches GitHub username, and returns JWT.
-   */
   async function completeGithubLogin(
     code: string,
     studentId: string
@@ -385,9 +131,6 @@ export function useApiClient() {
     });
   }
 
-  /**
-   * Direct GitHub login with access token (if backend already has the token).
-   */
   async function loginWithGithub(
     accessToken: string,
     username: string,
@@ -485,8 +228,8 @@ export function useApiClient() {
     return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", { mail }, token);
   }
 
-  async function createGroup(data: CreateGroupRequest, token?: string): Promise<CreateGroupResponse> {
-    return apiCall<CreateGroupResponse>("/groups", "POST", data, token);
+  async function createGroup(data: CreateGroupRequest, token?: string): Promise<GroupDetailResponse> {
+    return apiCall<GroupDetailResponse>("/groups", "POST", data, token);
   }
 
   async function fetchMyGroup(token?: string): Promise<GroupDetailResponse> {
@@ -494,7 +237,7 @@ export function useApiClient() {
   }
 
   async function fetchAvailableAdvisors(token?: string): Promise<AdvisorCapacityResponse[]> {
-    return apiCall<AdvisorCapacityResponse[]>("/advisors", "GET", undefined, token);
+    return apiCall<AdvisorCapacityResponse[]>("/advisor", "GET", undefined, token);
   }
 
   async function sendAdvisorRequest(
@@ -537,9 +280,9 @@ export function useApiClient() {
   async function fetchCoordinatorGroups(
     token?: string,
     termId?: string
-  ): Promise<CoordinatorGroupSummary[]> {
+  ): Promise<GroupSummaryResponse[]> {
     const query = termId ? `?termId=${encodeURIComponent(termId)}` : "";
-    return apiCall<CoordinatorGroupSummary[]>(`/coordinator/groups${query}`, "GET", undefined, token);
+    return apiCall<GroupSummaryResponse[]>(`/coordinator/groups${query}`, "GET", undefined, token);
   }
 
   async function fetchCoordinatorGroupDetail(
@@ -554,8 +297,8 @@ export function useApiClient() {
     );
   }
 
-  async function fetchCoordinatorAdvisors(token?: string): Promise<CoordinatorAdvisor[]> {
-    return apiCall<CoordinatorAdvisor[]>("/coordinator/advisors", "GET", undefined, token);
+  async function fetchCoordinatorAdvisors(token?: string): Promise<AdvisorCapacityResponse[]> {
+    return apiCall<AdvisorCapacityResponse[]>("/coordinator/advisors", "GET", undefined, token);
   }
 
   async function assignCoordinatorAdvisor(
@@ -646,22 +389,16 @@ export function useApiClient() {
     );
   }
 
-  /**
-   * Fetch all pending invitations for the authenticated student
-   */
   async function fetchPendingInvitations(token?: string): Promise<GroupInvitation[]> {
     return apiCall<GroupInvitation[]>("/invitations/pending", "GET", undefined, token);
   }
 
-  /**
-   * Respond to an invitation (accept or decline)
-   */
   async function respondToInvitation(
     invitationId: string,
     response: "ACCEPT" | "DECLINE",
     token?: string
-  ): Promise<RespondInvitationResponse> {
-    return apiCall<RespondInvitationResponse>(
+  ): Promise<InvitationActionResponse> {
+    return apiCall<InvitationActionResponse>(
       `/invitations/${encodeURIComponent(invitationId)}/respond`,
       "PATCH",
       { accept: response === "ACCEPT" },
@@ -681,16 +418,10 @@ export function useApiClient() {
     return apiCall<AdvisorRespondResponse>(`/advisor/requests/${encodeURIComponent(requestId)}/respond`, "PATCH", { accept }, token);
   }
 
-  /**
-   * Search for ungrouped students by studentId substring (min 3 chars)
-   */
   async function searchStudents(q: string, token?: string): Promise<StudentSearchResult[]> {
     return apiCall<StudentSearchResult[]>(`/students/search?q=${encodeURIComponent(q)}`, "GET", undefined, token);
   }
 
-  /**
-   * Send a group invitation to a target student (Team Leader only)
-   */
   async function sendGroupInvitation(
     groupId: string,
     targetStudentId: string,
@@ -704,9 +435,6 @@ export function useApiClient() {
     );
   }
 
-  /**
-   * Fetch all outbound invitations sent by the group (Team Leader only)
-   */
   async function fetchGroupInvitations(groupId: string, token?: string): Promise<SentGroupInvitation[]> {
     return apiCall<SentGroupInvitation[]>(
       `/groups/${encodeURIComponent(groupId)}/invitations`,
@@ -716,9 +444,6 @@ export function useApiClient() {
     );
   }
 
-  /**
-   * Cancel a pending outbound invitation (Team Leader only)
-   */
   async function cancelGroupInvitation(invitationId: string, token?: string): Promise<SentGroupInvitation> {
     return apiCall<SentGroupInvitation>(
       `/invitations/${encodeURIComponent(invitationId)}`,
@@ -731,58 +456,30 @@ export function useApiClient() {
   async function createCommittee(
     payload: CreateCommitteeRequest,
     token?: string
-  ): Promise<Committee> {
-    const committeeName = payload.committeeName?.trim() || payload.name?.trim() || "";
-    if (!committeeName) {
-      throw { status: 400, message: "Committee name is required" } as ApiError;
-    }
+  ): Promise<CommitteeSummaryResponse> {
+    return apiCall<CommitteeSummaryResponse>("/committees", "POST", payload, token);
+  }
 
-    let deliverableId = payload.deliverableId;
-    if (!deliverableId) {
-      const deliverables = await fetchDeliverables(token);
-      if (!deliverables.length) {
-        throw { status: 400, message: "No deliverable found. Create a deliverable first." } as ApiError;
-      }
-      deliverableId = deliverables[0].id;
-    }
-
-    const result = await apiCall<CommitteeApiResponse>(
-      "/committees",
-      "POST",
-      {
-        committeeName,
-        termId: payload.termId || "",
-        deliverableId,
-      },
-      token
-    );
-
-    return normalizeCommittee(result);
+  async function fetchCommittees(termId?: string, token?: string): Promise<CommitteeSummaryResponse[]> {
+    const query = termId ? `?termId=${encodeURIComponent(termId)}` : "";
+    return apiCall<CommitteeSummaryResponse[]>(`/committees${query}`, "GET", undefined, token);
   }
 
   async function fetchCommitteeDetail(
     committeeId: string,
     token?: string
-  ): Promise<CommitteeDetail> {
-    const detail = await apiCall<CommitteeApiResponse>(
+  ): Promise<CommitteeDetailResponse> {
+    return apiCall<CommitteeDetailResponse>(
       `/committees/${encodeURIComponent(committeeId)}`,
       "GET",
       undefined,
       token
     );
-
-    return {
-      id: String(detail.id),
-      committeeName: detail.committeeName || detail.name || "",
-      termId: detail.termId,
-      professors: detail.professors || [],
-      groupIds: (detail.groups || []).map((group) => String(group.groupId || group.id || "")),
-    };
   }
 
-  async function assignCommitteeProfessors(
+  async function addCommitteeProfessors(
     committeeId: string,
-    payload: AssignCommitteeProfessorsRequest,
+    payload: AddProfessorsToCommitteeRequest,
     token?: string
   ): Promise<void> {
     await apiCall<void>(
@@ -793,65 +490,21 @@ export function useApiClient() {
     );
   }
 
-  async function fetchProfessorCommittees(token?: string): Promise<ProfessorCommittee[]> {
-    return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
-  }
-
-  async function fetchCommittees(token?: string): Promise<Committee[]> {
-    const committees = await apiCall<CommitteeApiResponse[]>("/committees", "GET", undefined, token);
-    return committees.map(normalizeCommittee);
-  }
-
-  async function fetchCommittee(committeeId: string, token?: string): Promise<Committee> {
-    const committee = await apiCall<CommitteeApiResponse>(
-      `/committees/${encodeURIComponent(committeeId)}`,
-      "GET",
-      undefined,
-      token
-    );
-    return normalizeCommittee(committee);
-  }
-
-  async function fetchUnassignedGroups(token?: string): Promise<StudentGroup[]> {
-    const [allGroups, committees] = await Promise.all([
-      fetchCoordinatorGroups(token),
-      fetchCommittees(token),
-    ]);
-
-    const committeeDetails = await Promise.all(
-      committees.map((committee) =>
-        fetchCommittee(committee.id, token).catch(() => null)
-      )
-    );
-
-    const assignedGroupIds = new Set(
-      committeeDetails
-        .filter((committee): committee is Committee => committee !== null)
-        .flatMap((committee) => committee.groups || [])
-        .map((group) => group.id)
-    );
-
-    return allGroups
-      .filter((group) => group.status === "ADVISOR_ASSIGNED" && !assignedGroupIds.has(group.id))
-      .map((group) => ({
-        id: group.id,
-        name: group.groupName,
-        advisorApproved: group.status === "ADVISOR_ASSIGNED",
-        committeeId: null,
-      }));
-  }
-
-  async function assignGroupsToCommittee(
+  async function addCommitteeGroups(
     committeeId: string,
-    groupIds: string[],
+    payload: AddGroupsToCommitteeRequest,
     token?: string
   ): Promise<void> {
-    return apiCall<void>(
+    await apiCall<void>(
       `/committees/${encodeURIComponent(committeeId)}/groups`,
       "POST",
-      { groupIds },
+      payload,
       token
     );
+  }
+
+  async function fetchProfessorCommittees(token?: string): Promise<ProfessorCommittee[]> {
+    return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
   }
 
   return {
@@ -876,12 +529,11 @@ export function useApiClient() {
     registerProfessor,
     createCommittee,
     fetchCommittees,
-    fetchCommittee,
+    fetchCommittee: fetchCommitteeDetail,
     fetchCommitteeDetail,
-    assignCommitteeProfessors,
+    addCommitteeProfessors,
+    addCommitteeGroups,
     fetchProfessorCommittees,
-    fetchUnassignedGroups,
-    assignGroupsToCommittee,
     createGroup,
     fetchMyGroup,
     fetchAvailableAdvisors,
