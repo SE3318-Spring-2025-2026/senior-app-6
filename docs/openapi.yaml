@@ -2134,3 +2134,435 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+
+  # ── P6 — Blue Team Deliverable Submission & Review ────────────────────────────────────
+
+  /deliverables:
+    get:
+      tags: [Student]
+      summary: Get all active deliverables with submission status for the student's group
+      responses:
+        '200':
+          description: List of deliverables with current submission status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    name:
+                      type: string
+                    type:
+                      type: string
+                      enum: [Proposal, SoW, Demonstration]
+                    submissionDeadline:
+                      type: string
+                      format: date-time
+                    reviewDeadline:
+                      type: string
+                      format: date-time
+                    submissionStatus:
+                      type: string
+                      enum: [Not Submitted, Submitted, Graded]
+        '403':
+          description: Caller is not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /deliverables/{deliverableId}/submissions:
+    post:
+      tags: [Student]
+      summary: Submit a deliverable document (Markdown)
+      parameters:
+        - name: deliverableId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: Markdown content of the submission
+      responses:
+        '201':
+          description: Submission created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  submissionId:
+                    type: string
+                    format: uuid
+                  deliverableId:
+                    type: string
+                    format: uuid
+                  groupId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                  submittedAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Submission deadline passed, group not assigned to committee, or invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not the Team Leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Deliverable not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /submissions/{submissionId}:
+    get:
+      tags: [Student, Professor]
+      summary: Retrieve a submission document (read-only)
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Submission content retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  submissionId:
+                    type: string
+                    format: uuid
+                  deliverableId:
+                    type: string
+                    format: uuid
+                  groupId:
+                    type: string
+                    format: uuid
+                  content:
+                    type: string
+                    description: Markdown content
+                  submittedAt:
+                    type: string
+                    format: date-time
+                  revisedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+        '403':
+          description: Caller lacks permission to view this submission
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+    put:
+      tags: [Student]
+      summary: Revise a submitted deliverable (before final deadline)
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: Updated Markdown content
+      responses:
+        '200':
+          description: Submission updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  submissionId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                  revisedAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Final grading deadline has passed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not the Team Leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /submissions/{submissionId}/rubric-mappings:
+    post:
+      tags: [Student]
+      summary: Link submission sections to rubric criteria
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mappings]
+              properties:
+                mappings:
+                  type: array
+                  items:
+                    type: object
+                    required: [criterionId, sectionReference]
+                    properties:
+                      criterionId:
+                        type: string
+                        format: uuid
+                      sectionReference:
+                        type: string
+                        description: Text or position reference in markdown
+      responses:
+        '200':
+          description: Rubric mappings saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  submissionId:
+                    type: string
+                    format: uuid
+                  mappingCount:
+                    type: integer
+        '400':
+          description: Invalid criterion IDs or submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not the Team Leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /submissions/{submissionId}/comments:
+    post:
+      tags: [Professor]
+      summary: Add feedback comment to a submission (Committee members only)
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                  description: Comment text
+                sectionReference:
+                  type: string
+                  nullable: true
+                  description: Optional reference to specific section
+      responses:
+        '201':
+          description: Comment created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  commentId:
+                    type: string
+                    format: uuid
+                  submissionId:
+                    type: string
+                    format: uuid
+                  authorId:
+                    type: string
+                    format: uuid
+                  content:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+        '403':
+          description: Caller is not an assigned committee member for this group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+    get:
+      tags: [Student, Professor]
+      summary: Retrieve comments on a submission
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Comments retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    commentId:
+                      type: string
+                      format: uuid
+                    submissionId:
+                      type: string
+                      format: uuid
+                    authorId:
+                      type: string
+                      format: uuid
+                    authorName:
+                      type: string
+                    content:
+                      type: string
+                    sectionReference:
+                      type: string
+                      nullable: true
+                    createdAt:
+                      type: string
+                      format: date-time
+        '403':
+          description: Caller lacks permission to view these comments
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /committees/{id}/submissions:
+    get:
+      tags: [Professor]
+      summary: Retrieve all submissions assigned to a committee for review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Committee submissions retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    submissionId:
+                      type: string
+                      format: uuid
+                    deliverableId:
+                      type: string
+                      format: uuid
+                    groupId:
+                      type: string
+                      format: uuid
+                    groupName:
+                      type: string
+                    deliverableName:
+                      type: string
+                    submittedAt:
+                      type: string
+                      format: date-time
+                    commentCount:
+                      type: integer
+        '403':
+          description: Caller is not a member of this committee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Committee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
