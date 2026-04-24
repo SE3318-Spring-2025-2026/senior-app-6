@@ -237,7 +237,7 @@ export function useApiClient() {
   }
 
   async function fetchAvailableAdvisors(token?: string): Promise<AdvisorCapacityResponse[]> {
-    return apiCall<AdvisorCapacityResponse[]>("/advisors", "GET", undefined, token);
+    return apiCall<AdvisorCapacityResponse[]>("/advisor", "GET", undefined, token);
   }
 
   async function sendAdvisorRequest(
