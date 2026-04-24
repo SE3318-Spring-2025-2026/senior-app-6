@@ -46,14 +46,18 @@ public class SecurityConfig {
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/api/coordinator/deliverables/**").hasAnyRole("COORDINATOR", "PROFESSOR")
                                 .requestMatchers("/api/coordinator/**").hasRole("COORDINATOR")
                                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
+                                .requestMatchers("/api/professors/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/committees/**").hasRole("COORDINATOR")
                                 // P3: Student-facing advisor request endpoints.
                                 .requestMatchers("/api/advisors/").hasRole("STUDENT")
                                 // P3: Professor-only endpoints live under /api/advisor/**
                                 .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")
+                                .requestMatchers("/api/groups/*/sprints/**").hasRole("STUDENT")
+                                .requestMatchers("/api/sprints/**").hasRole("STUDENT")
                                 .anyRequest().authenticated())
                 .exceptionHandling(
                         ex -> ex.accessDeniedHandler(

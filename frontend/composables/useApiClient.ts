@@ -6,6 +6,15 @@
 import { useAuthStore } from '~/stores/auth';
 import type { GroupDetailResponse, CreateGroupResponse, CreateGroupRequest } from '~/types/group';
 import type { AdvisorRequestItem, AdvisorRequestDetail, AdvisorRespondResponse } from '~/types/advisor';
+import type {
+  Committee,
+  CommitteeDetail,
+  CreateCommitteeRequest,
+  AssignCommitteeProfessorsRequest,
+  StudentGroup,
+} from '~/types/committee';
+
+export type { Committee, CommitteeDetail, CreateCommitteeRequest, AssignCommitteeProfessorsRequest, StudentGroup } from '~/types/committee';
 
 export interface ApiError {
   status: number;
@@ -130,6 +139,42 @@ export interface CoordinatorAdvisor {
   atCapacity: boolean;
 }
 
+export interface ProfessorCommitteeGroup {
+  groupId: string;
+  groupName: string;
+	status: string;
+}
+
+export interface ProfessorCommitteeDeliverable {
+  id: string;
+  name: string;
+  type: "Proposal" | "SoW" | "Demonstration";
+  submissionDeadline: string;
+  reviewDeadline: string;
+}
+
+export interface ProfessorCommitteeRubricCriterion {
+  criterionName: string;
+  gradingType: "Binary" | "Soft";
+  weight: number;
+}
+
+export interface ProfessorCommittee {
+  committeeId: string;
+  committeeName: string;
+	termId?: string;
+  professorRole: "ADVISOR" | "JURY";
+
+  deliverableId?: string;
+  deliverableName?: string;
+  deliverableType?: ProfessorCommitteeDeliverable["type"];
+  submissionDeadline?: string;
+  reviewDeadline?: string;
+	deliverableWeight?: number;
+  groups: ProfessorCommitteeGroup[];
+  rubrics?: ProfessorCommitteeRubricCriterion[];
+}
+
 export interface AdvisorOverrideResponse {
   groupId: string;
   status: "ADVISOR_ASSIGNED" | "TOOLS_BOUND";
@@ -199,6 +244,29 @@ export interface RespondInvitationResponse {
   respondedAt: string;
 }
 
+interface CommitteeApiGroup {
+  id?: string;
+  groupId?: string;
+  name?: string;
+  groupName?: string;
+  status?: string;
+}
+
+interface CommitteeApiProfessor {
+  professorId: string;
+  role: "ADVISOR" | "JURY";
+}
+
+interface CommitteeApiResponse {
+  id: string;
+  committeeName?: string;
+  name?: string;
+  termId?: string;
+  deliverableId?: string;
+  professors?: CommitteeApiProfessor[];
+  groups?: CommitteeApiGroup[];
+}
+
 async function apiCall<T>(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" = "GET",
@@ -251,6 +319,24 @@ export function useApiClient() {
     if (import.meta.server) return null;
     const authStore = useAuthStore();
     return authStore.token;
+  }
+
+  function normalizeCommittee(data: CommitteeApiResponse): Committee {
+    const normalizedName = data.committeeName || data.name || "";
+    const groups = Array.isArray(data.groups)
+      ? data.groups.map((group) => ({
+          id: String(group.groupId || group.id || ""),
+          name: group.groupName || group.name || "Unnamed group",
+          advisorApproved: (group.status || "") === "ADVISOR_ASSIGNED",
+          committeeId: String(data.id),
+        }))
+      : undefined;
+
+    return {
+      id: String(data.id),
+      name: normalizedName,
+      groups,
+    };
   }
 
   async function loginFaculty(email: string, password: string): Promise<LoginResponse> {
@@ -642,6 +728,132 @@ export function useApiClient() {
     );
   }
 
+  async function createCommittee(
+    payload: CreateCommitteeRequest,
+    token?: string
+  ): Promise<Committee> {
+    const committeeName = payload.committeeName?.trim() || payload.name?.trim() || "";
+    if (!committeeName) {
+      throw { status: 400, message: "Committee name is required" } as ApiError;
+    }
+
+    let deliverableId = payload.deliverableId;
+    if (!deliverableId) {
+      const deliverables = await fetchDeliverables(token);
+      if (!deliverables.length) {
+        throw { status: 400, message: "No deliverable found. Create a deliverable first." } as ApiError;
+      }
+      deliverableId = deliverables[0].id;
+    }
+
+    const result = await apiCall<CommitteeApiResponse>(
+      "/committees",
+      "POST",
+      {
+        committeeName,
+        termId: payload.termId || "",
+        deliverableId,
+      },
+      token
+    );
+
+    return normalizeCommittee(result);
+  }
+
+  async function fetchCommitteeDetail(
+    committeeId: string,
+    token?: string
+  ): Promise<CommitteeDetail> {
+    const detail = await apiCall<CommitteeApiResponse>(
+      `/committees/${encodeURIComponent(committeeId)}`,
+      "GET",
+      undefined,
+      token
+    );
+
+    return {
+      id: String(detail.id),
+      committeeName: detail.committeeName || detail.name || "",
+      termId: detail.termId,
+      professors: detail.professors || [],
+      groupIds: (detail.groups || []).map((group) => String(group.groupId || group.id || "")),
+    };
+  }
+
+  async function assignCommitteeProfessors(
+    committeeId: string,
+    payload: AssignCommitteeProfessorsRequest,
+    token?: string
+  ): Promise<void> {
+    await apiCall<void>(
+      `/committees/${encodeURIComponent(committeeId)}/professors`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
+  async function fetchProfessorCommittees(token?: string): Promise<ProfessorCommittee[]> {
+    return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
+  }
+
+  async function fetchCommittees(token?: string): Promise<Committee[]> {
+    const committees = await apiCall<CommitteeApiResponse[]>("/committees", "GET", undefined, token);
+    return committees.map(normalizeCommittee);
+  }
+
+  async function fetchCommittee(committeeId: string, token?: string): Promise<Committee> {
+    const committee = await apiCall<CommitteeApiResponse>(
+      `/committees/${encodeURIComponent(committeeId)}`,
+      "GET",
+      undefined,
+      token
+    );
+    return normalizeCommittee(committee);
+  }
+
+  async function fetchUnassignedGroups(token?: string): Promise<StudentGroup[]> {
+    const [allGroups, committees] = await Promise.all([
+      fetchCoordinatorGroups(token),
+      fetchCommittees(token),
+    ]);
+
+    const committeeDetails = await Promise.all(
+      committees.map((committee) =>
+        fetchCommittee(committee.id, token).catch(() => null)
+      )
+    );
+
+    const assignedGroupIds = new Set(
+      committeeDetails
+        .filter((committee): committee is Committee => committee !== null)
+        .flatMap((committee) => committee.groups || [])
+        .map((group) => group.id)
+    );
+
+    return allGroups
+      .filter((group) => group.status === "ADVISOR_ASSIGNED" && !assignedGroupIds.has(group.id))
+      .map((group) => ({
+        id: group.id,
+        name: group.groupName,
+        advisorApproved: group.status === "ADVISOR_ASSIGNED",
+        committeeId: null,
+      }));
+  }
+
+  async function assignGroupsToCommittee(
+    committeeId: string,
+    groupIds: string[],
+    token?: string
+  ): Promise<void> {
+    return apiCall<void>(
+      `/committees/${encodeURIComponent(committeeId)}/groups`,
+      "POST",
+      { groupIds },
+      token
+    );
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -662,6 +874,14 @@ export function useApiClient() {
     createSprintDeliverableMapping,
     publishConfig,
     registerProfessor,
+    createCommittee,
+    fetchCommittees,
+    fetchCommittee,
+    fetchCommitteeDetail,
+    assignCommitteeProfessors,
+    fetchProfessorCommittees,
+    fetchUnassignedGroups,
+    assignGroupsToCommittee,
     createGroup,
     fetchMyGroup,
     fetchAvailableAdvisors,
@@ -686,6 +906,6 @@ export function useApiClient() {
     searchStudents,
     sendGroupInvitation,
     fetchGroupInvitations,
-    cancelGroupInvitation,
+    cancelGroupInvitation
   };
 }

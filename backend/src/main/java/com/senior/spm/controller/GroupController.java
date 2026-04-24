@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,9 +24,12 @@ import com.senior.spm.controller.request.SendAdvisorRequestBody;
 import com.senior.spm.controller.response.GroupDetailResponse;
 import com.senior.spm.controller.response.InvitationResponse;
 import com.senior.spm.controller.request.SendInvitationRequest;
+import com.senior.spm.controller.response.SprintTrackingResponse;
 import com.senior.spm.service.AdvisorService;
 import com.senior.spm.service.GroupService;
 import com.senior.spm.service.InvitationService;
+import com.senior.spm.service.ScrumGradingService;
+import com.senior.spm.util.SecurityUtils;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +43,7 @@ public class GroupController {
     private final GroupService groupService;
     private final InvitationService invitationService;
     private final AdvisorService advisorService;
+    private final ScrumGradingService scrumGradingService;
 
     /**
      * Create a new group for the authenticated student.
@@ -64,11 +67,10 @@ public class GroupController {
      */
     @PostMapping
     public ResponseEntity<GroupDetailResponse> createGroup(
-            @Valid @RequestBody CreateGroupRequest request
+            @Valid @RequestBody CreateGroupRequest request,
+            Authentication auth
     ) {
-        // Extract student UUID from JWT
-        UUID studentUUID = extractStudentUUIDFromJWT();
-
+        UUID studentUUID = SecurityUtils.extractPrincipalUUID(auth);
         GroupDetailResponse response = groupService.createGroup(request.getGroupName(), studentUUID);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -94,10 +96,8 @@ public class GroupController {
      * any group
      */
     @GetMapping("/my")
-    public ResponseEntity<GroupDetailResponse> getMyGroup() {
-        // Extract student UUID from JWT
-        UUID studentUUID = extractStudentUUIDFromJWT();
-
+    public ResponseEntity<GroupDetailResponse> getMyGroup(Authentication auth) {
+        UUID studentUUID = SecurityUtils.extractPrincipalUUID(auth);
         GroupDetailResponse response = groupService.getMyGroup(studentUUID);
         return ResponseEntity.ok(response);
     }
@@ -125,11 +125,12 @@ public class GroupController {
     @PostMapping("/{groupId}/invitations")
     public ResponseEntity<InvitationResponse> sendInvitation(
             @PathVariable UUID groupId,
-            @Valid @RequestBody SendInvitationRequest request
+            @Valid @RequestBody SendInvitationRequest request,
+            Authentication auth
     ) {
         InvitationResponse response = invitationService.sendInvitation(
                 groupId,
-                extractStudentUUIDFromJWT(),
+                SecurityUtils.extractPrincipalUUID(auth),
                 request.getTargetStudentId()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -149,11 +150,12 @@ public class GroupController {
      */
     @GetMapping("/{groupId}/invitations")
     public ResponseEntity<List<InvitationResponse>> getGroupInvitations(
-            @PathVariable UUID groupId
+            @PathVariable UUID groupId,
+            Authentication auth
     ) {
         List<InvitationResponse> response = invitationService.getGroupInvitations(
                 groupId,
-                extractStudentUUIDFromJWT()
+                SecurityUtils.extractPrincipalUUID(auth)
         );
         return ResponseEntity.ok(response);
     }
@@ -185,9 +187,10 @@ public class GroupController {
     @PostMapping("/{groupId}/jira")
     public ResponseEntity<BindToolResponse> bindJira(
             @PathVariable UUID groupId,
-            @Valid @RequestBody BindJiraRequest request
+            @Valid @RequestBody BindJiraRequest request,
+            Authentication auth
     ) {
-        UUID requesterUUID = extractStudentUUIDFromJWT();
+        UUID requesterUUID = SecurityUtils.extractPrincipalUUID(auth);
         BindToolResponse response = groupService.bindJira(
             groupId,
             request.getJiraSpaceUrl(),
@@ -226,9 +229,10 @@ public class GroupController {
     @PostMapping("/{groupId}/github")
     public ResponseEntity<BindToolResponse> bindGithub(
             @PathVariable UUID groupId,
-            @Valid @RequestBody BindGithubRequest request
+            @Valid @RequestBody BindGithubRequest request,
+            Authentication auth
     ) {
-        UUID requesterUUID = extractStudentUUIDFromJWT();
+        UUID requesterUUID = SecurityUtils.extractPrincipalUUID(auth);
         BindToolResponse response = groupService.bindGitHub(
                 groupId,
                 request.getGithubOrgName(),
@@ -237,18 +241,6 @@ public class GroupController {
                 requesterUUID
         );
         return ResponseEntity.ok(response);
-    }
-
-    /**
-     * Extract student UUID from SecurityContext Assumes the principal is a
-     * String containing the UUID
-     */
-    private UUID extractStudentUUIDFromJWT() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        // JwtAuthenticationFilter sets the principal to claims.get("id", String.class),
-        // which JWTService writes as student.getId() (the internal UUID PK).
-        String principal = (String) authentication.getPrincipal();
-        return UUID.fromString(principal);
     }
 
     // =========================================================================
@@ -282,8 +274,9 @@ public class GroupController {
     @PostMapping("/{groupId}/advisor-request")
     public ResponseEntity<AdvisorRequestResponse> sendAdvisorRequest(
             @PathVariable UUID groupId,
-            @Valid @RequestBody SendAdvisorRequestBody body) {
-        UUID requesterUUID = extractPrincipalUUID();
+            @Valid @RequestBody SendAdvisorRequestBody body,
+            Authentication auth) {
+        UUID requesterUUID = SecurityUtils.extractPrincipalUUID(auth);
         AdvisorRequestResponse response = advisorService.sendAdvisorRequest(groupId, body.getAdvisorId(), requesterUUID);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -301,8 +294,9 @@ public class GroupController {
      */
     @GetMapping("/{groupId}/advisor-request")
     public ResponseEntity<AdvisorRequestResponse> getAdvisorRequest(
-            @PathVariable UUID groupId) {
-        UUID studentUUID = extractPrincipalUUID();
+            @PathVariable UUID groupId,
+            Authentication auth) {
+        UUID studentUUID = SecurityUtils.extractPrincipalUUID(auth);
         AdvisorRequestResponse response = advisorService.getAdvisorRequest(groupId, studentUUID);
         return ResponseEntity.ok(response);
     }
@@ -320,15 +314,24 @@ public class GroupController {
      */
     @DeleteMapping("/{groupId}/advisor-request")
     public ResponseEntity<AdvisorRequestResponse> cancelAdvisorRequest(
-            @PathVariable UUID groupId) {
-        UUID requesterUUID = extractPrincipalUUID();
+            @PathVariable UUID groupId,
+            Authentication auth) {
+        UUID requesterUUID = SecurityUtils.extractPrincipalUUID(auth);
         AdvisorRequestResponse response = advisorService.cancelAdvisorRequest(groupId, requesterUUID);
         return ResponseEntity.ok(response);
     }
 
-    // Code duplication but i cant care less
-    private UUID extractPrincipalUUID() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return UUID.fromString((String) auth.getPrincipal());
+    // =========================================================================
+    // STUDENT — Sprint tracking (P5)
+    // GET /api/groups/{groupId}/sprints/{sprintId}/tracking
+    // Returns 200 + issues:[] when sprint not yet processed (never 404)
+    // =========================================================================
+    @GetMapping("/{groupId}/sprints/{sprintId}/tracking")
+    public ResponseEntity<SprintTrackingResponse> getStudentGroupTracking(
+            @PathVariable UUID groupId,
+            @PathVariable UUID sprintId,
+            Authentication auth) {
+        UUID studentId = SecurityUtils.extractPrincipalUUID(auth);
+        return ResponseEntity.ok(scrumGradingService.getStudentGroupTracking(studentId, groupId, sprintId));
     }
 }

@@ -13,4 +13,6 @@ import com.senior.spm.entity.Sprint;
 public interface SprintRepository extends JpaRepository<Sprint, UUID> {
 
     List<Sprint> findByEndDate(LocalDate endDate);
+
+    List<Sprint> findByStartDateLessThanEqualAndEndDateGreaterThanEqual(LocalDate startDate, LocalDate endDate);
 }

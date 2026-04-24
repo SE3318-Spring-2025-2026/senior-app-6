@@ -3,9 +3,10 @@ package com.senior.spm.controller.request;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.validator.constraints.UniqueElements;
+
 import com.senior.spm.entity.CommitteeProfessor.ProfessorRole;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -14,7 +15,7 @@ import lombok.Data;
 public class AddProfessorsToCommitteeRequest {
 
     @NotEmpty
-    @Valid
+    @UniqueElements
     private List<ProfessorEntry> professors;
 
     @Data
