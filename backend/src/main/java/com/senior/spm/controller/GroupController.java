@@ -197,6 +197,7 @@ public class GroupController {
             request.getJiraEmail(),
             request.getJiraProjectKey(),
             request.getJiraApiToken(),
+            request.getJiraTokenExpiresAt(),
             requesterUUID
         );
         return ResponseEntity.ok(response);
@@ -236,6 +237,7 @@ public class GroupController {
                 groupId,
                 request.getGithubOrgName(),
                 request.getGithubPat(),
+                request.getGithubRepoName(),
                 requesterUUID
         );
         return ResponseEntity.ok(response);

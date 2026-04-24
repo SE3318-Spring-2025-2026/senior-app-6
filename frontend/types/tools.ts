@@ -3,11 +3,13 @@ export interface BindJiraRequest {
   jiraEmail: string;
   jiraProjectKey: string;
   jiraApiToken: string;
+  jiraTokenExpiresAt?: string;
 }
 
 export interface BindGithubRequest {
   githubOrgName: string;
   githubPat: string;
+  githubRepoName: string;
 }
 
 import type { GroupStatus } from "./group";

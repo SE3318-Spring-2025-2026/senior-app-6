@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CheckCircle2, Lock, Loader2, Info } from "lucide-vue-next";
+import { CheckCircle2, Lock, Loader2, Info, AlertTriangle, AlertCircle } from "lucide-vue-next";
 
 defineOptions({
   name: "ToolBindingFormCard",
@@ -8,13 +8,15 @@ defineOptions({
 type ToolBindingField = {
   name: string;
   label: string;
-  type?: "text" | "url" | "password" | "email";
+  type?: "text" | "url" | "password" | "email" | "date";
   placeholder?: string;
   autocomplete?: string;
   helpText?: string;
   lockedValue?: string;
   lockedPlaceholder?: string;
 };
+
+type ToolStatus = "unbound" | "healthy" | "expiring" | "invalid";
 
 const props = withDefaults(defineProps<{
   title: string;
@@ -27,12 +29,14 @@ const props = withDefaults(defineProps<{
   loading?: boolean;
   locked?: boolean;
   submitLabel?: string;
+  toolStatus?: ToolStatus;
 }>(), {
   fieldErrors: () => ({}),
   errorMessage: null,
   loading: false,
   locked: false,
   submitLabel: "Bind credentials",
+  toolStatus: "unbound",
 });
 
 const emit = defineEmits<{
@@ -94,11 +98,25 @@ function handleSubmit() {
             {{ title }}
           </h2>
           <span
-            v-if="locked"
+            v-if="toolStatus === 'healthy'"
             class="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
           >
             <CheckCircle2 class="h-3.5 w-3.5" />
-            Bound
+            Active
+          </span>
+          <span
+            v-else-if="toolStatus === 'expiring'"
+            class="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+          >
+            <AlertTriangle class="h-3.5 w-3.5" />
+            Expiring Soon
+          </span>
+          <span
+            v-else-if="toolStatus === 'invalid'"
+            class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
+          >
+            <AlertCircle class="h-3.5 w-3.5" />
+            Token Invalid
           </span>
         </div>
         <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
@@ -108,20 +126,19 @@ function handleSubmit() {
 
       <div
         class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border"
-        :class="locked
+        :class="toolStatus === 'healthy'
           ? 'border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-          : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'"
+          : toolStatus === 'expiring'
+            ? 'border-amber-200 bg-amber-50 text-amber-600 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300'
+            : toolStatus === 'invalid'
+              ? 'border-red-200 bg-red-50 text-red-600 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300'
+              : 'border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'"
       >
-        <CheckCircle2 v-if="locked" class="h-5 w-5" />
+        <CheckCircle2 v-if="toolStatus === 'healthy'" class="h-5 w-5" />
+        <AlertTriangle v-else-if="toolStatus === 'expiring'" class="h-5 w-5" />
+        <AlertCircle v-else-if="toolStatus === 'invalid'" class="h-5 w-5" />
         <Lock v-else class="h-5 w-5" />
       </div>
-    </div>
-
-    <div
-      v-if="locked"
-      class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
-    >
-      {{ toolName }} credentials are already bound for this group and are now read-only.
     </div>
 
     <div
