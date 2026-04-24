@@ -45,7 +45,6 @@
 
 		return (
 			group.value.members.find((member) =>
-				member.studentId === currentStudent.value?.id ||
 				member.studentId === currentStudent.value?.studentId
 			) || null
 		);

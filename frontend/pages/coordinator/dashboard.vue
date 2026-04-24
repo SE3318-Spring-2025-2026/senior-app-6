@@ -19,9 +19,7 @@ import type { SanitizationReport } from "~/types/sanitization";
 	const showForceWarning = ref(false);
 
 	const autoRejectedCount = computed(() =>
-		sanitizationReport.value?.autoRejectedRequestCount ??
-		sanitizationReport.value?.disbandedCount ??
-		0
+		sanitizationReport.value?.autoRejectedRequestCount ?? 0
 	);
 
 	const triggeredAtLabel = computed(() => {
