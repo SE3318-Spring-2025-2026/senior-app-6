@@ -12,7 +12,7 @@
 	} from "lucide-vue-next";
 
 	import { GitHubIcon as Github } from "vue3-simple-icons";
-import type { StaffUser } from "~/types/User";
+import type { StaffUser } from "~/types/user";
 
 	const router = useRouter();
 	const route = useRoute();
