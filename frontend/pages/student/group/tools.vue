@@ -18,6 +18,8 @@ const { getAuthToken, fetchMyGroup, bindJiraTool, bindGithubTool } = useApiClien
 const authStore = useAuthStore();
 const router = useRouter();
 
+const EXPIRY_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
+
 const group = ref<GroupDetailResponse | null>(null);
 const isLoading = ref(true);
 const loadError = ref<string | null>(null);
@@ -91,14 +93,14 @@ const githubPatExpiringSoon = computed(() => {
   if (githubTokenInvalid.value) return false;
   const exp = group.value?.githubPatExpiresAt;
   if (!exp) return false;
-  return new Date(exp).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
+  return new Date(exp).getTime() - Date.now() < EXPIRY_THRESHOLD_MS;
 });
 
 const jiraTokenExpiringSoon = computed(() => {
   if (jiraTokenInvalid.value) return false;
   const exp = group.value?.jiraTokenExpiresAt;
   if (!exp) return false;
-  return new Date(exp).getTime() - Date.now() < 7 * 24 * 60 * 60 * 1000;
+  return new Date(exp).getTime() - Date.now() < EXPIRY_THRESHOLD_MS;
 });
 
 function formatDate(dateStr?: string | null): string {
@@ -420,6 +422,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
             :error-message="jiraError"
             :loading="jiraSubmitting"
             :tool-status="jiraToolStatus"
+            :locked="group?.status === 'DISBANDED'"
             :submit-label="jiraToolStatus === 'unbound' ? 'Bind JIRA' : 'Update JIRA Credentials'"
             @submit="handleJiraSubmit"
           />
@@ -460,6 +463,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
             :error-message="githubError"
             :loading="githubSubmitting"
             :tool-status="githubToolStatus"
+            :locked="group?.status === 'DISBANDED'"
             :submit-label="githubToolStatus === 'unbound' ? 'Bind GitHub' : 'Update GitHub Credentials'"
             @submit="handleGithubSubmit"
           />

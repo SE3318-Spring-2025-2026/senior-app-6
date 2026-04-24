@@ -1,5 +1,8 @@
 package com.senior.spm.service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -42,7 +45,7 @@ public class GitHubValidationService {
      * Result record returned by validate(). Contains whether the PAT is valid
      * and the optional expiry date extracted from the GitHub response header.
      */
-    public record GitHubValidationResult(boolean valid, java.time.LocalDateTime tokenExpiresAt) {}
+    public record GitHubValidationResult(LocalDateTime tokenExpiresAt) {}
 
     /**
      * Runs the two-step GitHub validation.
@@ -51,7 +54,7 @@ public class GitHubValidationService {
      *                                   404 → org not found,
      *                                   403 on second call → missing 'repo' scope)
      */
-    public GitHubValidationResult validate(String githubOrgName, String githubPat) {
+    public GitHubValidationResult validate(String githubOrgName, String githubPat, String githubRepoName) {
         var headers = new HttpHeaders();
         // GitHub REST API requires a User-Agent header
         headers.set(HttpHeaders.USER_AGENT, "SPM-Senior-App");
@@ -60,13 +63,16 @@ public class GitHubValidationService {
         var entity = new HttpEntity<>(headers);
 
         // Step 1: verify org existence and PAT validity — also extracts expiry header
-        java.time.LocalDateTime expiresAt = callStep1OrgExists(githubOrgName, entity);
+        LocalDateTime expiresAt = callStep1OrgExists(githubOrgName, entity);
 
         // Step 2: verify the PAT has 'repo' scope
         // Only reached when Step 1 succeeds (200 OK).
         callStep2RepoScope(githubOrgName, entity);
 
-        return new GitHubValidationResult(true, expiresAt);
+        // Step 3: verify the specific repository exists
+        callStep3RepoExists(githubOrgName, githubRepoName, entity);
+
+        return new GitHubValidationResult(expiresAt);
     }
 
     /**
@@ -74,7 +80,7 @@ public class GitHubValidationService {
      * 401 → invalid PAT, 404 → org not found, anything else → rethrow as
      * unreachable. Returns the value of GitHub-Authentication-Token-Expiration header if present.
      */
-    private java.time.LocalDateTime callStep1OrgExists(String githubOrgName, HttpEntity<?> entity) {
+    private LocalDateTime callStep1OrgExists(String githubOrgName, HttpEntity<?> entity) {
         var url = githubApiBase + "/orgs/" + githubOrgName;
         try {
             ResponseEntity<Void> response = restTemplate.exchange(url, HttpMethod.GET, entity, Void.class);
@@ -84,8 +90,8 @@ public class GitHubValidationService {
                 // Format: "2026-06-01 00:00:00 UTC"
                 try {
                     String datePart = expiryHeader.replace(" UTC", "").trim();
-                    java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                    return java.time.LocalDateTime.parse(datePart, formatter);
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    return LocalDateTime.parse(datePart, formatter);
                 } catch (Exception e) {
                     return null;
                 }
@@ -136,6 +142,31 @@ public class GitHubValidationService {
         } catch (ResourceAccessException ex) {
             // Timeout on the second call — scope check inconclusive; reject to be safe.
             throw new GitHubValidationException("GitHub validation failed: PAT lacks required 'repo' scope");
+        }
+    }
+
+    /**
+     * GET /repos/{githubOrgName}/{githubRepoName}
+     * Verifies that the specific repository exists and is accessible.
+     */
+    private void callStep3RepoExists(String githubOrgName, String githubRepoName, HttpEntity<?> entity) {
+        var url = githubApiBase + "/repos/" + githubOrgName + "/" + githubRepoName;
+        try {
+            restTemplate.exchange(url, HttpMethod.GET, entity, Void.class);
+
+        } catch (HttpClientErrorException ex) {
+            HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+
+            if (status == HttpStatus.NOT_FOUND) {
+                throw new GitHubValidationException(
+                        "GitHub validation failed: Repository '" + githubRepoName + "' not found in organization '" + githubOrgName + "'");
+            }
+
+            // Any other 4xx (e.g. 403) likely means access problems.
+            throw new GitHubValidationException("GitHub validation failed: Repository '" + githubRepoName + "' is inaccessible");
+
+        } catch (ResourceAccessException ex) {
+            throw new GitHubValidationException("GitHub validation failed: Repository check timed out");
         }
     }
 }

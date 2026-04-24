@@ -1,5 +1,6 @@
 package com.senior.spm.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -70,13 +71,13 @@ public class ProjectGroup {
     private Boolean githubTokenValid;
 
     @Column(nullable = true)
-    private java.time.LocalDateTime githubPatExpiresAt;
+    private LocalDateTime githubPatExpiresAt;
 
     @Column(nullable = true)
     private Boolean jiraTokenValid;
 
     @Column(nullable = true)
-    private java.time.LocalDate jiraTokenExpiresAt;
+    private LocalDate jiraTokenExpiresAt;
 
     @ManyToOne
     @JoinColumn(name = "advisor_id", nullable = true, foreignKey = @ForeignKey(name = "fk_project_group_advisor"))
