@@ -9,6 +9,8 @@
 		TrendingUp,
 		Link2,
 	} from "lucide-vue-next";
+import type { Sprint } from "~/types/sprint";
+import type { Deliverable } from "~/types/deliverable";
 
 	const {
 		createSprint,

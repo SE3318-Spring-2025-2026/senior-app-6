@@ -7,6 +7,8 @@
 		ShieldAlert,
 		Loader as LoaderIcon,
 	} from "lucide-vue-next";
+import type { Deliverable } from "~/types/deliverable";
+import type { Sprint } from "~/types/sprint";
 
 	const { getAuthToken, fetchSprints, fetchDeliverables, publishConfig } = useApiClient();
 

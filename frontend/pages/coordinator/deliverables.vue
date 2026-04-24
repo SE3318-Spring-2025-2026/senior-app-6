@@ -1,6 +1,7 @@
 <script setup lang="ts">
 	import { z } from "zod";
 	import { CalendarDays, CheckCircle2, Edit, Plus, AlertCircle, Loader as LoaderIcon } from "lucide-vue-next";
+import type { Deliverable } from "~/types/deliverable";
 
 	const { createDeliverable, updateDeliverable, getAuthToken, fetchDeliverables } = useApiClient();
 

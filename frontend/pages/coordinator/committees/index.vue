@@ -179,7 +179,7 @@ async function loadCommittees() {
   try {
     const token = getAuthToken();
     if (!token) throw new Error("Authentication required. Please log in.");
-    committees.value = await fetchCommittees(token);
+    committees.value = await fetchCommittees(undefined, token);
   } catch (error) {
     const message =
       error && typeof error === "object" && "message" in error

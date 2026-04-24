@@ -507,35 +507,6 @@ export function useApiClient() {
     return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
   }
 
-  async function fetchUnassignedGroups(token?: string): Promise<StudentGroup[]> {
-    const [allGroups, committees] = await Promise.all([
-      fetchCoordinatorGroups(token),
-      fetchCommittees(token),
-    ]);
-
-    const committeeDetails = await Promise.all(
-      committees.map((committee) =>
-        fetchCommitteeDetail(committee.id, token).catch(() => null)
-      )
-    );
-
-    const assignedGroupIds = new Set(
-      committeeDetails
-        .filter((committee): committee is Committee => committee !== null)
-        .flatMap((committee) => committee.groups || [])
-        .map((group) => group.id)
-    );
-
-    return allGroups
-      .filter((group) => group.status === "ADVISOR_ASSIGNED" && !assignedGroupIds.has(group.id))
-      .map((group) => ({
-        id: group.id,
-        name: group.groupName,
-        advisorApproved: group.status === "ADVISOR_ASSIGNED",
-        committeeId: null,
-      }));
-  }
-
   return {
     getAuthToken,
     loginFaculty,
@@ -560,7 +531,6 @@ export function useApiClient() {
     fetchCommittees,
     fetchCommittee: fetchCommitteeDetail,
     fetchCommitteeDetail,
-		fetchUnassignedGroups,
     addCommitteeProfessors,
     addCommitteeGroups,
     fetchProfessorCommittees,

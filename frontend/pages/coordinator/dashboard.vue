@@ -1,6 +1,7 @@
 <script setup lang="ts">
 	import { AlertTriangle, LogOut, Play, FileText, ClipboardCheck, Send, ShieldX, Users, X, Building } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
+import type { SanitizationReport } from "~/types/sanitization";
 
 	definePageMeta({
 		middleware: "auth",
@@ -19,7 +20,7 @@
 
 	const autoRejectedCount = computed(() =>
 		sanitizationReport.value?.autoRejectedRequestCount ??
-		sanitizationReport.value?.rejectedRequestCount ??
+		sanitizationReport.value?.disbandedCount ??
 		0
 	);
 

@@ -5,6 +5,8 @@
 	import { usePendingInvitations } from "~/composables/usePendingInvitations";
 	import type { GroupDetailResponse } from "~/types/group";
 	import { useAuthStore } from "~/stores/auth";
+import type { SentGroupInvitation } from "~/types/invitation";
+import type { StudentSearchResult } from "~/types/student";
 
 	definePageMeta({
 		middleware: "auth",
