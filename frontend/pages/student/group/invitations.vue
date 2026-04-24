@@ -1,3 +1,233 @@
+
+<script setup lang="ts">
+	import { computed, onMounted, ref } from "vue";
+	import { AlertCircle, ArrowLeft, MailOpen, MailX, Search, Send, UserRoundPlus, XCircle } from "lucide-vue-next";
+	import { usePendingInvitations } from "~/composables/usePendingInvitations";
+	import type { GroupDetailResponse } from "~/types/group";
+	import { useAuthStore } from "~/stores/auth";
+import type { SentGroupInvitation } from "~/types/invitation";
+import type { StudentSearchResult } from "~/types/student";
+
+	definePageMeta({
+		middleware: "auth",
+		roles: ["Student"]
+	});
+
+	const {
+		fetchInvitations,
+		invitations: pendingInvitations,
+		count: pendingCount,
+		isLoading,
+		error,
+		lastFetchTime,
+		acceptInvitation,
+		declineInvitation
+	} = usePendingInvitations();
+
+	const {
+		getAuthToken,
+		fetchMyGroup,
+		searchStudents,
+		sendGroupInvitation,
+		fetchGroupInvitations,
+		cancelGroupInvitation
+	} = useApiClient();
+
+	const authStore = useAuthStore();
+
+	// ─── Group + leader state ────────────────────────────────────────────
+	const myGroup = ref<GroupDetailResponse | null>(null);
+
+	const isLeader = computed(() => {
+		if (!myGroup.value || !authStore.userInfo) return false;
+		const userInfo = authStore.userInfo;
+		const me = myGroup.value.members.find(
+			(m) => m.studentId === (userInfo.userType === "Student" ? userInfo.studentId : undefined)
+		);
+		return me?.role === "TEAM_LEADER";
+	});
+
+	const canSendInvitations = computed(() => {
+		if (!myGroup.value) return false;
+		const { status } = myGroup.value;
+		return status === "FORMING" || status === "TOOLS_PENDING";
+	});
+
+	const sendBlockedReason = computed(() => {
+		if (!myGroup.value) return "";
+		switch (myGroup.value.status) {
+			case "DISBANDED": return "This group has been disbanded.";
+			case "TOOLS_BOUND":
+			case "ADVISOR_ASSIGNED": return "Roster is locked after tool binding.";
+			default: return "";
+		}
+	});
+
+	// ─── Search state ────────────────────────────────────────────────────
+	const searchQuery = ref("");
+	const searchResults = ref<StudentSearchResult[]>([]);
+	const isSearching = ref(false);
+	const selectedStudent = ref<StudentSearchResult | null>(null);
+	const sendError = ref("");
+	const sendSuccess = ref(false);
+	const isSending = ref(false);
+	let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+
+	const onSearchInput = () => {
+		sendError.value = "";
+		sendSuccess.value = false;
+		selectedStudent.value = null;
+		searchResults.value = [];
+		if (searchTimeout) clearTimeout(searchTimeout);
+		if (searchQuery.value.trim().length < 3) return;
+		searchTimeout = setTimeout(async () => {
+			isSearching.value = true;
+			try {
+				const token = getAuthToken();
+				searchResults.value = await searchStudents(searchQuery.value.trim(), token ?? undefined);
+			} catch {
+				searchResults.value = [];
+			} finally {
+				isSearching.value = false;
+			}
+		}, 300);
+	};
+
+	const selectStudent = (student: StudentSearchResult) => {
+		selectedStudent.value = student;
+		searchQuery.value = student.studentId;
+		searchResults.value = [];
+	};
+
+	const clearSelection = () => {
+		selectedStudent.value = null;
+		searchQuery.value = "";
+		searchResults.value = [];
+	};
+
+	// ─── Send invitation ─────────────────────────────────────────────────
+	const sentInvitations = ref<SentGroupInvitation[]>([]);
+	const isSentLoading = ref(false);
+
+	const handleSendInvitation = async () => {
+		if (!selectedStudent.value || !myGroup.value) return;
+		isSending.value = true;
+		sendError.value = "";
+		sendSuccess.value = false;
+		try {
+			const token = getAuthToken();
+			await sendGroupInvitation(myGroup.value.id, selectedStudent.value.studentId, token ?? undefined);
+			sendSuccess.value = true;
+			clearSelection();
+			await loadSentInvitations();
+		} catch (err: unknown) {
+			const apiErr = err as { message?: string };
+			sendError.value = apiErr?.message ?? "Failed to send invitation.";
+		} finally {
+			isSending.value = false;
+		}
+	};
+
+	// ─── Sent invitations list ───────────────────────────────────────────
+	const loadSentInvitations = async () => {
+		if (!myGroup.value) return;
+		isSentLoading.value = true;
+		try {
+			const token = getAuthToken();
+			sentInvitations.value = await fetchGroupInvitations(myGroup.value.id, token ?? undefined);
+		} catch {
+			sentInvitations.value = [];
+		} finally {
+			isSentLoading.value = false;
+		}
+	};
+
+	const cancellingId = ref<string | null>(null);
+
+	const handleCancelInvitation = async (invitationId: string) => {
+		cancellingId.value = invitationId;
+		try {
+			const token = getAuthToken();
+			await cancelGroupInvitation(invitationId, token ?? undefined);
+			await loadSentInvitations();
+		} catch {
+			// list unchanged — user can retry
+		} finally {
+			cancellingId.value = null;
+		}
+	};
+
+	// ─── Status badge helpers ─────────────────────────────────────────────
+	const statusClass = (status: string) => {
+		switch (status) {
+			case "PENDING":
+				return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+			case "ACCEPTED":
+				return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+			default:
+				return "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400";
+		}
+	};
+
+	const formatDate = (iso: string) =>
+		new Date(iso).toLocaleDateString(undefined, {
+			month: "short",
+			day: "numeric",
+			hour: "2-digit",
+			minute: "2-digit"
+		});
+
+	// ─── Inbox ────────────────────────────────────────────────────────────
+	const lastUpdateTime = ref<string>("");
+
+	const refreshInvitations = async () => {
+		await fetchInvitations();
+		updateLastUpdateTime();
+	};
+
+	const updateLastUpdateTime = () => {
+		if (lastFetchTime.value) {
+			const diffSeconds = Math.floor((new Date().getTime() - lastFetchTime.value.getTime()) / 1000);
+			if (diffSeconds < 60) lastUpdateTime.value = "Just now";
+			else if (diffSeconds < 3600) lastUpdateTime.value = `${Math.floor(diffSeconds / 60)}m ago`;
+			else if (diffSeconds < 86400) lastUpdateTime.value = `${Math.floor(diffSeconds / 3600)}h ago`;
+			else lastUpdateTime.value = lastFetchTime.value.toLocaleDateString();
+		}
+	};
+
+	const handleAccept = async (invitationId: string) => {
+		try {
+			await acceptInvitation(invitationId);
+			updateLastUpdateTime();
+		} catch (err) {
+			console.error("Failed to accept invitation:", err);
+		}
+	};
+
+	const handleDecline = async (invitationId: string) => {
+		try {
+			await declineInvitation(invitationId);
+			updateLastUpdateTime();
+		} catch (err) {
+			console.error("Failed to decline invitation:", err);
+		}
+	};
+
+	// ─── Mount ────────────────────────────────────────────────────────────
+	onMounted(async () => {
+		await refreshInvitations();
+		try {
+			const token = getAuthToken();
+			myGroup.value = await fetchMyGroup(token ?? undefined);
+			if (isLeader.value) {
+				await loadSentInvitations();
+			}
+		} catch {
+			// no group or not in group — leader section hidden
+		}
+	});
+</script>
+
 <template>
 	<main
 		class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8"
@@ -264,231 +494,3 @@
 		</div>
 	</main>
 </template>
-
-<script setup lang="ts">
-	import { computed, onMounted, ref } from "vue";
-	import { AlertCircle, ArrowLeft, MailOpen, MailX, Search, Send, UserRoundPlus, XCircle } from "lucide-vue-next";
-	import { usePendingInvitations } from "~/composables/usePendingInvitations";
-	import type { StudentSearchResult, SentGroupInvitation } from "~/composables/useApiClient";
-	import type { GroupDetailResponse } from "~/types/group";
-	import { useAuthStore } from "~/stores/auth";
-
-	definePageMeta({
-		middleware: "auth",
-		roles: ["Student"]
-	});
-
-	const {
-		fetchInvitations,
-		invitations: pendingInvitations,
-		count: pendingCount,
-		isLoading,
-		error,
-		lastFetchTime,
-		acceptInvitation,
-		declineInvitation
-	} = usePendingInvitations();
-
-	const {
-		getAuthToken,
-		fetchMyGroup,
-		searchStudents,
-		sendGroupInvitation,
-		fetchGroupInvitations,
-		cancelGroupInvitation
-	} = useApiClient();
-
-	const authStore = useAuthStore();
-
-	// ─── Group + leader state ────────────────────────────────────────────
-	const myGroup = ref<GroupDetailResponse | null>(null);
-
-	const isLeader = computed(() => {
-		if (!myGroup.value || !authStore.userInfo) return false;
-		const userInfo = authStore.userInfo;
-		const me = myGroup.value.members.find(
-			(m) => m.studentId === (userInfo.userType === "Student" ? userInfo.studentId : undefined)
-		);
-		return me?.role === "TEAM_LEADER";
-	});
-
-	const canSendInvitations = computed(() => {
-		if (!myGroup.value) return false;
-		const { status } = myGroup.value;
-		return status === "FORMING" || status === "TOOLS_PENDING";
-	});
-
-	const sendBlockedReason = computed(() => {
-		if (!myGroup.value) return "";
-		switch (myGroup.value.status) {
-			case "DISBANDED": return "This group has been disbanded.";
-			case "TOOLS_BOUND":
-			case "ADVISOR_ASSIGNED": return "Roster is locked after tool binding.";
-			default: return "";
-		}
-	});
-
-	// ─── Search state ────────────────────────────────────────────────────
-	const searchQuery = ref("");
-	const searchResults = ref<StudentSearchResult[]>([]);
-	const isSearching = ref(false);
-	const selectedStudent = ref<StudentSearchResult | null>(null);
-	const sendError = ref("");
-	const sendSuccess = ref(false);
-	const isSending = ref(false);
-	let searchTimeout: ReturnType<typeof setTimeout> | null = null;
-
-	const onSearchInput = () => {
-		sendError.value = "";
-		sendSuccess.value = false;
-		selectedStudent.value = null;
-		searchResults.value = [];
-		if (searchTimeout) clearTimeout(searchTimeout);
-		if (searchQuery.value.trim().length < 3) return;
-		searchTimeout = setTimeout(async () => {
-			isSearching.value = true;
-			try {
-				const token = getAuthToken();
-				searchResults.value = await searchStudents(searchQuery.value.trim(), token ?? undefined);
-			} catch {
-				searchResults.value = [];
-			} finally {
-				isSearching.value = false;
-			}
-		}, 300);
-	};
-
-	const selectStudent = (student: StudentSearchResult) => {
-		selectedStudent.value = student;
-		searchQuery.value = student.studentId;
-		searchResults.value = [];
-	};
-
-	const clearSelection = () => {
-		selectedStudent.value = null;
-		searchQuery.value = "";
-		searchResults.value = [];
-	};
-
-	// ─── Send invitation ─────────────────────────────────────────────────
-	const sentInvitations = ref<SentGroupInvitation[]>([]);
-	const isSentLoading = ref(false);
-
-	const handleSendInvitation = async () => {
-		if (!selectedStudent.value || !myGroup.value) return;
-		isSending.value = true;
-		sendError.value = "";
-		sendSuccess.value = false;
-		try {
-			const token = getAuthToken();
-			await sendGroupInvitation(myGroup.value.id, selectedStudent.value.studentId, token ?? undefined);
-			sendSuccess.value = true;
-			clearSelection();
-			await loadSentInvitations();
-		} catch (err: unknown) {
-			const apiErr = err as { message?: string };
-			sendError.value = apiErr?.message ?? "Failed to send invitation.";
-		} finally {
-			isSending.value = false;
-		}
-	};
-
-	// ─── Sent invitations list ───────────────────────────────────────────
-	const loadSentInvitations = async () => {
-		if (!myGroup.value) return;
-		isSentLoading.value = true;
-		try {
-			const token = getAuthToken();
-			sentInvitations.value = await fetchGroupInvitations(myGroup.value.id, token ?? undefined);
-		} catch {
-			sentInvitations.value = [];
-		} finally {
-			isSentLoading.value = false;
-		}
-	};
-
-	const cancellingId = ref<string | null>(null);
-
-	const handleCancelInvitation = async (invitationId: string) => {
-		cancellingId.value = invitationId;
-		try {
-			const token = getAuthToken();
-			await cancelGroupInvitation(invitationId, token ?? undefined);
-			await loadSentInvitations();
-		} catch {
-			// list unchanged — user can retry
-		} finally {
-			cancellingId.value = null;
-		}
-	};
-
-	// ─── Status badge helpers ─────────────────────────────────────────────
-	const statusClass = (status: string) => {
-		switch (status) {
-			case "PENDING":
-				return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-			case "ACCEPTED":
-				return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-			default:
-				return "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400";
-		}
-	};
-
-	const formatDate = (iso: string) =>
-		new Date(iso).toLocaleDateString(undefined, {
-			month: "short",
-			day: "numeric",
-			hour: "2-digit",
-			minute: "2-digit"
-		});
-
-	// ─── Inbox ────────────────────────────────────────────────────────────
-	const lastUpdateTime = ref<string>("");
-
-	const refreshInvitations = async () => {
-		await fetchInvitations();
-		updateLastUpdateTime();
-	};
-
-	const updateLastUpdateTime = () => {
-		if (lastFetchTime.value) {
-			const diffSeconds = Math.floor((new Date().getTime() - lastFetchTime.value.getTime()) / 1000);
-			if (diffSeconds < 60) lastUpdateTime.value = "Just now";
-			else if (diffSeconds < 3600) lastUpdateTime.value = `${Math.floor(diffSeconds / 60)}m ago`;
-			else if (diffSeconds < 86400) lastUpdateTime.value = `${Math.floor(diffSeconds / 3600)}h ago`;
-			else lastUpdateTime.value = lastFetchTime.value.toLocaleDateString();
-		}
-	};
-
-	const handleAccept = async (invitationId: string) => {
-		try {
-			await acceptInvitation(invitationId);
-			updateLastUpdateTime();
-		} catch (err) {
-			console.error("Failed to accept invitation:", err);
-		}
-	};
-
-	const handleDecline = async (invitationId: string) => {
-		try {
-			await declineInvitation(invitationId);
-			updateLastUpdateTime();
-		} catch (err) {
-			console.error("Failed to decline invitation:", err);
-		}
-	};
-
-	// ─── Mount ────────────────────────────────────────────────────────────
-	onMounted(async () => {
-		await refreshInvitations();
-		try {
-			const token = getAuthToken();
-			myGroup.value = await fetchMyGroup(token ?? undefined);
-			if (isLeader.value) {
-				await loadSentInvitations();
-			}
-		} catch {
-			// no group or not in group — leader section hidden
-		}
-	});
-</script>

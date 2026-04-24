@@ -9,7 +9,8 @@
 		TrendingUp,
 		Link2,
 	} from "lucide-vue-next";
-	import type { Sprint, Deliverable } from "~/composables/useApiClient";
+import type { Sprint } from "~/types/sprint";
+import type { Deliverable } from "~/types/deliverable";
 
 	const {
 		createSprint,
@@ -182,7 +183,7 @@
 
 			await updateSprintTarget(editingTargetId.value, result.data.storyPointTarget, token);
 
-			sprints.value = sprints.value.map((s) =>
+			sprints.value = sprints.value.map((s: Sprint) =>
 				s.id === editingTargetId.value ? { ...s, storyPointTarget: result.data.storyPointTarget } : s
 			);
 

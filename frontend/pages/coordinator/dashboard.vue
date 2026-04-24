@@ -1,7 +1,7 @@
 <script setup lang="ts">
 	import { AlertTriangle, LogOut, Play, FileText, ClipboardCheck, Send, ShieldX, Users, X, Building } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
-	import type { SanitizationReport } from "~/composables/useApiClient";
+import type { SanitizationReport } from "~/types/sanitization";
 
 	definePageMeta({
 		middleware: "auth",
@@ -19,9 +19,7 @@
 	const showForceWarning = ref(false);
 
 	const autoRejectedCount = computed(() =>
-		sanitizationReport.value?.autoRejectedRequestCount ??
-		sanitizationReport.value?.rejectedRequestCount ??
-		0
+		sanitizationReport.value?.autoRejectedRequestCount ?? 0
 	);
 
 	const triggeredAtLabel = computed(() => {
