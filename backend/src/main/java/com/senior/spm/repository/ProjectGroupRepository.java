@@ -28,4 +28,6 @@ public interface ProjectGroupRepository extends JpaRepository<ProjectGroup, UUID
     List<ProjectGroup> findByTermIdAndStatusInAndAdvisorIsNull(String termId, List<GroupStatus> statuses);
 
     List<ProjectGroup> findByAdvisor_IdAndTermId(UUID advisorId, String termId);
+
+    List<ProjectGroup> findByTermIdAndStatusIn(String termId, List<GroupStatus> statuses);
 }
