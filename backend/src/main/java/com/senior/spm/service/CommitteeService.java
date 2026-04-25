@@ -81,10 +81,10 @@ public class CommitteeService {
 
         return committees.stream()
                 .map(c -> new CommitteeSummaryResponse(
-                        c.getId(),
-                        c.getCommitteeName(),
-                        c.getTermId(),
-                        c.getDeliverable().getId()))
+                c.getId(),
+                c.getCommitteeName(),
+                c.getTermId(),
+                c.getDeliverable().getId()))
                 .toList();
     }
 
@@ -112,6 +112,8 @@ public class CommitteeService {
 
         var deliverableId = committee.getDeliverable().getId();
         var responses = new ArrayList<CommitteeProfessorResponse>();
+
+        committee.getProfessors().clear();
 
         for (var entry : request.getProfessors()) {
             var professor = staffUserRepository.findById(entry.getProfessorId())
@@ -221,19 +223,19 @@ public class CommitteeService {
 
                     var groups = committee.getGroups().stream()
                             .map(group -> new ProfessorCommitteeDashboardResponse.GroupItem(
-                                    group.getId(),
-                                    group.getGroupName(),
-                                    group.getStatus().name()
-                            ))
+                            group.getId(),
+                            group.getGroupName(),
+                            group.getStatus().name()
+                    ))
                             .sorted((left, right) -> left.getGroupName().compareToIgnoreCase(right.getGroupName()))
                             .toList();
 
                     var rubrics = rubricCriterionRepository.findAllByDeliverableId(deliverable.getId()).stream()
                             .map(rubric -> new ProfessorCommitteeDashboardResponse.RubricItem(
-                                    rubric.getCriterionName(),
-                                    rubric.getGradingType(),
-                                    rubric.getWeight()
-                            ))
+                            rubric.getCriterionName(),
+                            rubric.getGradingType(),
+                            rubric.getWeight()
+                    ))
                             .sorted((left, right) -> left.getCriterionName().compareToIgnoreCase(right.getCriterionName()))
                             .toList();
 
@@ -276,12 +278,12 @@ public class CommitteeService {
 
         List<CommitteeAssignmentNotificationPayload> notifications = committee.getProfessors().stream()
                 .map(committeeProfessor -> new CommitteeAssignmentNotificationPayload(
-                        committee.getId(),
-                        committeeProfessor.getProfessor().getId(),
-                        committeeProfessor.getProfessor().getMail(),
-                        committeeProfessor.getRole(),
-                        assignedGroups
-                ))
+                committee.getId(),
+                committeeProfessor.getProfessor().getId(),
+                committeeProfessor.getProfessor().getMail(),
+                committeeProfessor.getRole(),
+                assignedGroups
+        ))
                 .sorted(Comparator.comparing(CommitteeAssignmentNotificationPayload::professorMail))
                 .toList();
 
