@@ -101,7 +101,7 @@ public class GithubSprintService {
 
             for (JsonNode branch : response) {
                 String name = branch.path("name").asText(null);
-                if (name != null && name.contains(issueKey)) {
+                if (name != null && (name.contains(issueKey + "-") || name.contains(issueKey + "/") || name.endsWith(issueKey) || name.equals(issueKey))) {
                     return Optional.of(name);
                 }
             }
@@ -139,7 +139,7 @@ public class GithubSprintService {
             String org  = group.getGithubOrgName();
             String repo = group.getGithubRepoName();
             String url  = githubApiBase() + "/repos/" + org + "/" + repo
-                    + "/pulls?head=" + org + ":" + branchName + "&state=closed";
+                    + "/pulls?head=" + org + ":" + branchName + "&base=main&state=closed";
 
             JsonNode response = buildClient(group).get()
                     .uri(url)
@@ -189,7 +189,7 @@ public class GithubSprintService {
             String org  = group.getGithubOrgName();
             String repo = group.getGithubRepoName();
             String url  = githubApiBase() + "/repos/" + org + "/" + repo
-                    + "/pulls/" + prNumber + "/reviews";
+                    + "/pulls/" + prNumber + "/comments?per_page=100";
 
             JsonNode response = buildClient(group).get()
                     .uri(url)
@@ -240,7 +240,7 @@ public class GithubSprintService {
             String org  = group.getGithubOrgName();
             String repo = group.getGithubRepoName();
             String url  = githubApiBase() + "/repos/" + org + "/" + repo
-                    + "/pulls/" + prNumber + "/files";
+                    + "/pulls/" + prNumber + "/files?per_page=100";
 
             JsonNode response = buildClient(group).get()
                     .uri(url)

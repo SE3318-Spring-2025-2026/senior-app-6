@@ -191,7 +191,7 @@ class GithubSprintServiceWireMockTest {
     @Test
     void fetchPRReviewComments_returnsBodies() {
         wireMockServer.stubFor(
-            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/reviews"))
+            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/comments?per_page=100"))
                 .willReturn(WireMock.aResponse()
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
@@ -206,7 +206,7 @@ class GithubSprintServiceWireMockTest {
     @Test
     void fetchPRReviewComments_returnsEmpty_on401() {
         wireMockServer.stubFor(
-            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/reviews"))
+            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/comments?per_page=100"))
                 .willReturn(WireMock.aResponse().withStatus(401))
         );
 
@@ -223,7 +223,7 @@ class GithubSprintServiceWireMockTest {
     @Test
     void fetchFileDiffs_includesPatchString() {
         wireMockServer.stubFor(
-            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/files"))
+            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/files?per_page=100"))
                 .willReturn(WireMock.aResponse()
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
@@ -246,7 +246,7 @@ class GithubSprintServiceWireMockTest {
     @Test
     void fetchFileDiffs_returnsEmpty_on500() {
         wireMockServer.stubFor(
-            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/files"))
+            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/files?per_page=100"))
                 .willReturn(WireMock.aResponse().withStatus(500))
         );
 
