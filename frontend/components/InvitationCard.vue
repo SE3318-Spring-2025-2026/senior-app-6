@@ -1,3 +1,61 @@
+
+<script setup lang="ts">
+	import { ref } from "vue";
+import type { GroupInvitation } from "~/types/invitation";
+
+	interface Props {
+		invitation: GroupInvitation;
+	}
+
+	const props = defineProps<Props>();
+
+	const emit = defineEmits<{
+		accept: [invitationId: string];
+		decline: [invitationId: string];
+	}>();
+
+	const isProcessing = ref(false);
+	const activeAction = ref<"accept" | "decline" | null>(null);
+	const errorMessage = ref<string>("");
+
+	const onAccept = () => {
+		if (isProcessing.value) return;
+		isProcessing.value = true;
+		activeAction.value = "accept";
+		emit("accept", props.invitation.invitationId);
+		setTimeout(() => {
+			isProcessing.value = false;
+			activeAction.value = null;
+		}, 500);
+	};
+
+	const onDecline = () => {
+		if (isProcessing.value) return;
+		isProcessing.value = true;
+		activeAction.value = "decline";
+		emit("decline", props.invitation.invitationId);
+		setTimeout(() => {
+			isProcessing.value = false;
+			activeAction.value = null;
+		}, 500);
+	};
+
+	const formatDate = (dateString: string) => {
+		try {
+			const date = new Date(dateString);
+			return date.toLocaleDateString("en-US", {
+				month: "short",
+				day: "numeric",
+				year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
+				hour: "2-digit",
+				minute: "2-digit"
+			});
+		} catch {
+			return dateString;
+		}
+	};
+</script>
+
 <template>
 	<div
 		class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all dark:border-slate-700 dark:bg-slate-800"
@@ -67,60 +125,3 @@
 		</p>
 	</div>
 </template>
-
-<script setup lang="ts">
-	import { ref } from "vue";
-	import type { GroupInvitation } from "~/composables/useApiClient";
-
-	interface Props {
-		invitation: GroupInvitation;
-	}
-
-	const props = defineProps<Props>();
-
-	const emit = defineEmits<{
-		accept: [invitationId: string];
-		decline: [invitationId: string];
-	}>();
-
-	const isProcessing = ref(false);
-	const activeAction = ref<"accept" | "decline" | null>(null);
-	const errorMessage = ref<string>("");
-
-	const onAccept = () => {
-		if (isProcessing.value) return;
-		isProcessing.value = true;
-		activeAction.value = "accept";
-		emit("accept", props.invitation.invitationId);
-		setTimeout(() => {
-			isProcessing.value = false;
-			activeAction.value = null;
-		}, 500);
-	};
-
-	const onDecline = () => {
-		if (isProcessing.value) return;
-		isProcessing.value = true;
-		activeAction.value = "decline";
-		emit("decline", props.invitation.invitationId);
-		setTimeout(() => {
-			isProcessing.value = false;
-			activeAction.value = null;
-		}, 500);
-	};
-
-	const formatDate = (dateString: string) => {
-		try {
-			const date = new Date(dateString);
-			return date.toLocaleDateString("en-US", {
-				month: "short",
-				day: "numeric",
-				year: date.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined,
-				hour: "2-digit",
-				minute: "2-digit"
-			});
-		} catch {
-			return dateString;
-		}
-	};
-</script>

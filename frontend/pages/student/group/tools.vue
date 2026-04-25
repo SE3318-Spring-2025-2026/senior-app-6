@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { z } from "zod";
-import { AlertCircle, ArrowLeft, FolderGit2, Loader2, ShieldCheck } from "lucide-vue-next";
-import type { BindGithubRequest, BindJiraRequest } from "~/composables/useApiClient";
+import { AlertCircle, ArrowLeft, CheckCircle, FolderGit2, Loader2, ShieldCheck, X } from "lucide-vue-next";
 import type { GroupDetailResponse } from "~/types/group";
 import { useAuthStore } from "~/stores/auth";
+import type { BindGithubRequest, BindJiraRequest } from "~/types/tools";
 
 defineOptions({
   name: "StudentGroupToolsPage",
@@ -18,6 +18,8 @@ const { getAuthToken, fetchMyGroup, bindJiraTool, bindGithubTool } = useApiClien
 const authStore = useAuthStore();
 const router = useRouter();
 
+const EXPIRY_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000;
+
 const group = ref<GroupDetailResponse | null>(null);
 const isLoading = ref(true);
 const loadError = ref<string | null>(null);
@@ -30,16 +32,31 @@ const githubSubmitting = ref(false);
 const githubError = ref<string | null>(null);
 const githubFieldErrors = ref<Record<string, string>>({});
 
+const toast = ref({
+  show: false,
+  message: "",
+  type: "success" as "success" | "error"
+});
+
+function showToast(message: string, type: "success" | "error" = "success") {
+  toast.value = { show: true, message, type };
+  setTimeout(() => {
+    toast.value.show = false;
+  }, 5000);
+}
+
 const jiraSchema = z.object({
   jiraSpaceUrl: z.string().trim().url("Enter a valid JIRA space URL."),
   jiraEmail: z.string().trim().email("Enter a valid Atlassian account email."),
   jiraProjectKey: z.string().trim().min(1, "JIRA project key is required."),
   jiraApiToken: z.string().trim().min(1, "JIRA API token is required."),
+  jiraTokenExpiresAt: z.string().optional(),
 });
 
 const githubSchema = z.object({
   githubOrgName: z.string().trim().min(1, "GitHub organization name is required."),
   githubPat: z.string().trim().min(1, "GitHub personal access token is required."),
+  githubRepoName: z.string().trim().min(1, "GitHub repository name is required."),
 });
 
 const currentStudentId = computed(() =>
@@ -60,12 +77,50 @@ const jiraFormValues = computed(() => ({
   jiraEmail: group.value?.jiraEmail ?? "",
   jiraProjectKey: group.value?.jiraProjectKey ?? "",
   jiraApiToken: "",
+  jiraTokenExpiresAt: group.value?.jiraTokenExpiresAt ?? "",
 }));
 
 const githubFormValues = computed(() => ({
   githubOrgName: group.value?.githubOrgName ?? "",
   githubPat: "",
+  githubRepoName: group.value?.githubRepoName ?? "",
 }));
+
+const githubTokenInvalid = computed(() => group.value?.githubTokenValid === false);
+const jiraTokenInvalid = computed(() => group.value?.jiraTokenValid === false);
+
+const githubPatExpiringSoon = computed(() => {
+  if (githubTokenInvalid.value) return false;
+  const exp = group.value?.githubPatExpiresAt;
+  if (!exp) return false;
+  return new Date(exp).getTime() - Date.now() < EXPIRY_THRESHOLD_MS;
+});
+
+const jiraTokenExpiringSoon = computed(() => {
+  if (jiraTokenInvalid.value) return false;
+  const exp = group.value?.jiraTokenExpiresAt;
+  if (!exp) return false;
+  return new Date(exp).getTime() - Date.now() < EXPIRY_THRESHOLD_MS;
+});
+
+function formatDate(dateStr?: string | null): string {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString();
+}
+
+const jiraToolStatus = computed(() => {
+  if (!group.value?.jiraBound) return "unbound";
+  if (group.value.jiraTokenValid === false) return "invalid";
+  if (jiraTokenExpiringSoon.value) return "expiring";
+  return "healthy";
+});
+
+const githubToolStatus = computed(() => {
+  if (!group.value?.githubBound) return "unbound";
+  if (group.value.githubTokenValid === false) return "invalid";
+  if (githubPatExpiringSoon.value) return "expiring";
+  return "healthy";
+});
 
 async function loadGroup() {
   isLoading.value = true;
@@ -120,6 +175,7 @@ async function handleJiraSubmit(payload: Record<string, string>) {
       jiraEmail: fields.jiraEmail?.[0] ?? "",
       jiraProjectKey: fields.jiraProjectKey?.[0] ?? "",
       jiraApiToken: fields.jiraApiToken?.[0] ?? "",
+      jiraTokenExpiresAt: fields.jiraTokenExpiresAt?.[0] ?? "",
     };
     return;
   }
@@ -133,11 +189,13 @@ async function handleJiraSubmit(payload: Record<string, string>) {
 
     await bindJiraTool(group.value.id, result.data as BindJiraRequest, token);
     await loadGroup();
+    showToast("JIRA successfully bound to your group!", "success");
   } catch (error: unknown) {
-    jiraError.value =
-      error && typeof error === "object" && "message" in error
+    const msg = error && typeof error === "object" && "message" in error
         ? String(error.message)
         : "Failed to bind JIRA credentials.";
+    jiraError.value = msg;
+    showToast(msg, "error");
   } finally {
     jiraSubmitting.value = false;
   }
@@ -153,6 +211,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
     githubFieldErrors.value = {
       githubOrgName: fields.githubOrgName?.[0] ?? "",
       githubPat: fields.githubPat?.[0] ?? "",
+      githubRepoName: fields.githubRepoName?.[0] ?? "",
     };
     return;
   }
@@ -166,11 +225,13 @@ async function handleGithubSubmit(payload: Record<string, string>) {
 
     await bindGithubTool(group.value.id, result.data as BindGithubRequest, token);
     await loadGroup();
+    showToast("GitHub successfully bound to your group!", "success");
   } catch (error: unknown) {
-    githubError.value =
-      error && typeof error === "object" && "message" in error
+    const msg = error && typeof error === "object" && "message" in error
         ? String(error.message)
         : "Failed to bind GitHub credentials.";
+    githubError.value = msg;
+    showToast(msg, "error");
   } finally {
     githubSubmitting.value = false;
   }
@@ -220,6 +281,46 @@ async function handleGithubSubmit(payload: Record<string, string>) {
         </div>
       </header>
 
+      <!-- Token warning banners -->
+      <div v-if="githubTokenInvalid || jiraTokenInvalid || githubPatExpiringSoon || jiraTokenExpiringSoon" class="space-y-3">
+        <div
+          v-if="githubTokenInvalid"
+          class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4 dark:border-red-800 dark:bg-red-950/40"
+        >
+          <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+          <p class="text-sm font-medium text-red-800 dark:text-red-200">
+            GitHub PAT is no longer valid. Please re-bind with a new token.
+          </p>
+        </div>
+        <div
+          v-if="jiraTokenInvalid"
+          class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4 dark:border-red-800 dark:bg-red-950/40"
+        >
+          <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+          <p class="text-sm font-medium text-red-800 dark:text-red-200">
+            JIRA API token is no longer valid. Please re-bind with a new token.
+          </p>
+        </div>
+        <div
+          v-if="githubPatExpiringSoon"
+          class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-800 dark:bg-amber-950/40"
+        >
+          <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
+            Your GitHub PAT expires on {{ formatDate(group?.githubPatExpiresAt) }}. Consider updating it soon.
+          </p>
+        </div>
+        <div
+          v-if="jiraTokenExpiringSoon"
+          class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-800 dark:bg-amber-950/40"
+        >
+          <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+          <p class="text-sm font-medium text-amber-800 dark:text-amber-200">
+            Your JIRA API token expires on {{ formatDate(group?.jiraTokenExpiresAt) }}. Consider updating it soon.
+          </p>
+        </div>
+      </div>
+
       <div
         v-if="isLoading"
         class="flex items-center justify-center rounded-2xl border border-slate-200 bg-white p-12 shadow-sm dark:border-slate-700 dark:bg-slate-800"
@@ -251,8 +352,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
               Secure binding flow
             </h2>
             <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Credentials are validated by the backend before they are stored. Successful bindings are
-              shown as locked to prevent accidental edits from the UI.
+              Credentials are validated by the backend before they are stored. You can update credentials at any time — re-binding validates the new token before overwriting the old one.
             </p>
           </div>
 
@@ -264,7 +364,7 @@ async function handleGithubSubmit(payload: Record<string, string>) {
             <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
               <li>Enter the JIRA workspace URL, Atlassian account email, project key, and API token.</li>
               <li>Enter the GitHub organization name and a PAT with repository access.</li>
-              <li>Watch each form switch into a locked state after a successful bind.</li>
+              <li>Each tool shows its current health status (Active / Expiring Soon / Token Invalid) after binding.</li>
             </ul>
           </div>
         </div>
@@ -308,13 +408,22 @@ async function handleGithubSubmit(payload: Record<string, string>) {
                 lockedPlaceholder: 'Stored securely after validation',
                 helpText: 'Generate one at id.atlassian.com → Security → API tokens → Create API token. Must be created while logged in as the same email above.',
               },
+              {
+                name: 'jiraTokenExpiresAt',
+                label: 'Token Expiry Date (optional)',
+                type: 'date',
+                placeholder: '',
+                autocomplete: 'off',
+                helpText: 'Optional. The expiry date of your API token — visible in your Atlassian account under Security → API tokens.',
+              },
             ]"
             :model-value="jiraFormValues"
             :field-errors="jiraFieldErrors"
             :error-message="jiraError"
             :loading="jiraSubmitting"
-            :locked="Boolean(group.jiraBound)"
-            submit-label="Bind JIRA"
+            :tool-status="jiraToolStatus"
+            :locked="group?.status === 'DISBANDED'"
+            :submit-label="jiraToolStatus === 'unbound' ? 'Bind JIRA' : 'Update JIRA Credentials'"
             @submit="handleJiraSubmit"
           />
 
@@ -340,17 +449,70 @@ async function handleGithubSubmit(payload: Record<string, string>) {
                 lockedPlaceholder: 'Stored securely after validation',
                 helpText: 'Generate at github.com → Settings → Developer settings → Personal access tokens → Tokens (classic). Select the repo scope. The token must have access to the organization above.',
               },
+              {
+                name: 'githubRepoName',
+                label: 'Repository Name',
+                type: 'text',
+                placeholder: 'my-project-repo',
+                autocomplete: 'off',
+                helpText: 'The exact name of the repository under the organization above.',
+              },
             ]"
             :model-value="githubFormValues"
             :field-errors="githubFieldErrors"
             :error-message="githubError"
             :loading="githubSubmitting"
-            :locked="Boolean(group.githubBound)"
-            submit-label="Bind GitHub"
+            :tool-status="githubToolStatus"
+            :locked="group?.status === 'DISBANDED'"
+            :submit-label="githubToolStatus === 'unbound' ? 'Bind GitHub' : 'Update GitHub Credentials'"
             @submit="handleGithubSubmit"
           />
         </div>
       </section>
     </div>
+
+    <!-- Success/Error Toast -->
+    <Transition name="toast">
+      <div
+        v-if="toast.show"
+        class="fixed bottom-8 right-8 z-[100] flex items-center gap-3 rounded-xl border px-6 py-4 shadow-2xl transition-all duration-300"
+        :class="[
+          toast.type === 'success'
+            ? 'border-green-200 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950/80 dark:text-green-100'
+            : 'border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/80 dark:text-red-100'
+        ]"
+      >
+        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+             :class="toast.type === 'success' ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'">
+          <component :is="toast.type === 'success' ? CheckCircle : AlertCircle"
+                     class="h-5 w-5"
+                     :class="toast.type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" />
+        </div>
+        <div class="flex flex-col">
+          <p class="text-sm font-semibold leading-tight">{{ toast.type === 'success' ? 'Success' : 'Error' }}</p>
+          <p class="text-xs opacity-80">{{ toast.message }}</p>
+        </div>
+        <button @click="toast.show = false" class="ml-4 p-1 opacity-50 hover:opacity-100">
+          <X class="h-4 w-4" />
+        </button>
+      </div>
+    </Transition>
   </main>
 </template>
+
+<style scoped>
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translateY(10px) scale(0.95);
+}
+</style>
