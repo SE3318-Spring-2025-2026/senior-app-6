@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.senior.spm.entity.SprintTrackingLog.AiValidationResult;
 import com.senior.spm.repository.SystemConfigRepository;
+import com.senior.spm.service.dto.GithubFileDiffDto;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -197,6 +198,11 @@ public class AiValidationService {
             log.warn("Failed to parse LLM response structure — defaulting to WARN");
             return AiValidationResult.WARN;
         }
+    }
+
+    // TODO: replaced by P5-04b (Batıkan) — stub returns PENDING during development
+    public AiValidationResult validateIssueDiff(String issueDescription, List<GithubFileDiffDto> fileDiffs) {
+        return AiValidationResult.PENDING;
     }
 
     // ── Gemini request records ────────────────────────────────────────────────
