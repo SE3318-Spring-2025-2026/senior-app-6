@@ -226,6 +226,11 @@ public class CoordinatorController {
     }
 
     // ========== GROUP MANAGEMENT ENDPOINTS (P2) ==========
+
+    /**
+     * Lists all project groups for the active term.
+     * REST Endpoint: {@code GET /api/coordinator/groups}
+     */
     @GetMapping("/groups")
     public ResponseEntity<List<GroupSummaryResponse>> listGroups(
             @RequestParam(required = false) String termId) {
@@ -237,6 +242,10 @@ public class CoordinatorController {
         }
     }
 
+    /**
+     * Retrieves detailed information for a specific project group.
+     * REST Endpoint: {@code GET /api/coordinator/groups/{groupId}}
+     */
     @GetMapping("/groups/{groupId}")
     public ResponseEntity<?> getGroupDetail(@PathVariable UUID groupId) {
         try {
@@ -249,6 +258,10 @@ public class CoordinatorController {
         }
     }
 
+    /**
+     * Adds or removes a student from a project group (coordinator force operation).
+     * REST Endpoint: {@code PATCH /api/coordinator/groups/{groupId}/members}
+     */
     @PatchMapping("/groups/{groupId}/members")
     public ResponseEntity<?> updateGroupMembers(
             @PathVariable UUID groupId,
@@ -278,6 +291,10 @@ public class CoordinatorController {
         }
     }
 
+    /**
+     * Disbands a project group with full cascade cleanup.
+     * REST Endpoint: {@code PATCH /api/coordinator/groups/{groupId}/disband}
+     */
     @PatchMapping("/groups/{groupId}/disband")
     public ResponseEntity<?> disbandGroup(@PathVariable UUID groupId) {
         try {
@@ -293,12 +310,62 @@ public class CoordinatorController {
     }
 
     // ========== P3 ADVISOR OVERRIDE ENDPOINTS ==========
+
+    /**
+     * Lists all professors with their current group assignment count and capacity for the active
+     * term. Unlike the student-facing {@code GET /api/advisors}, this includes advisors who are
+     * at or above capacity and adds the {@code atCapacity} flag.
+     *
+     * <p>termId is resolved server-side via {@link com.senior.spm.service.TermConfigService} —
+     * never passed from the client.
+     *
+     * <p>Auth: Staff JWT with role=Coordinator (enforced by SecurityConfig).
+     *
+     * <p>REST Endpoint: {@code GET /api/coordinator/advisors}
+     * <p>Sequence: DFD 3.5 / sequence 3.5_coordinator_advisor_p3.md
+     *
+     * @return 200 with list of all professors and capacity metadata
+     */
     @GetMapping("/advisors")
     public ResponseEntity<List<AdvisorCapacityResponse>> listAdvisorsWithCapacity() {
         List<AdvisorCapacityResponse> advisors = advisorService.getAllAdvisorsWithCapacity();
         return ResponseEntity.ok(advisors);
     }
 
+    /**
+     * Coordinator force-assigns or force-removes an advisor for a group, bypassing both the
+     * schedule window and the advisor capacity limit.
+     *
+     * <p>Action {@code ASSIGN}:
+     * <ul>
+     *   <li>Requires {@code advisorId} in the body → 400 if absent.</li>
+     *   <li>Returns 400 if group is DISBANDED.</li>
+     *   <li>Returns 400 if group status is not TOOLS_BOUND or ADVISOR_ASSIGNED.</li>
+     *   <li>Returns 400 if the group already has this exact advisor assigned.</li>
+     *   <li>Atomically sets {@code group.advisorId}, sets {@code group.status = ADVISOR_ASSIGNED},
+     *       and bulk AUTO_REJECTs all PENDING advisor requests for the group.</li>
+     * </ul>
+     *
+     * <p>Action {@code REMOVE}:
+     * <ul>
+     *   <li>{@code advisorId} in the body is ignored.</li>
+     *   <li>Returns 400 if the group has no advisor assigned.</li>
+     *   <li>Clears {@code group.advisorId}, sets {@code group.status = TOOLS_BOUND}.</li>
+     * </ul>
+     *
+     * <p>Auth: Staff JWT with role=Coordinator (enforced by SecurityConfig).
+     *
+     * <p>REST Endpoint: {@code PATCH /api/coordinator/groups/{groupId}/advisor}
+     * <p>Sequence: DFD 3.5 / sequence 3.5_coordinator_advisor_p3.md
+     *
+     * @param groupId UUID of the target group
+     * @param request {@link AdvisorOverrideRequest} with {@code action} and optional {@code advisorId}
+     * @return 200 with {@link AdvisorOverrideResponse} containing groupId, updated status, and advisorId
+     *
+     *         Error responses:
+     *         - 400: advisorId absent for ASSIGN; group DISBANDED; invalid status; already assigned; no advisor to remove
+     *         - 404: group not found; advisor not found
+     */
     @PatchMapping("/groups/{groupId}/advisor")
     public ResponseEntity<?> overrideAdvisor(
             @PathVariable UUID groupId,
