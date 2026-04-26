@@ -18,14 +18,14 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SprintGroupOverview {
 
     private UUID groupId;
     private String groupName;
 
-    /** Advisor's email; null for TOOLS_BOUND groups without an assigned advisor. */
-    private String advisorName;
+    /** Advisor email; null for TOOLS_BOUND groups without an assigned advisor. Omitted from JSON when null. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String advisorEmail;
 
     private int totalIssues;
     private int mergedPRs;
@@ -37,9 +37,11 @@ public class SprintGroupOverview {
 
     private boolean gradeSubmitted;
 
+    /** Always present in JSON — null when no grade has been submitted yet. */
     @JsonProperty("pointA_grade")
     private ScrumGradeValue pointAGrade;
 
+    /** Always present in JSON — null when no grade has been submitted yet. */
     @JsonProperty("pointB_grade")
     private ScrumGradeValue pointBGrade;
 }
