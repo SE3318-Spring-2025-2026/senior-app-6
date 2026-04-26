@@ -24,20 +24,28 @@ public record GithubPrDto(
          * {@code true} when the PR was merged ({@code state=closed} AND
          * {@code merged_at != null}); {@code false} otherwise.
          */
-        boolean merged
+        boolean merged,
+
+        /**
+         * GitHub username of the PR author ({@code user.login} in the API response).
+         * Used as the authoritative identity source for {@code assigneeGithubUsername}
+         * in {@code SprintTrackingLog} — JIRA assignee email is not a reliable match.
+         */
+        String authorLogin
 ) {
 
     /**
      * Factory used by {@link com.senior.spm.service.GithubSprintService} to
-     * derive the merged flag from the raw GitHub API response fields.
+     * derive the merged flag and author from the raw GitHub API response fields.
      *
-     * @param prNumber  the PR number from GitHub's {@code "number"} field
-     * @param state     the value of GitHub's {@code "state"} field
-     * @param mergedAt  the value of GitHub's {@code "merged_at"} field (nullable)
-     * @return a {@code GithubPrDto} with {@code merged} set correctly
+     * @param prNumber    the PR number from GitHub's {@code "number"} field
+     * @param state       the value of GitHub's {@code "state"} field
+     * @param mergedAt    the value of GitHub's {@code "merged_at"} field (nullable)
+     * @param authorLogin the value of GitHub's {@code "user.login"} field (nullable)
+     * @return a {@code GithubPrDto} with {@code merged} and {@code authorLogin} set correctly
      */
-    public static GithubPrDto of(Long prNumber, String state, String mergedAt) {
+    public static GithubPrDto of(Long prNumber, String state, String mergedAt, String authorLogin) {
         boolean merged = "closed".equalsIgnoreCase(state) && mergedAt != null;
-        return new GithubPrDto(prNumber, merged);
+        return new GithubPrDto(prNumber, merged, authorLogin);
     }
 }
