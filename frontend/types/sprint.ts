@@ -18,7 +18,7 @@ export interface ActiveSprintResponse {
   daysRemaining?: number | null;
 }
 
-export type AiResult = "PASS" | "WARN" | "FAIL" | null;
+export type AiResult = "PASS" | "WARN" | "FAIL" | "PENDING" | "SKIPPED" | null;
 
 export interface SprintTrackingIssue {
   issueKey: string;

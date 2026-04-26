@@ -2,7 +2,7 @@
 import { computed } from "vue";
 
 const props = defineProps<{
-  result: "PASS" | "WARN" | "FAIL" | null | undefined;
+  result: "PASS" | "WARN" | "FAIL" | "PENDING" | "SKIPPED" | null | undefined;
 }>();
 
 const config = computed(() => {
@@ -24,6 +24,18 @@ const config = computed(() => {
         label: "FAIL",
         classes:
           "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800",
+      };
+    case "PENDING":
+      return {
+        label: "Pending",
+        classes:
+          "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800",
+      };
+    case "SKIPPED":
+      return {
+        label: "Skipped",
+        classes:
+          "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700",
       };
     default:
       return {

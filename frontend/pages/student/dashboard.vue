@@ -1,6 +1,7 @@
 <script setup lang="ts">
 	import { LogOut, GitBranch, FileCheck, Users } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
+	import type { ActiveSprintResponse } from "~/types/sprint";
 
 	definePageMeta({
 		middleware: "auth",
@@ -9,6 +10,31 @@
 
 	const router = useRouter();
 	const authStore = useAuthStore();
+	const { getAuthToken, fetchActiveSprint } = useApiClient();
+
+	type SprintState = "loading" | "loaded" | "no-sprint";
+
+	const sprintState = ref<SprintState>("loading");
+	const sprint = ref<ActiveSprintResponse | null>(null);
+
+	const sprintDateRange = computed(() => {
+		if (!sprint.value) return "";
+		const fmt = (d: string) =>
+			new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(d));
+		return `${fmt(sprint.value.startDate)} – ${fmt(sprint.value.endDate)}`;
+	});
+
+	onMounted(async () => {
+		const token = getAuthToken();
+		if (!token) return;
+		try {
+			sprint.value = await fetchActiveSprint(token);
+			sprintState.value = "loaded";
+		} catch (err: unknown) {
+			const apiError = err as { status?: number };
+			sprintState.value = apiError.status === 404 ? "no-sprint" : "no-sprint";
+		}
+	});
 
 	function handleLogout() {
 		authStore.logout();
@@ -42,13 +68,45 @@
 
       <!-- Overview -->
       <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <NuxtLink
+          to="/student/group/sprint"
+          class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-blue-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-600"
+        >
           <GitBranch class="h-8 w-8 text-blue-600 dark:text-blue-400" />
           <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Current Sprint</h3>
-          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            View your current sprint tasks and story points.
+
+          <!-- Loading skeleton -->
+          <div v-if="sprintState === 'loading'" class="mt-3 space-y-2 animate-pulse">
+            <div class="h-3.5 w-36 rounded bg-slate-200 dark:bg-slate-700"></div>
+            <div class="h-3.5 w-24 rounded bg-slate-200 dark:bg-slate-700"></div>
+          </div>
+
+          <!-- No active sprint -->
+          <p v-else-if="sprintState === 'no-sprint'" class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            No active sprint found.
           </p>
-        </div>
+
+          <!-- Loaded -->
+          <template v-else-if="sprintState === 'loaded' && sprint">
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              {{ sprintDateRange }}
+            </p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <span
+                v-if="sprint.daysRemaining != null"
+                class="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+              >
+                {{ sprint.daysRemaining }}d remaining
+              </span>
+              <span
+                v-if="sprint.storyPointTarget != null"
+                class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+              >
+                {{ sprint.storyPointTarget }} SP target
+              </span>
+            </div>
+          </template>
+        </NuxtLink>
 
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
           <FileCheck class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
