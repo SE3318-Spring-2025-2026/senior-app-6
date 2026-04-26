@@ -27,6 +27,12 @@ export interface SprintTrackingIssue {
   prMerged: boolean;
   aiPrReview: AiResult;
   aiDiffMatch: AiResult;
+  // Optional detail fields — populated when available from the backend pipeline
+  prNumber?: number | null;
+  branchName?: string | null;
+  prUrl?: string | null;
+  aiPrReviewNote?: string | null;
+  aiDiffMatchNote?: string | null;
 }
 
 export interface SprintTrackingResponse {
