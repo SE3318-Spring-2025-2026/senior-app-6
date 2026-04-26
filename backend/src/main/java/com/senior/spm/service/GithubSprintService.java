@@ -150,14 +150,15 @@ public class GithubSprintService {
                 return Optional.empty();
             }
 
-            JsonNode first  = response.get(0);
-            Long prNumber   = first.path("number").asLong();
-            String state    = first.path("state").asText(null);
-            String mergedAt = first.hasNonNull("merged_at")
+            JsonNode first   = response.get(0);
+            Long prNumber    = first.path("number").asLong();
+            String state     = first.path("state").asText(null);
+            String mergedAt  = first.hasNonNull("merged_at")
                     ? first.path("merged_at").asText(null)
                     : null;
+            String authorLogin = first.path("user").path("login").asText(null);
 
-            return Optional.of(GithubPrDto.of(prNumber, state, mergedAt));
+            return Optional.of(GithubPrDto.of(prNumber, state, mergedAt, authorLogin));
 
         } catch (RestClientException ex) {
             log.warn("GitHub API error finding merged PR for group {} branch {}: {}",

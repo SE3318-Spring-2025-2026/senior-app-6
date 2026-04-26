@@ -98,8 +98,8 @@ public class SprintTrackingOrchestrator {
      * <p>Guard: when {@code force=false} and the sprint has not yet ended,
      * throws {@link BusinessRuleException} (→ HTTP 400).
      *
-     * <p>Deletes all existing {@code SprintTrackingLog} rows for the sprint before
-     * re-fetching — ensures idempotency (running twice yields the same result).
+     * <p>Idempotency is handled per-group inside {@code processGroup} via
+     * {@code deleteByGroupIdAndSprintId} — no outer bulk delete is needed here.
      *
      * @param sprintId target sprint
      * @param force    when {@code true}, bypasses the sprint-end-date guard
@@ -115,9 +115,6 @@ public class SprintTrackingOrchestrator {
             throw new BusinessRuleException(
                     "Sprint has not ended yet — use ?force=true to refresh early");
         }
-
-        // Wipe existing rows so re-run is idempotent
-        sprintTrackingLogRepository.deleteBySprintId(sprintId);
 
         AtomicInteger groupsProcessed   = new AtomicInteger();
         AtomicInteger issuesFetched     = new AtomicInteger();
@@ -195,7 +192,8 @@ public class SprintTrackingOrchestrator {
             entry.setGroup(group);
             entry.setSprint(sprint);
             entry.setIssueKey(issue.issueKey());
-            entry.setAssigneeGithubUsername(issue.assigneeEmail());
+            // assigneeGithubUsername is set later from pr.authorLogin() (GitHub PR author)
+            // because JIRA assigneeEmail does not match Student.githubUsername
             entry.setStoryPoints(issue.storyPoints());
             entry.setFetchedAt(fetchedAt);
             entry.setAiPrResult(AiValidationResult.PENDING);
@@ -233,6 +231,8 @@ public class SprintTrackingOrchestrator {
             GithubPrDto pr = prOpt.get();
             log.setPrNumber(pr.prNumber());
             log.setPrMerged(pr.merged());
+            // PR author (user.login) is the authoritative GitHub username — overrides JIRA email
+            log.setAssigneeGithubUsername(pr.authorLogin());
 
             if (!pr.merged()) {
                 log.setAiPrResult(AiValidationResult.SKIPPED);
