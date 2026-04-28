@@ -25,6 +25,7 @@ import com.senior.spm.controller.request.CoordinatorMemberRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.MapDeliverablesRequest;
 import com.senior.spm.controller.request.RubricRequest;
+import com.senior.spm.controller.request.SanitizationTriggerRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
@@ -35,6 +36,7 @@ import com.senior.spm.controller.response.AdvisorOverrideResponse;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.controller.response.GroupDetailResponse;
 import com.senior.spm.controller.response.GroupSummaryResponse;
+import com.senior.spm.controller.response.SanitizationReport;
 import com.senior.spm.controller.response.SprintGroupOverview;
 import com.senior.spm.controller.response.SprintOverviewResponse;
 import com.senior.spm.controller.response.SprintRefreshResponse;
@@ -52,6 +54,7 @@ import com.senior.spm.repository.SprintTrackingLogRepository;
 import com.senior.spm.service.AdvisorService;
 import com.senior.spm.service.DeliverableService;
 import com.senior.spm.service.GroupService;
+import com.senior.spm.service.SanitizationService;
 import com.senior.spm.service.SprintService;
 import com.senior.spm.service.SprintTrackingOrchestrator;
 import com.senior.spm.service.StudentService;
@@ -77,6 +80,7 @@ public class CoordinatorController {
     private final ScrumGradeRepository scrumGradeRepository;
     private final ProjectGroupRepository projectGroupRepository;
     private final TermConfigService termConfigService;
+    private final SanitizationService sanitizationService;
 
     public CoordinatorController(SprintService sprintService,
             DeliverableService deliverableService,
@@ -89,7 +93,8 @@ public class CoordinatorController {
             SprintTrackingLogRepository sprintTrackingLogRepository,
             ScrumGradeRepository scrumGradeRepository,
             ProjectGroupRepository projectGroupRepository,
-            TermConfigService termConfigService) {
+            TermConfigService termConfigService,
+            SanitizationService sanitizationService) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
         this.studentService = studentService;
@@ -102,6 +107,7 @@ public class CoordinatorController {
         this.scrumGradeRepository = scrumGradeRepository;
         this.projectGroupRepository = projectGroupRepository;
         this.termConfigService = termConfigService;
+        this.sanitizationService = sanitizationService;
     }
 
     @PostMapping("/sprints")
@@ -471,6 +477,29 @@ public class CoordinatorController {
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         }
+    }
+
+    // ========== P3 SANITIZATION ENDPOINT ==========
+
+    /**
+     * Manually triggers the sanitization job for the active term.
+     *
+     * <p>Normal trigger ({@code force = false} or body omitted): runs only if the
+     * {@code ADVISOR_ASSOCIATION} window is already closed. Returns 400 if the window is still active.
+     *
+     * <p>Force trigger ({@code force = true}): runs immediately regardless of window state.
+     *
+     * <p>Auth: Staff JWT with role=Coordinator (enforced by SecurityConfig).
+     *
+     * @param body optional request body; defaults to {@code force = false} if omitted
+     * @return 200 with {@link SanitizationReport}; 400 if window still active and force not set
+     */
+    @PostMapping("/sanitize")
+    public ResponseEntity<SanitizationReport> triggerSanitization(
+            @RequestBody(required = false) SanitizationTriggerRequest body) {
+        boolean force = (body != null) && body.isForce();
+        SanitizationReport report = sanitizationService.triggerManually(force);
+        return ResponseEntity.ok(report);
     }
 
     /** Counts across both aiPrResult and aiDiffResult columns independently — no double-count. */
