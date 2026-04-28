@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { LogOut, BookOpen, BarChart3, Inbox, Users } from "lucide-vue-next";
+	import { LogOut, BookOpen, BarChart3, Inbox, Users, ClipboardList } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
 
 	definePageMeta({
@@ -65,6 +65,19 @@
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             View your committees, assigned groups, and upcoming deadlines.
+          </p>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/professor/sprint"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-amber-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-amber-600"
+        >
+          <ClipboardList class="h-8 w-8 text-amber-600 dark:text-amber-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 transition-colors group-hover:text-amber-600 dark:text-white dark:group-hover:text-amber-400">
+            Sprint Panel
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Track group sprint progress, AI checks, and submit Point A/B grades.
           </p>
         </NuxtLink>
 
