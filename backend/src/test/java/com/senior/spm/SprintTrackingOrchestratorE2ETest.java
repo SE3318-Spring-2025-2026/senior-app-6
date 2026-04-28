@@ -383,9 +383,14 @@ class SprintTrackingOrchestratorE2ETest {
     }
 
     private void stubGithubReviews(String org, String repo, long prNumber, String body) {
+        // Formal reviews endpoint — called first by fetchPRReviewComments
+        githubWireMock.stubFor(get(urlPathEqualTo(
+                "/repos/" + org + "/" + repo + "/pulls/" + prNumber + "/reviews"))
+                .willReturn(okJson(String.format("[{\"state\":\"APPROVED\",\"body\":\"%s\"}]", body))));
+        // Inline diff comments endpoint
         githubWireMock.stubFor(get(urlPathEqualTo(
                 "/repos/" + org + "/" + repo + "/pulls/" + prNumber + "/comments"))
-                .willReturn(okJson(String.format("[{\"body\":\"%s\"}]", body))));
+                .willReturn(okJson("[]")));
     }
 
     private void stubGithubDiffs(String org, String repo, long prNumber) {
