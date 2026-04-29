@@ -359,10 +359,10 @@ onMounted(loadPage);
                       </span>
                     </td>
                     <td class="px-6 py-4">
-                      <AiResultBadge :result="issue.aiPrResult" />
+                      <AiResultBadge :result="issue.aiPrResult ?? 'PENDING'" />
                     </td>
                     <td class="px-6 py-4">
-                      <AiResultBadge :result="issue.aiDiffResult" />
+                      <AiResultBadge :result="issue.aiDiffResult ?? 'PENDING'" />
                     </td>
                   </tr>
 
