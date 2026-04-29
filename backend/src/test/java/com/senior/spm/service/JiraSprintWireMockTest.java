@@ -76,18 +76,18 @@ class JiraSprintWireMockTest {
         JiraIssueDto issue1 = result.get(0);
         assertThat(issue1.issueKey()).isEqualTo("SPM-42");
         assertThat(issue1.assigneeEmail()).isEqualTo("student@example.com");
-        assertThat(issue1.storyPoints()).isEqualTo(3);
+        assertThat(issue1.storyPoints()).isEqualTo(3.0);
         assertThat(issue1.description()).isEqualTo("Implemented group creation");
 
         JiraIssueDto issue2 = result.get(1);
         assertThat(issue2.issueKey()).isEqualTo("SPM-43");
         assertThat(issue2.assigneeEmail()).isNull();
-        assertThat(issue2.storyPoints()).isEqualTo(5);
+        assertThat(issue2.storyPoints()).isEqualTo(5.0);
         assertThat(issue2.description()).isNull();
 
         JiraIssueDto issue3 = result.get(2);
         assertThat(issue3.issueKey()).isEqualTo("SPM-44");
-        assertThat(issue3.storyPoints()).isEqualTo(8);
+        assertThat(issue3.storyPoints()).isEqualTo(8.0);
         assertThat(issue3.description()).contains("\"type\":\"doc\"");
     }
 
