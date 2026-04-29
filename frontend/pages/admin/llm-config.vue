@@ -49,6 +49,7 @@ async function handleSubmit() {
     if (!token) throw new Error("Authentication required");
     await updateLlmKey(apiKeyInput.value.trim(), token);
     apiKeyInput.value = "";
+    showKey.value = false;
     saveSuccess.value = "API key saved successfully.";
     await loadConfig();
   } catch (err: unknown) {

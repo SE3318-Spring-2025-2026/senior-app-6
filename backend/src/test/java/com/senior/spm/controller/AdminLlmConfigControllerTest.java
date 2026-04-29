@@ -1,6 +1,7 @@
 package com.senior.spm.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -63,7 +64,7 @@ class AdminLlmConfigControllerTest {
                         .with(authentication(adminAuth())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.configured").value(false))
-                .andExpect(jsonPath("$.maskedKey").doesNotExist());
+                .andExpect(jsonPath("$.maskedKey").value(nullValue()));
     }
 
     @Test
