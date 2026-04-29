@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.senior.spm.entity.SprintTrackingLog.AiValidationResult;
 import com.senior.spm.repository.SystemConfigRepository;
 import com.senior.spm.service.dto.GithubFileDiffDto;
+
+import static com.senior.spm.service.LlmConfigService.LLM_KEY_CONFIG;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +28,6 @@ import java.util.stream.Collectors;
 public class AiValidationService {
 
     // ── Static constants ──────────────────────────────────────────────────────
-    private static final String LLM_KEY_CONFIG  = "llm_api_key";
     private static final String PR_REVIEW_PROMPT =
             "Review the following PR review comments and respond with only one word: " +
             "PASS if the review is substantive, " +
@@ -73,6 +74,10 @@ public class AiValidationService {
                 .baseUrl(llmBaseUrl)
                 .requestFactory(factory)
                 .build();
+    }
+
+    public void invalidateKeyCache() {
+        cachedApiKey.set(null);
     }
 
     // Package-private constructor for unit tests — accepts a pre-built RestClient mock
