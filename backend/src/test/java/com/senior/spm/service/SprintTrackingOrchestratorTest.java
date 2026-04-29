@@ -96,7 +96,7 @@ class SprintTrackingOrchestratorTest {
     }
 
     private JiraIssueDto issue(String key) {
-        return new JiraIssueDto(key, "dev@example.com", 3, "description");
+        return new JiraIssueDto(key, "dev@example.com", 3.0, "description");
     }
 
     // ── triggerForSprint guard tests ──────────────────────────────────────────

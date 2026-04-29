@@ -438,10 +438,12 @@ export function useApiClient() {
 
   async function fetchAdvisorSprintGroups(
     sprintId: string,
-    token?: string
+    token?: string,
+    includeDisbanded?: boolean
   ): Promise<AdvisorGroupSprintSummaryResponse[]> {
+    const query = includeDisbanded ? "?includeDisbanded=true" : "";
     return apiCall<AdvisorGroupSprintSummaryResponse[]>(
-      `/advisor/sprints/${encodeURIComponent(sprintId)}/groups`,
+      `/advisor/sprints/${encodeURIComponent(sprintId)}/groups${query}`,
       "GET",
       undefined,
       token

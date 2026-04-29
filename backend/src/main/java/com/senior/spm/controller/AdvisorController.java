@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.senior.spm.controller.request.AdvisorRespondRequest;
@@ -191,9 +192,10 @@ public class AdvisorController {
     @GetMapping("/sprints/{sprintId}/groups")
     public ResponseEntity<List<AdvisorGroupSprintSummaryResponse>> getAdvisorGroupSummaries(
             @PathVariable UUID sprintId,
+            @RequestParam(required = false, defaultValue = "false") boolean includeDisbanded,
             Authentication auth) {
         UUID advisorId = SecurityUtils.extractPrincipalUUID(auth);
-        return ResponseEntity.ok(scrumGradingService.getAdvisorGroupSummaries(advisorId, sprintId));
+        return ResponseEntity.ok(scrumGradingService.getAdvisorGroupSummaries(advisorId, sprintId, includeDisbanded));
     }
 
     // GET /api/advisor/sprints/{sprintId}/groups/{groupId}/tracking

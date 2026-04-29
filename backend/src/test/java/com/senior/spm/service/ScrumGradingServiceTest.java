@@ -254,7 +254,7 @@ class ScrumGradingServiceTest {
         when(projectGroupRepository.findByAdvisor_IdAndTermId(ADVISOR_ID, TERM_ID))
                 .thenReturn(List.of());
 
-        var result = service.getAdvisorGroupSummaries(ADVISOR_ID, SPRINT_ID);
+        var result = service.getAdvisorGroupSummaries(ADVISOR_ID, SPRINT_ID, false);
 
         assertThat(result).isEmpty();
     }
@@ -269,21 +269,18 @@ class ScrumGradingServiceTest {
         group2.setVersion(0L);
 
         SprintTrackingLog log = makeLog("SPM-1", "alice", AiValidationResult.FAIL, AiValidationResult.PASS, true);
+        log.setGroup(group); // required for batch-fetch groupingBy
 
         when(sprintRepository.findById(SPRINT_ID)).thenReturn(Optional.of(sprint));
         when(termConfigService.getActiveTermId()).thenReturn(TERM_ID);
         when(projectGroupRepository.findByAdvisor_IdAndTermId(ADVISOR_ID, TERM_ID))
                 .thenReturn(List.of(group, group2));
-        when(sprintTrackingLogRepository.findByGroupIdAndSprintId(GROUP_ID, SPRINT_ID))
+        when(sprintTrackingLogRepository.findBySprintId(SPRINT_ID))
                 .thenReturn(List.of(log));
-        when(sprintTrackingLogRepository.findByGroupIdAndSprintId(group2.getId(), SPRINT_ID))
+        when(scrumGradeRepository.findBySprintId(SPRINT_ID))
                 .thenReturn(List.of());
-        when(scrumGradeRepository.findByGroupIdAndSprintId(GROUP_ID, SPRINT_ID))
-                .thenReturn(Optional.empty());
-        when(scrumGradeRepository.findByGroupIdAndSprintId(group2.getId(), SPRINT_ID))
-                .thenReturn(Optional.empty());
 
-        var result = service.getAdvisorGroupSummaries(ADVISOR_ID, SPRINT_ID);
+        var result = service.getAdvisorGroupSummaries(ADVISOR_ID, SPRINT_ID, false);
 
         assertThat(result).hasSize(2);
         var summary = result.stream().filter(s -> s.getGroupId().equals(GROUP_ID)).findFirst().orElseThrow();
@@ -297,7 +294,7 @@ class ScrumGradingServiceTest {
     void getAdvisorGroupSummaries_sprintNotFound_throwsNotFoundException() {
         when(sprintRepository.findById(SPRINT_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getAdvisorGroupSummaries(ADVISOR_ID, SPRINT_ID))
+        assertThatThrownBy(() -> service.getAdvisorGroupSummaries(ADVISOR_ID, SPRINT_ID, false))
                 .isInstanceOf(NotFoundException.class);
     }
 

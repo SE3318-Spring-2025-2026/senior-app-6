@@ -41,17 +41,17 @@ class P3RbacSecurityTest {
     // ── Staff/Admin hitting student-only endpoints ───────────────────────────
 
     @Test
-    @DisplayName("Professor JWT on GET /api/advisors returns 403")
+    @DisplayName("Professor JWT on GET /api/advisor returns 403")
     void professor_getAvailableAdvisors_returns403() throws Exception {
-        mockMvc.perform(get("/api/advisors")
+        mockMvc.perform(get("/api/advisor")
                 .with(authentication(professorAuth())))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    @DisplayName("Coordinator JWT on GET /api/advisors returns 403")
+    @DisplayName("Coordinator JWT on GET /api/advisor returns 403")
     void coordinator_getAvailableAdvisors_returns403() throws Exception {
-        mockMvc.perform(get("/api/advisors")
+        mockMvc.perform(get("/api/advisor")
                 .with(authentication(coordinatorAuth())))
                 .andExpect(status().isForbidden());
     }

@@ -176,13 +176,15 @@ public class SprintTrackingOrchestrator {
         // 5.1 — fetch JIRA stories (resolves active sprint internally)
         List<JiraIssueDto> issues = jiraSprintService.fetchSprintStories(group);
 
-        // Wipe any pre-existing rows for this group+sprint (handles per-group re-runs)
-        sprintTrackingLogRepository.deleteByGroupIdAndSprintId(group.getId(), sprint.getId());
-
+        // Guard: on empty result (JIRA outage / no stories) do NOT wipe existing good rows
         if (issues.isEmpty()) {
-            log.info("No JIRA issues found for group {} sprint {}", group.getId(), sprint.getId());
+            log.info("No JIRA issues found for group {} sprint {} — skipping delete to preserve existing rows",
+                    group.getId(), sprint.getId());
             return new int[]{0, 0};
         }
+
+        // Wipe any pre-existing rows for this group+sprint only after we have fresh data
+        sprintTrackingLogRepository.deleteByGroupIdAndSprintId(group.getId(), sprint.getId());
 
         LocalDateTime fetchedAt = LocalDateTime.now(ZoneId.of("UTC"));
         List<SprintTrackingLog> logs = new ArrayList<>(issues.size());
@@ -194,7 +196,7 @@ public class SprintTrackingOrchestrator {
             entry.setIssueKey(issue.issueKey());
             // assigneeGithubUsername is set later from pr.authorLogin() (GitHub PR author)
             // because JIRA assigneeEmail does not match Student.githubUsername
-            entry.setStoryPoints(issue.storyPoints());
+            entry.setStoryPoints(issue.storyPoints() != null ? (int) Math.round(issue.storyPoints()) : null);
             entry.setFetchedAt(fetchedAt);
             entry.setAiPrResult(AiValidationResult.PENDING);
             entry.setAiDiffResult(AiValidationResult.PENDING);
@@ -207,47 +209,51 @@ public class SprintTrackingOrchestrator {
         int aiValidationsRun = 0;
 
         for (int i = 0; i < savedLogs.size(); i++) {
-            SprintTrackingLog log = savedLogs.get(i);
+            SprintTrackingLog entry = savedLogs.get(i);
             JiraIssueDto issue = issues.get(i);
 
             // 5.2 — GitHub branch + PR match
             Optional<String> branchOpt = githubSprintService.findBranchByIssueKey(group, issue.issueKey());
             if (branchOpt.isEmpty()) {
                 // No branch found — skip AI, leave prMerged=null, set AI to SKIPPED
-                log.setAiPrResult(AiValidationResult.SKIPPED);
-                log.setAiDiffResult(AiValidationResult.SKIPPED);
+                entry.setAiPrResult(AiValidationResult.SKIPPED);
+                entry.setAiDiffResult(AiValidationResult.SKIPPED);
                 continue;
             }
 
             Optional<GithubPrDto> prOpt = githubSprintService.findMergedPR(group, branchOpt.get());
             if (prOpt.isEmpty()) {
                 // Branch found but no closed PR
-                log.setPrMerged(false);
-                log.setAiPrResult(AiValidationResult.SKIPPED);
-                log.setAiDiffResult(AiValidationResult.SKIPPED);
+                entry.setPrMerged(false);
+                entry.setAiPrResult(AiValidationResult.SKIPPED);
+                entry.setAiDiffResult(AiValidationResult.SKIPPED);
                 continue;
             }
 
             GithubPrDto pr = prOpt.get();
-            log.setPrNumber(pr.prNumber());
-            log.setPrMerged(pr.merged());
+            entry.setPrNumber(pr.prNumber());
+            entry.setPrMerged(pr.merged());
             // PR author (user.login) is the authoritative GitHub username — overrides JIRA email
-            log.setAssigneeGithubUsername(pr.authorLogin());
+            if (pr.authorLogin() == null) {
+                log.warn("No authorLogin from GitHub for PR {} group {} — assigneeGithubUsername will be null",
+                        pr.prNumber(), group.getId());
+            }
+            entry.setAssigneeGithubUsername(pr.authorLogin());
 
             if (!pr.merged()) {
-                log.setAiPrResult(AiValidationResult.SKIPPED);
-                log.setAiDiffResult(AiValidationResult.SKIPPED);
+                entry.setAiPrResult(AiValidationResult.SKIPPED);
+                entry.setAiDiffResult(AiValidationResult.SKIPPED);
                 continue;
             }
 
             // 5.3 — AI PR review validation
             List<String> comments = githubSprintService.fetchPRReviewComments(group, pr.prNumber());
-            log.setAiPrResult(aiValidationService.validatePRReview(comments));
+            entry.setAiPrResult(aiValidationService.validatePRReview(comments));
             aiValidationsRun++;
 
             // 5.4 — AI diff semantics validation
             List<GithubFileDiffDto> diffs = githubSprintService.fetchFileDiffs(group, pr.prNumber());
-            log.setAiDiffResult(aiValidationService.validateIssueDiff(issue.description(), diffs));
+            entry.setAiDiffResult(aiValidationService.validateIssueDiff(issue.description(), diffs));
             aiValidationsRun++;
         }
 

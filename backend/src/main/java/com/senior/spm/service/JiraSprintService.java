@@ -37,6 +37,16 @@ public class JiraSprintService {
      *
      * <p>Board not found or no active sprint → logs WARN and returns empty list. Never throws.
      */
+    private String buildAuthHeader(ProjectGroup group) {
+        String decryptedToken = encryptionService.decrypt(group.getEncryptedJiraToken());
+        String authString = group.getJiraEmail().strip() + ":" + decryptedToken;
+        return "Basic " + Base64.getEncoder().encodeToString(authString.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String buildBaseUrl(ProjectGroup group) {
+        return group.getJiraSpaceUrl().strip().replaceAll("/+$", "");
+    }
+
     public List<JiraIssueDto> fetchSprintStories(ProjectGroup group) {
         if (group.getJiraSpaceUrl() == null || group.getJiraEmail() == null
                 || group.getEncryptedJiraToken() == null || group.getJiraProjectKey() == null) {
@@ -44,16 +54,14 @@ public class JiraSprintService {
             return Collections.emptyList();
         }
         try {
-            String decryptedToken = encryptionService.decrypt(group.getEncryptedJiraToken());
-            String authString = group.getJiraEmail().strip() + ":" + decryptedToken;
-            String base64Auth = Base64.getEncoder().encodeToString(authString.getBytes(StandardCharsets.UTF_8));
-            String baseUrl = group.getJiraSpaceUrl().strip().replaceAll("/+$", "");
+            String base64Auth = buildAuthHeader(group);
+            String baseUrl = buildBaseUrl(group);
 
             // Step 1: resolve boardId from project key
             String boardUrl = baseUrl + "/rest/agile/1.0/board?projectKeyOrId=" + group.getJiraProjectKey();
             JsonNode boardResp = restClient.get()
                     .uri(boardUrl)
-                    .header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth)
+                    .header(HttpHeaders.AUTHORIZATION, base64Auth)
                     .header(HttpHeaders.ACCEPT, "application/json")
                     .retrieve()
                     .body(JsonNode.class);
@@ -69,7 +77,7 @@ public class JiraSprintService {
             String sprintUrl = baseUrl + "/rest/agile/1.0/board/" + boardId + "/sprint?state=active";
             JsonNode sprintResp = restClient.get()
                     .uri(sprintUrl)
-                    .header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth)
+                    .header(HttpHeaders.AUTHORIZATION, base64Auth)
                     .header(HttpHeaders.ACCEPT, "application/json")
                     .retrieve()
                     .body(JsonNode.class);
@@ -108,11 +116,8 @@ public class JiraSprintService {
         }
 
         try {
-            String decryptedToken = encryptionService.decrypt(group.getEncryptedJiraToken());
-            String authString = group.getJiraEmail().strip() + ":" + decryptedToken;
-            String base64Auth = Base64.getEncoder().encodeToString(authString.getBytes(StandardCharsets.UTF_8));
-            
-            String baseUrl = group.getJiraSpaceUrl().strip().replaceAll("/+$", "");
+            String base64Auth = buildAuthHeader(group);
+            String baseUrl = buildBaseUrl(group);
             
             List<JiraIssueDto> dtos = new ArrayList<>();
             int startAt = 0;
@@ -123,7 +128,7 @@ public class JiraSprintService {
 
                 JsonNode response = restClient.get()
                         .uri(url)
-                        .header(HttpHeaders.AUTHORIZATION, "Basic " + base64Auth)
+                        .header(HttpHeaders.AUTHORIZATION, base64Auth)
                         .header(HttpHeaders.ACCEPT, "application/json")
                         .retrieve()
                         .body(JsonNode.class);
@@ -150,9 +155,9 @@ public class JiraSprintService {
                         }
                     }
 
-                    Integer storyPoints = null;
+                    Double storyPoints = null;
                     if (fields.hasNonNull("customfield_10016")) {
-                        storyPoints = fields.get("customfield_10016").asInt();
+                        storyPoints = fields.get("customfield_10016").asDouble();
                     }
 
                     String description = null;
