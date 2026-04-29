@@ -6,6 +6,8 @@ import {
   CalendarDays,
   ChevronDown,
   ChevronUp,
+  Eye,
+  EyeOff,
   Loader2,
   Save,
   Trophy,
@@ -37,6 +39,7 @@ const pageError = ref<string | null>(null);
 const noActiveSprint = ref(false);
 const activeSprint = ref<ActiveSprintResponse | null>(null);
 const groups = ref<AdvisorGroupSprintSummaryResponse[]>([]);
+const showDisbanded = ref(false);
 
 const expandedGroupIds = ref<Set<string>>(new Set());
 const trackingByGroup = reactive<Record<string, SprintTrackingResponse | null>>({});
@@ -81,7 +84,7 @@ async function loadPageData() {
     const sprint = await fetchAdvisorActiveSprint(token);
     activeSprint.value = sprint;
 
-    const sprintGroups = await fetchAdvisorSprintGroups(sprint.sprintId, token);
+    const sprintGroups = await fetchAdvisorSprintGroups(sprint.sprintId, token, showDisbanded.value);
     groups.value = sprintGroups;
 
     for (const group of sprintGroups) {
@@ -213,12 +216,28 @@ onMounted(loadPageData);
       <header
         class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg"
       >
-        <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
-          Sprint Tracking & Grading
-        </h1>
-        <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          Review per-group tracking, AI validation results, and submit Point A / Point B grades.
-        </p>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
+              Sprint Tracking & Grading
+            </h1>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Review per-group tracking, AI validation results, and submit Point A / Point B grades.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="inline-flex shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition"
+            :class="showDisbanded
+              ? 'border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50'
+              : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'"
+            @click="showDisbanded = !showDisbanded; loadPageData()"
+          >
+            <Eye v-if="!showDisbanded" class="h-4 w-4" />
+            <EyeOff v-else class="h-4 w-4" />
+            {{ showDisbanded ? "Hide disbanded" : "Show disbanded" }}
+          </button>
+        </div>
 
         <div
           v-if="activeSprint"

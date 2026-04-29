@@ -21,6 +21,7 @@ import com.senior.spm.controller.response.SprintTrackingResponse;
 import com.senior.spm.controller.response.TrackingIssueResponse;
 import com.senior.spm.controller.request.ScrumGradeRequest;
 import com.senior.spm.entity.ProjectGroup;
+import com.senior.spm.entity.ProjectGroup.GroupStatus;
 import com.senior.spm.entity.ScrumGrade;
 import com.senior.spm.entity.ScrumGrade.ScrumGradeValue;
 import com.senior.spm.entity.Sprint;
@@ -118,14 +119,30 @@ public class ScrumGradingService {
     // -------------------------------------------------------------------------
 
     @Transactional(readOnly = true)
-    public List<AdvisorGroupSprintSummaryResponse> getAdvisorGroupSummaries(UUID advisorId, UUID sprintId) {
+    public List<AdvisorGroupSprintSummaryResponse> getAdvisorGroupSummaries(UUID advisorId, UUID sprintId, boolean includeDisbanded) {
         findSprintOrThrow(sprintId);
 
         String termId = termConfigService.getActiveTermId();
-        List<ProjectGroup> groups = projectGroupRepository.findByAdvisor_IdAndTermId(advisorId, termId);
+        List<ProjectGroup> groups = projectGroupRepository.findByAdvisor_IdAndTermId(advisorId, termId)
+                .stream()
+                .filter(g -> includeDisbanded || g.getStatus() != GroupStatus.DISBANDED)
+                .toList();
+
+        // Batch-fetch all tracking logs and grades for the sprint in 2 queries (avoids N+1)
+        Map<UUID, List<SprintTrackingLog>> logsByGroup = sprintTrackingLogRepository
+                .findBySprintId(sprintId)
+                .stream()
+                .collect(Collectors.groupingBy(l -> l.getGroup().getId()));
+
+        Map<UUID, ScrumGrade> gradeByGroup = scrumGradeRepository
+                .findBySprintId(sprintId)
+                .stream()
+                .collect(Collectors.toMap(g -> g.getGroup().getId(), g -> g));
 
         return groups.stream()
-                .map(group -> buildGroupSummary(group, sprintId))
+                .map(group -> buildGroupSummary(group,
+                        logsByGroup.getOrDefault(group.getId(), List.of()),
+                        gradeByGroup.get(group.getId())))
                 .toList();
     }
 
@@ -219,11 +236,22 @@ public class ScrumGradingService {
         }
     }
 
+    /** Pre-fetched variant — used by getAdvisorGroupSummaries to avoid N+1. */
+    private AdvisorGroupSprintSummaryResponse buildGroupSummary(
+            ProjectGroup group, List<SprintTrackingLog> logs, ScrumGrade grade) {
+        return buildGroupSummaryFromData(group, logs, Optional.ofNullable(grade));
+    }
+
     private AdvisorGroupSprintSummaryResponse buildGroupSummary(ProjectGroup group, UUID sprintId) {
         List<SprintTrackingLog> logs = sprintTrackingLogRepository
                 .findByGroupIdAndSprintId(group.getId(), sprintId);
         Optional<ScrumGrade> grade = scrumGradeRepository
                 .findByGroupIdAndSprintId(group.getId(), sprintId);
+        return buildGroupSummaryFromData(group, logs, grade);
+    }
+
+    private AdvisorGroupSprintSummaryResponse buildGroupSummaryFromData(
+            ProjectGroup group, List<SprintTrackingLog> logs, Optional<ScrumGrade> grade) {
 
         long mergedPRs = logs.stream().filter(l -> Boolean.TRUE.equals(l.getPrMerged())).count();
 
