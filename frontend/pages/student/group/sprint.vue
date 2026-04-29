@@ -371,7 +371,7 @@ onMounted(loadPage);
                     v-if="expandedIssueKey === issue.issueKey && hasDetail(issue)"
                     class="bg-slate-50 dark:bg-slate-900/40"
                   >
-                    <td colspan="7" class="px-6 pb-5 pt-0">
+                    <td colspan="7" class="px-6 pb-5 pt-4">
                       <div class="grid gap-4 sm:grid-cols-2">
                         <!-- PR info -->
                         <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
@@ -433,7 +433,7 @@ onMounted(loadPage);
                               </p>
                             </div>
                             <p v-if="!issue.aiPrReviewNote && !issue.aiDiffMatchNote" class="text-slate-400 dark:text-slate-500">
-                              No AI notes available yet.
+                              AI notes are not available yet.
                             </p>
                           </div>
                         </div>

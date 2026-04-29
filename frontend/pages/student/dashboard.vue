@@ -12,7 +12,7 @@
 	const authStore = useAuthStore();
 	const { getAuthToken, fetchActiveSprint } = useApiClient();
 
-	type SprintState = "loading" | "loaded" | "no-sprint";
+	type SprintState = "loading" | "loaded" | "no-sprint" | "error";
 
 	const sprintState = ref<SprintState>("loading");
 	const sprint = ref<ActiveSprintResponse | null>(null);
@@ -32,7 +32,7 @@
 			sprintState.value = "loaded";
 		} catch (err: unknown) {
 			const apiError = err as { status?: number };
-			sprintState.value = apiError.status === 404 ? "no-sprint" : "no-sprint";
+			sprintState.value = apiError.status === 404 ? "no-sprint" : "error";
 		}
 	});
 
@@ -84,6 +84,11 @@
           <!-- No active sprint -->
           <p v-else-if="sprintState === 'no-sprint'" class="mt-1 text-sm text-slate-500 dark:text-slate-400">
             No active sprint found.
+          </p>
+
+          <!-- Error -->
+          <p v-else-if="sprintState === 'error'" class="mt-1 text-sm text-red-500 dark:text-red-400">
+            Couldn't load sprint info.
           </p>
 
           <!-- Loaded -->
