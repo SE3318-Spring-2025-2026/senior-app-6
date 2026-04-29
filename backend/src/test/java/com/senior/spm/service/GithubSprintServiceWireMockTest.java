@@ -190,23 +190,38 @@ class GithubSprintServiceWireMockTest {
 
     @Test
     void fetchPRReviewComments_returnsBodies() {
+        // /reviews returns formal reviews (APPROVED with body, CHANGES_REQUESTED with body, APPROVED with empty body)
+        wireMockServer.stubFor(
+            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/reviews?per_page=100"))
+                .willReturn(WireMock.aResponse()
+                    .withStatus(200)
+                    .withHeader("Content-Type", "application/json")
+                    .withBody("[{\"state\":\"APPROVED\",\"body\":\"LGTM\"},{\"state\":\"CHANGES_REQUESTED\",\"body\":\"Please fix tests\"},{\"state\":\"APPROVED\",\"body\":\"\"}]"))
+        );
+        // /comments returns inline diff comments
         wireMockServer.stubFor(
             WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/comments?per_page=100"))
                 .willReturn(WireMock.aResponse()
                     .withStatus(200)
                     .withHeader("Content-Type", "application/json")
-                    .withBody("[{\"state\":\"APPROVED\",\"body\":\"LGTM\"},{\"state\":\"COMMENTED\",\"body\":\"Please add tests\"},{\"state\":\"APPROVED\",\"body\":\"\"}]"))
+                    .withBody("[{\"body\":\"nit: rename variable\"},{\"body\":\"\"}]"))
         );
 
         List<String> comments = service.fetchPRReviewComments(group("my-org", "my-repo"), 7L);
 
-        assertThat(comments).containsExactly("LGTM", "Please add tests");
+        assertThat(comments).containsExactly(
+            "APPROVED: LGTM",
+            "CHANGES_REQUESTED: Please fix tests",
+            "APPROVED",              // empty body — state label still included
+            "nit: rename variable"   // inline comment
+        );
     }
 
     @Test
     void fetchPRReviewComments_returnsEmpty_on401() {
+        // /reviews is called first — a 401 there causes the whole method to return empty
         wireMockServer.stubFor(
-            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/comments?per_page=100"))
+            WireMock.get(WireMock.urlEqualTo("/repos/my-org/my-repo/pulls/7/reviews?per_page=100"))
                 .willReturn(WireMock.aResponse().withStatus(401))
         );
 

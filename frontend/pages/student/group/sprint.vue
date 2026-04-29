@@ -83,7 +83,7 @@ async function loadPage() {
 
     sprint.value = activeSprint;
 
-    const tracking = await fetchSprintTracking(group.id, activeSprint.id, token);
+    const tracking = await fetchSprintTracking(group.id, activeSprint.sprintId, token);
     issues.value = tracking.issues ?? [];
     state.value = "loaded";
   } catch (err: unknown) {
@@ -343,7 +343,7 @@ onMounted(loadPage);
                       {{ issue.issueKey }}
                     </td>
                     <td class="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {{ issue.assignee || "—" }}
+                      {{ issue.assigneeGithubUsername || "—" }}
                     </td>
                     <td class="px-6 py-4 text-slate-700 dark:text-slate-300">
                       {{ issue.storyPoints }}
@@ -359,10 +359,10 @@ onMounted(loadPage);
                       </span>
                     </td>
                     <td class="px-6 py-4">
-                      <AiResultBadge :result="issue.aiPrReview" />
+                      <AiResultBadge :result="issue.aiPrResult" />
                     </td>
                     <td class="px-6 py-4">
-                      <AiResultBadge :result="issue.aiDiffMatch" />
+                      <AiResultBadge :result="issue.aiDiffResult" />
                     </td>
                   </tr>
 

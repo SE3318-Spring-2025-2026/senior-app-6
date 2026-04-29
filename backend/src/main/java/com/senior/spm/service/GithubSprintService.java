@@ -150,14 +150,15 @@ public class GithubSprintService {
                 return Optional.empty();
             }
 
-            JsonNode first  = response.get(0);
-            Long prNumber   = first.path("number").asLong();
-            String state    = first.path("state").asText(null);
-            String mergedAt = first.hasNonNull("merged_at")
+            JsonNode first   = response.get(0);
+            Long prNumber    = first.path("number").asLong();
+            String state     = first.path("state").asText(null);
+            String mergedAt  = first.hasNonNull("merged_at")
                     ? first.path("merged_at").asText(null)
                     : null;
+            String authorLogin = first.path("user").path("login").asText(null);
 
-            return Optional.of(GithubPrDto.of(prNumber, state, mergedAt));
+            return Optional.of(GithubPrDto.of(prNumber, state, mergedAt, authorLogin));
 
         } catch (RestClientException ex) {
             log.warn("GitHub API error finding merged PR for group {} branch {}: {}",
@@ -171,14 +172,20 @@ public class GithubSprintService {
     }
 
     /**
-     * Fetches the review comment bodies for a given Pull Request.
+     * Fetches review content for a given Pull Request from two endpoints:
      *
-     * <p>Calls {@code GET /repos/{org}/{repo}/pulls/{prNumber}/reviews}.
-     * Blank or null bodies are excluded from the result.
+     * <ol>
+     *   <li>{@code GET /repos/{org}/{repo}/pulls/{prNumber}/reviews} — formal reviews
+     *       (APPROVED, CHANGES_REQUESTED, COMMENTED).  APPROVED and CHANGES_REQUESTED
+     *       entries are always included (state label + body if present) so the AI can
+     *       see that a deliberate review action was taken even when the body is empty.</li>
+     *   <li>{@code GET /repos/{org}/{repo}/pulls/{prNumber}/comments} — inline diff
+     *       comments.  Only non-blank bodies are included.</li>
+     * </ol>
      *
      * @param group    the project group whose GitHub credentials are used
      * @param prNumber the GitHub PR number
-     * @return list of non-blank review comment bodies, or an empty list on error
+     * @return combined list of review strings for AI evaluation, empty on error
      */
     public List<String> fetchPRReviewComments(ProjectGroup group, long prNumber) {
         if (!hasGithubCredentials(group)) {
@@ -188,25 +195,46 @@ public class GithubSprintService {
         try {
             String org  = group.getGithubOrgName();
             String repo = group.getGithubRepoName();
-            String url  = githubApiBase() + "/repos/" + org + "/" + repo
-                    + "/pulls/" + prNumber + "/comments?per_page=100";
+            RestClient client = buildClient(group);
+            List<String> bodies = new ArrayList<>();
 
-            JsonNode response = buildClient(group).get()
-                    .uri(url)
+            // 1. Formal reviews: APPROVED / CHANGES_REQUESTED / COMMENTED
+            String reviewsUrl = githubApiBase() + "/repos/" + org + "/" + repo
+                    + "/pulls/" + prNumber + "/reviews?per_page=100";
+            JsonNode reviews = client.get()
+                    .uri(reviewsUrl)
                     .retrieve()
                     .body(JsonNode.class);
-
-            if (response == null || !response.isArray()) {
-                return Collections.emptyList();
-            }
-
-            List<String> bodies = new ArrayList<>();
-            for (JsonNode review : response) {
-                String body = review.path("body").asText(null);
-                if (body != null && !body.isBlank()) {
-                    bodies.add(body);
+            if (reviews != null && reviews.isArray()) {
+                for (JsonNode review : reviews) {
+                    String state = review.path("state").asText(null);
+                    String body  = review.path("body").asText(null);
+                    boolean hasBody = body != null && !body.isBlank();
+                    if ("APPROVED".equals(state) || "CHANGES_REQUESTED".equals(state)) {
+                        bodies.add(hasBody ? state + ": " + body : state);
+                    } else if (hasBody) {
+                        // COMMENTED state — include only if body is substantive
+                        bodies.add(body);
+                    }
                 }
             }
+
+            // 2. Inline diff comments
+            String commentsUrl = githubApiBase() + "/repos/" + org + "/" + repo
+                    + "/pulls/" + prNumber + "/comments?per_page=100";
+            JsonNode comments = client.get()
+                    .uri(commentsUrl)
+                    .retrieve()
+                    .body(JsonNode.class);
+            if (comments != null && comments.isArray()) {
+                for (JsonNode comment : comments) {
+                    String body = comment.path("body").asText(null);
+                    if (body != null && !body.isBlank()) {
+                        bodies.add(body);
+                    }
+                }
+            }
+
             return Collections.unmodifiableList(bodies);
 
         } catch (RestClientException ex) {

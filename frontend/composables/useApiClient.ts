@@ -14,6 +14,11 @@ import type {
   AdvisorCapacityResponse,
   AdvisorRequestResponse,
   AdvisorOverrideResponse,
+  ActiveSprintResponse,
+  AdvisorGroupSprintSummaryResponse,
+  SprintTrackingResponse,
+  SubmitScrumGradeRequest,
+  ScrumGradeResponse,
 } from '~/types/advisor';
 import type {
   CommitteeSummaryResponse,
@@ -427,6 +432,62 @@ export function useApiClient() {
     return apiCall<AdvisorRequestItem[]>("/advisor/requests", "GET", undefined, token);
   }
 
+  async function fetchAdvisorActiveSprint(token?: string): Promise<ActiveSprintResponse> {
+    return apiCall<ActiveSprintResponse>("/advisor/sprints/active", "GET", undefined, token);
+  }
+
+  async function fetchAdvisorSprintGroups(
+    sprintId: string,
+    token?: string
+  ): Promise<AdvisorGroupSprintSummaryResponse[]> {
+    return apiCall<AdvisorGroupSprintSummaryResponse[]>(
+      `/advisor/sprints/${encodeURIComponent(sprintId)}/groups`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchAdvisorGroupTracking(
+    sprintId: string,
+    groupId: string,
+    token?: string
+  ): Promise<SprintTrackingResponse> {
+    return apiCall<SprintTrackingResponse>(
+      `/advisor/sprints/${encodeURIComponent(sprintId)}/groups/${encodeURIComponent(groupId)}/tracking`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function submitAdvisorGroupGrade(
+    sprintId: string,
+    groupId: string,
+    payload: SubmitScrumGradeRequest,
+    token?: string
+  ): Promise<ScrumGradeResponse> {
+    return apiCall<ScrumGradeResponse>(
+      `/advisor/sprints/${encodeURIComponent(sprintId)}/groups/${encodeURIComponent(groupId)}/grade`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
+  async function fetchAdvisorGroupGrade(
+    sprintId: string,
+    groupId: string,
+    token?: string
+  ): Promise<ScrumGradeResponse> {
+    return apiCall<ScrumGradeResponse>(
+      `/advisor/sprints/${encodeURIComponent(sprintId)}/groups/${encodeURIComponent(groupId)}/grade`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   async function fetchAdvisorRequestDetail(requestId: string, token?: string): Promise<AdvisorRequestDetail> {
     return apiCall<AdvisorRequestDetail>(`/advisor/requests/${encodeURIComponent(requestId)}`, "GET", undefined, token);
   }
@@ -572,6 +633,11 @@ export function useApiClient() {
     fetchPendingInvitations,
     respondToInvitation,
     fetchAdvisorRequests,
+    fetchAdvisorActiveSprint,
+    fetchAdvisorSprintGroups,
+    fetchAdvisorGroupTracking,
+    submitAdvisorGroupGrade,
+    fetchAdvisorGroupGrade,
     fetchAdvisorRequestDetail,
     respondToAdvisorRequest,
     searchStudents,

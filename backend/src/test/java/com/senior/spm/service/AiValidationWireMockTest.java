@@ -5,6 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.senior.spm.entity.SystemConfig;
 import com.senior.spm.entity.SprintTrackingLog.AiValidationResult;
 import com.senior.spm.repository.SystemConfigRepository;
+import com.senior.spm.service.dto.GithubFileDiffDto;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +28,7 @@ import static org.mockito.Mockito.when;
 /**
  * WireMock integration tests for AiValidationService — covers all HTTP-response branches.
  * Non-HTTP branches (SKIPPED, missing key) are covered in AiValidationServiceTest.
- * Issue: #151
+ * Issue: #151, #152
  */
 class AiValidationWireMockTest {
 
@@ -198,6 +199,169 @@ class AiValidationWireMockTest {
         stubGemini(200, geminiBody("PASS"));
 
         service.validatePRReview(List.of("Some review"));
+
+        wireMockServer.verify(1,
+                WireMock.postRequestedFor(urlPathEqualTo(GEMINI_PATH))
+                        .withHeader("Content-Type", WireMock.containing(MediaType.APPLICATION_JSON_VALUE)));
+    }
+
+    // ── validateIssueDiff — LLM returns PASS / WARN / FAIL ───────────────────
+
+    @Test
+    void validateIssueDiff_geminiReturnsPass_returnsPass() {
+        stubGemini(200, geminiBody("PASS"));
+
+        AiValidationResult result = service.validateIssueDiff(
+                "Implement login endpoint with JWT",
+                List.of(new GithubFileDiffDto("LoginController.java", "@@ -0,0 +1,10 @@\n+public void login() {}")));
+
+        assertThat(result).isEqualTo(AiValidationResult.PASS);
+    }
+
+    @Test
+    void validateIssueDiff_geminiReturnsWarn_returnsWarn() {
+        stubGemini(200, geminiBody("WARN"));
+
+        AiValidationResult result = service.validateIssueDiff(
+                "Add full user registration flow",
+                List.of(new GithubFileDiffDto("UserService.java", "@@ -5,1 +5,3 @@\n+// partial impl")));
+
+        assertThat(result).isEqualTo(AiValidationResult.WARN);
+    }
+
+    @Test
+    void validateIssueDiff_geminiReturnsFail_returnsFail() {
+        stubGemini(200, geminiBody("FAIL"));
+
+        AiValidationResult result = service.validateIssueDiff(
+                "Fix payment processing bug",
+                List.of(new GithubFileDiffDto("README.md", "@@ -1,1 +1,1 @@\n-typo\n+typo fix")));
+
+        assertThat(result).isEqualTo(AiValidationResult.FAIL);
+    }
+
+    // ── validateIssueDiff — request body contains both description and diff ──
+
+    @Test
+    void validateIssueDiff_requestBodyContainsDescriptionAndPatch() {
+        stubGemini(200, geminiBody("PASS"));
+
+        service.validateIssueDiff(
+                "Implement login endpoint with JWT",
+                List.of(new GithubFileDiffDto("LoginController.java", "@@ -0,0 +1,10 @@\n+public void login() {}")));
+
+        wireMockServer.verify(1,
+                WireMock.postRequestedFor(urlPathEqualTo(GEMINI_PATH))
+                        .withRequestBody(WireMock.containing("Implement login endpoint with JWT"))
+                        .withRequestBody(WireMock.containing("public void login()")));
+    }
+
+    // ── validateIssueDiff — unrecognised / lowercase LLM output ─────────────
+
+    @Test
+    void validateIssueDiff_geminiReturnsGarbledOutput_returnsWarn() {
+        stubGemini(200, geminiBody("The changes look related to me."));
+
+        AiValidationResult result = service.validateIssueDiff(
+                "Fix NPE in service",
+                List.of(new GithubFileDiffDto("Service.java", "@@ -10,1 +10,2 @@\n+null check")));
+
+        assertThat(result).isEqualTo(AiValidationResult.WARN);
+    }
+
+    @Test
+    void validateIssueDiff_geminiReturnsLowercasePass_returnsPass() {
+        stubGemini(200, geminiBody("pass"));
+
+        AiValidationResult result = service.validateIssueDiff(
+                "Add null check to service layer",
+                List.of(new GithubFileDiffDto("Service.java", "@@ -10,1 +10,2 @@\n+null check")));
+
+        assertThat(result).isEqualTo(AiValidationResult.PASS);
+    }
+
+    // ── validateIssueDiff — HTTP error branches → WARN ───────────────────────
+
+    @Test
+    void validateIssueDiff_gemini500_returnsWarn_noException() {
+        stubGemini(500, "{\"error\":{\"message\":\"Internal server error\"}}");
+
+        assertThatCode(() -> {
+            AiValidationResult result = service.validateIssueDiff(
+                    "Fix NPE in service layer",
+                    List.of(new GithubFileDiffDto("Service.java", "@@ -10,1 +10,2 @@\n+null check")));
+            assertThat(result).isEqualTo(AiValidationResult.WARN);
+        }).doesNotThrowAnyException();
+    }
+
+    @Test
+    void validateIssueDiff_gemini503_returnsWarn_noException() {
+        stubGemini(503, "{\"error\":{\"message\":\"Service unavailable\"}}");
+
+        assertThatCode(() -> {
+            AiValidationResult result = service.validateIssueDiff(
+                    "Fix NPE in service layer",
+                    List.of(new GithubFileDiffDto("Service.java", "@@ -10,1 +10,2 @@\n+null check")));
+            assertThat(result).isEqualTo(AiValidationResult.WARN);
+        }).doesNotThrowAnyException();
+    }
+
+    // ── validateIssueDiff — timeout → WARN, no exception propagated ──────────
+
+    @Test
+    void validateIssueDiff_geminiTimeout_returnsWarn_noException() {
+        // 2s delay exceeds the 1s timeout configured in setUp()
+        wireMockServer.stubFor(post(urlPathEqualTo(GEMINI_PATH))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withFixedDelay(2000)
+                        .withBody(geminiBody("PASS"))));
+
+        assertThatCode(() -> {
+            AiValidationResult result = service.validateIssueDiff(
+                    "Fix NPE in service layer",
+                    List.of(new GithubFileDiffDto("Service.java", "@@ -10,1 +10,2 @@\n+null check")));
+            assertThat(result).isEqualTo(AiValidationResult.WARN);
+        }).doesNotThrowAnyException();
+    }
+
+    // ── validateIssueDiff — empty candidates list in response → WARN ─────────
+
+    @Test
+    void validateIssueDiff_emptyCandidates_returnsWarn() {
+        stubGemini(200, "{\"candidates\":[]}");
+
+        AiValidationResult result = service.validateIssueDiff(
+                "Fix NPE in service layer",
+                List.of(new GithubFileDiffDto("Service.java", "@@ -10,1 +10,2 @@\n+null check")));
+
+        assertThat(result).isEqualTo(AiValidationResult.WARN);
+    }
+
+    // ── validateIssueDiff — API key is passed as query parameter ─────────────
+
+    @Test
+    void validateIssueDiff_sendsApiKeyAsQueryParam() {
+        stubGemini(200, geminiBody("PASS"));
+
+        service.validateIssueDiff(
+                "Fix NPE in service layer",
+                List.of(new GithubFileDiffDto("Service.java", "@@ -10,1 +10,2 @@\n+null check")));
+
+        wireMockServer.verify(1,
+                WireMock.postRequestedFor(urlPathEqualTo(GEMINI_PATH))
+                        .withQueryParam("key", WireMock.equalTo(FAKE_PLAIN_KEY)));
+    }
+
+    // ── validateIssueDiff — Content-Type header is set to application/json ───
+
+    @Test
+    void validateIssueDiff_setsJsonContentType() {
+        stubGemini(200, geminiBody("PASS"));
+
+        service.validateIssueDiff(
+                "Fix NPE in service layer",
+                List.of(new GithubFileDiffDto("Service.java", "@@ -10,1 +10,2 @@\n+null check")));
 
         wireMockServer.verify(1,
                 WireMock.postRequestedFor(urlPathEqualTo(GEMINI_PATH))

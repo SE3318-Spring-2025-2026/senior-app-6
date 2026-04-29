@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.senior.spm.entity.SprintTrackingLog.AiValidationResult;
 import com.senior.spm.repository.SystemConfigRepository;
+import com.senior.spm.service.dto.GithubFileDiffDto;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestClientResponseException;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,6 +32,14 @@ public class AiValidationService {
             "PASS if the review is substantive, " +
             "WARN if it is minimal or superficial, " +
             "FAIL if it is empty or purely cosmetic.\n\n";
+    // Section labels are included in the constant so the assembled prompt reads:
+    // [instruction] Issue description: [description] Code diff: [patches]
+    private static final String DIFF_VALIDATION_PROMPT =
+            "Compare the following issue description and code diff, then respond with only one word: " +
+            "PASS if the changes clearly implement the issue, " +
+            "WARN if the match is partial or unclear, " +
+            "FAIL if the changes are unrelated to the issue.\n\n" +
+            "Issue description:\n";
     private static final int  MAX_ATTEMPTS    = 3;
     private static final long INITIAL_RETRY_MS = 5_000;  // 5 s → 10 s → 20 s
     private static final long MAX_RETRY_MS     = 60_000; // cap at 60 s
@@ -195,6 +205,56 @@ public class AiValidationService {
             };
         } catch (Exception ex) {
             log.warn("Failed to parse LLM response structure — defaulting to WARN");
+            return AiValidationResult.WARN;
+        }
+    }
+
+    /**
+     * Validates whether the code diff implements the JIRA issue using Gemini Flash Lite.
+     *
+     * @param issueDescription JIRA issue description body
+     * @param fileDiffs        list of file diffs from the merged PR
+     * @return SKIPPED if fileDiffs is empty/null, issueDescription is blank/null,
+     *         or all patches are null (e.g. binary-only PR);
+     *         PASS/WARN/FAIL per LLM judgement;
+     *         WARN on any error (timeout, 5xx, parse failure, missing key) — never throws
+     */
+    public AiValidationResult validateIssueDiff(String issueDescription, List<GithubFileDiffDto> fileDiffs) {
+        if (fileDiffs == null || fileDiffs.isEmpty()) {
+            return AiValidationResult.SKIPPED;
+        }
+        if (issueDescription == null || issueDescription.isBlank()) {
+            return AiValidationResult.SKIPPED;
+        }
+
+        // Filter null patches upfront — GithubFileDiffDto.patch is null for binary/oversized files.
+        // If no usable patch text remains, there is nothing meaningful to validate.
+        String patches = fileDiffs.stream()
+                .map(GithubFileDiffDto::patch)
+                .filter(p -> p != null && !p.isBlank())
+                .collect(Collectors.joining("\n"));
+
+        if (patches.isBlank()) {
+            return AiValidationResult.SKIPPED;
+        }
+
+        try {
+            String apiKey = resolveApiKey();
+            if (apiKey == null) return AiValidationResult.WARN;
+
+            String promptText = DIFF_VALIDATION_PROMPT + issueDescription + "\n\nCode diff:\n" + patches;
+            var request = new GeminiRequest(
+                    List.of(new GeminiContent(List.of(new GeminiPart(promptText)))),
+                    new GeminiRequest.GenerationConfig(10, 0.0)
+            );
+
+            return callWithRetry(request, apiKey);
+
+        } catch (ResourceAccessException ex) {
+            log.warn("LLM diff validation timed out or connection failed — returning WARN: {}", ex.getMessage());
+            return AiValidationResult.WARN;
+        } catch (Exception ex) {
+            log.warn("Unexpected error during AI diff validation — returning WARN: {}", ex.getMessage());
             return AiValidationResult.WARN;
         }
     }
