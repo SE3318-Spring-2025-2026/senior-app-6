@@ -562,6 +562,70 @@ components:
         status:
           type: string
 
+    SprintRefreshResponse:
+      type: object
+      properties:
+        sprintId:
+          type: string
+          format: uuid
+        groupsProcessed:
+          type: integer
+        issuesFetched:
+          type: integer
+        aiValidationsRun:
+          type: integer
+        triggeredAt:
+          type: string
+          format: date-time
+
+    SprintOverviewResponse:
+      type: object
+      properties:
+        sprintId:
+          type: string
+          format: uuid
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/SprintGroupOverview'
+
+    SprintGroupOverview:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        groupName:
+          type: string
+        advisorEmail:
+          type: string
+          nullable: true
+          description: Omitted from JSON when null (TOOLS_BOUND groups with no advisor).
+        totalIssues:
+          type: integer
+        mergedPRs:
+          type: integer
+        aiPassCount:
+          type: integer
+        aiWarnCount:
+          type: integer
+        aiFailCount:
+          type: integer
+        aiPendingCount:
+          type: integer
+        aiSkippedCount:
+          type: integer
+        gradeSubmitted:
+          type: boolean
+        pointA_grade:
+          type: string
+          enum: [A, B, C, D, F]
+          nullable: true
+        pointB_grade:
+          type: string
+          enum: [A, B, C, D, F]
+          nullable: true
+
     SanitizeRequest:
       type: object
       properties:
@@ -1841,6 +1905,75 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
         '404':
           description: Request not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/sprints/{sprintId}/refresh:
+    post:
+      tags: [Coordinator]
+      summary: Manually trigger the sprint tracking pipeline (5.1–5.4)
+      description: >
+        Deletes all existing SprintTrackingLog rows for the sprint and re-fetches
+        from scratch (idempotent). Use ?force=true to trigger mid-sprint.
+      parameters:
+        - name: sprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: force
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: When true, bypasses the sprint-end-date guard.
+      responses:
+        '200':
+          description: Pipeline triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SprintRefreshResponse'
+        '400':
+          description: Sprint has not ended and force was not set to true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/sprints/{sprintId}/overview:
+    get:
+      tags: [Coordinator]
+      summary: Get sprint overview for all eligible groups
+      description: >
+        Returns tracking stats and grade status for every TOOLS_BOUND and
+        ADVISOR_ASSIGNED group. Not filtered to any advisor.
+      parameters:
+        - name: sprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Sprint overview returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SprintOverviewResponse'
+        '404':
+          description: Sprint not found
           content:
             application/json:
               schema:

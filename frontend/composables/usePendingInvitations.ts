@@ -4,7 +4,8 @@
  */
 
 import { ref, computed } from "vue";
-import { useApiClient, type GroupInvitation } from "./useApiClient";
+import { useApiClient } from "./useApiClient";
+import type { GroupInvitation } from "~/types/invitation";
 import { useAuthStore } from "~/stores/auth";
 
 const pendingInvitations = ref<GroupInvitation[]>([]);
