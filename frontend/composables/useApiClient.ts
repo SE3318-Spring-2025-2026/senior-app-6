@@ -34,7 +34,7 @@ import type {
   CreateDeliverableRequest,
   UpdateDeliverableRequest,
 } from '~/types/deliverable';
-import type { Sprint, CreateSprintRequest } from '~/types/sprint';
+import type { Sprint, CreateSprintRequest, ActiveSprintResponse, SprintTrackingResponse } from '~/types/sprint';
 import type { GradingCriterion, RubricCriterionResponse } from '~/types/rubric';
 import type {
   GroupInvitation,
@@ -196,6 +196,23 @@ export function useApiClient() {
 
   async function fetchSprints(token?: string): Promise<Sprint[]> {
     return apiCall<Sprint[]>("/coordinator/sprints", "GET", undefined, token);
+  }
+
+  async function fetchActiveSprint(token?: string): Promise<ActiveSprintResponse> {
+    return apiCall<ActiveSprintResponse>("/sprints/active", "GET", undefined, token);
+  }
+
+  async function fetchSprintTracking(
+    groupId: string,
+    sprintId: string,
+    token?: string
+  ): Promise<SprintTrackingResponse> {
+    return apiCall<SprintTrackingResponse>(
+      `/groups/${encodeURIComponent(groupId)}/sprints/${encodeURIComponent(sprintId)}/tracking`,
+      "GET",
+      undefined,
+      token
+    );
   }
 
   async function fetchRubric(deliverableId: string, token?: string): Promise<RubricCriterionResponse[]> {
@@ -611,6 +628,8 @@ export function useApiClient() {
     disbandCoordinatorGroup,
     bindJiraTool,
     bindGithubTool,
+    fetchActiveSprint,
+    fetchSprintTracking,
     fetchPendingInvitations,
     respondToInvitation,
     fetchAdvisorRequests,
