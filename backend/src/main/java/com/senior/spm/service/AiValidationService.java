@@ -75,6 +75,10 @@ public class AiValidationService {
                 .build();
     }
 
+    public void invalidateKeyCache() {
+        cachedApiKey.set(null);
+    }
+
     // Package-private constructor for unit tests — accepts a pre-built RestClient mock
     AiValidationService(SystemConfigRepository systemConfigRepository,
                         EncryptionService encryptionService,

@@ -1,5 +1,5 @@
 import { useAuthStore } from '~/stores/auth';
-import type { ApiError } from '~/types/api';
+import type { ApiError, LlmConfigResponse } from '~/types/api';
 import type { GithubLoginResponse, LoginResponse } from '~/types/auth';
 import type {
   GroupDetailResponse,
@@ -34,7 +34,7 @@ import type {
   CreateDeliverableRequest,
   UpdateDeliverableRequest,
 } from '~/types/deliverable';
-import type { Sprint, CreateSprintRequest, ActiveSprintResponse, SprintTrackingResponse } from '~/types/sprint';
+import type { Sprint, CreateSprintRequest } from '~/types/sprint';
 import type { GradingCriterion, RubricCriterionResponse } from '~/types/rubric';
 import type {
   GroupInvitation,
@@ -248,6 +248,14 @@ export function useApiClient() {
 
   async function registerProfessor(mail: string, token?: string): Promise<{ resetToken: string }> {
     return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", { mail }, token);
+  }
+
+  async function fetchLlmConfig(token?: string): Promise<LlmConfigResponse> {
+    return apiCall<LlmConfigResponse>("/admin/llm-config", "GET", undefined, token);
+  }
+
+  async function updateLlmKey(apiKey: string, token?: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>("/admin/llm-config", "PUT", { apiKey }, token);
   }
 
   async function createGroup(data: CreateGroupRequest, token?: string): Promise<GroupDetailResponse> {
@@ -645,6 +653,8 @@ export function useApiClient() {
     searchStudents,
     sendGroupInvitation,
     fetchGroupInvitations,
-    cancelGroupInvitation
+    cancelGroupInvitation,
+    fetchLlmConfig,
+    updateLlmKey,
   };
 }
