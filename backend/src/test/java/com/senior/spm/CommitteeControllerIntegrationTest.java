@@ -9,6 +9,7 @@ import com.senior.spm.entity.StaffUser;
 import com.senior.spm.entity.StaffUser.Role;
 import com.senior.spm.repository.CommitteeRepository;
 import com.senior.spm.repository.DeliverableRepository;
+import com.senior.spm.repository.RubricCriterionRepository;
 import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.service.JWTService;
 import org.junit.jupiter.api.BeforeEach;
@@ -60,6 +61,9 @@ class CommitteeControllerIntegrationTest {
     private DeliverableRepository deliverableRepository;
 
     @Autowired
+    private RubricCriterionRepository rubricCriterionRepository;
+
+    @Autowired
     private StaffUserRepository staffUserRepository;
 
     private StaffUser coordinator;
@@ -76,6 +80,8 @@ class CommitteeControllerIntegrationTest {
     void setUp() {
         committeeRepository.deleteAll();
         staffUserRepository.deleteAll();
+        // rubric_criterion.deliverable_id → deliverable.id: delete child before parent
+        rubricCriterionRepository.deleteAll();
         deliverableRepository.deleteAll();
 
         coordinator = staffUserRepository.save(newCoordinator("coord@test.com"));
