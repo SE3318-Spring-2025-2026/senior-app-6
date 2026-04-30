@@ -87,6 +87,9 @@ class SprintTrackingOrchestratorE2ETest {
     @DynamicPropertySource
     static void overrideProps(DynamicPropertyRegistry reg) {
         reg.add("llm.api.base-url", llmWireMock::baseUrl);
+        // Use an isolated DB so @DirtiesContext teardown (create-drop) doesn't drop
+        // the shared testdb tables used by other integration test classes.
+        reg.add("spring.datasource.url", () -> "jdbc:h2:mem:sprintdb;DB_CLOSE_DELAY=-1;MODE=MySQL");
     }
 
     @AfterAll
