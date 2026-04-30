@@ -85,3 +85,28 @@ Set environment variable:
 baseUrl = http://localhost:8080
 
 Run both collections using Postman Runner.
+
+---
+
+## P2/P3 — Group & Advisor  
+
+Collection: `P2-P3-GroupAdvisor_postman_collection.json`
+
+Covers the full P2/P3 flow end-to-end: group creation, invitations (cancel + accept paths), tool binding (JIRA/GitHub), coordinator member overrides, advisor request lifecycle (send, accept, reject, cancel), coordinator advisor override, sanitization trigger, and RBAC negative tests.
+
+Required env vars: `baseUrl`, `coordinatorMail`, `coordinatorPassword`, `professorMail`, `professorPassword`, `studentToken`, `student2Token`, `student1StudentNumber`, `student2StudentNumber`, `jiraSpaceUrl`, `jiraProjectKey`, `jiraApiToken`, `githubOrgName`, `githubPat`
+
+---
+
+## P5 — Sprint Tracking  Tests
+
+Collection: `P5-SprintTracking_postman_collection.json`
+
+Covers P5 sprint tracking pipeline: admin LLM config, sprint discovery (student + advisor + coordinator views), coordinator sprint refresh (force/no-force, 404), sprint overview, advisor group summaries, per-group tracking detail (advisor + student views), scrum grade submit/upsert/get, validation errors, and RBAC guards (403/401).
+
+Required env vars: `baseUrl`, `coordinatorMail`, `coordinatorPassword`, `professorMail`, `professorPassword`, `adminMail`, `adminPassword`, `studentToken`, `llmApiKey`, `sprintId`, `advisorGroupId`
+
+Run with Newman:
+```
+newman run P5-SprintTracking_postman_collection.json -e SPM-Local.postman_environment.json
+```
