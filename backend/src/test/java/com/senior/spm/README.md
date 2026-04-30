@@ -73,6 +73,7 @@ These integration tests were added because the student upload endpoint does not 
 | `JiraValidationServiceTest` | Jira PAT validation (mocked) |
 | `JiraValidationWireMockTest` | Jira PAT validation against WireMock stub |
 | `SanitizationServiceTest` | Scheduled sanitization job and optimistic-lock handling |
+| `ScrumGradingServiceTest` | Grade submit/upsert, ownership guard, tracking aggregation, AI priority logic |
 | `TermConfigServiceTest` | Active term ID and max team size config reads |
 
 ### Controller / API
@@ -89,6 +90,8 @@ These integration tests were added because the student upload endpoint does not 
 | `CapacityGuardSanitizationIntegrationTest` | Capacity guard and sanitization race conditions |
 | `P3AdvisorLifecycleIntegrationTest` | Full P3 advisor request lifecycle via API |
 | `P3RbacSecurityTest` | Role-based access control for all P3 endpoints |
+| `ScrumGradingControllerTest` | Grade submit (201/200 upsert), wrong-advisor 403, invalid enum 400, GET 404 when no grade |
+| `P5SecurityTest` | URL-pattern guards for `/api/sprints/**`, `/api/advisor/sprints/**`, `/api/groups/*/sprints/**` |
 
 ### DTO
 | Class | Summary |
@@ -106,3 +109,5 @@ Collections are located in `tests/postman/`. Set `baseUrl = http://localhost:808
 | `Coordinator QA Tests` | Auth, student upload, deliverable management, rubric |
 | `Coordinator QA Tests - Part 2 (Sprints & Publish)` | Sprint creation, sprint mapping, publish flow |
 | `auth-and-rbac-tests` | Login and RBAC enforcement across all roles |
+| `P2-P3-GroupAdvisor` | Group formation, invitations, tool binding, advisor request lifecycle |
+| `P5-SprintTracking` | Sprint tracking pipeline, LLM grading dashboard, scrum grade submit/get, RBAC |

@@ -114,7 +114,7 @@ class P5SecurityTest {
                 .andExpect(status().isForbidden());
     }
 
-    // ── /api/groups/{id}/sprints/{id}/tracking → any authenticated user ──────
+    // ── /api/groups/{id}/sprints/{id}/tracking → STUDENT only ────────────────
 
     @Test
     @DisplayName("Unauthenticated request on GET /api/groups/{id}/sprints/{id}/tracking returns 401")
@@ -122,6 +122,15 @@ class P5SecurityTest {
         mockMvc.perform(get("/api/groups/{groupId}/sprints/{sprintId}/tracking",
                 UUID.randomUUID(), UUID.randomUUID()))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Professor JWT on GET /api/groups/{id}/sprints/{id}/tracking returns 403")
+    void professor_getGroupSprintTracking_returns403() throws Exception {
+        mockMvc.perform(get("/api/groups/{groupId}/sprints/{sprintId}/tracking",
+                UUID.randomUUID(), UUID.randomUUID())
+                .with(authentication(professorAuth())))
+                .andExpect(status().isForbidden());
     }
 
     // ── Auth helpers ─────────────────────────────────────────────────────────
