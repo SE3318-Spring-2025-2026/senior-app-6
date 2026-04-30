@@ -1,0 +1,1038 @@
+{
+  "info": {
+    "_postman_id": "spm-red-team-p5-smoke-v1",
+    "name": "SPM Red Team — P5 Sprint Tracking Smoke Tests",
+    "description": "Smoke tests for P5: sprint tracking pipeline, LLM-assisted PR/story validation, advisor grading dashboard, student tracking view. All credentials come from environment variables — never hardcoded.\n\nRequired env vars:\n  baseUrl, coordinatorMail, coordinatorPassword, professorMail, professorPassword,\n  adminMail, adminPassword,\n  studentToken (pre-issued GitHub OAuth token for a student in a TOOLS_BOUND/ADVISOR_ASSIGNED group),\n  llmApiKey, sprintId (UUID of an existing sprint — may be overridden by step 2.1),\n  advisorGroupId (UUID of a group assigned to the professor — may be overridden by step 5.1)\n\nRun with Newman:\n  newman run P5-SprintTracking-Smoke.postman_collection.json -e SPM-Local.postman_environment.json",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "coordinatorToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "professorToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "resolvedSprintId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "advisorGroupId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gradeId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Setup",
+      "item": [
+        {
+          "name": "0.1 Login — Coordinator",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Coordinator login 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Token returned', function() { pm.expect(json.token).to.be.a('string'); });",
+                  "pm.collectionVariables.set('coordinatorToken', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mail\": \"{{coordinatorMail}}\",\n  \"password\": \"{{coordinatorPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "0.2 Login — Professor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Professor login 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Token returned', function() { pm.expect(json.token).to.be.a('string'); });",
+                  "pm.collectionVariables.set('professorToken', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mail\": \"{{professorMail}}\",\n  \"password\": \"{{professorPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        },
+        {
+          "name": "0.3 Login — Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin login 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Token returned', function() { pm.expect(json.token).to.be.a('string'); });",
+                  "pm.collectionVariables.set('adminToken', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mail\": \"{{adminMail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Admin — LLM Configuration",
+      "item": [
+        {
+          "name": "1.1 Admin — GET LLM Config",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('GET llm-config 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Response has configured field', function() {",
+                  "  pm.expect(json).to.have.property('configured');",
+                  "  pm.expect(json.configured).to.be.a('boolean');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/llm-config"
+          }
+        },
+        {
+          "name": "1.2 Admin — PUT LLM Config (set key)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('PUT llm-config 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Success message returned', function() {",
+                  "  pm.expect(json.message).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"apiKey\": \"{{llmApiKey}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/admin/llm-config"
+          }
+        },
+        {
+          "name": "1.3 Admin — GET LLM Config (verify configured=true)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('GET llm-config 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('configured is true after PUT', function() {",
+                  "  pm.expect(json.configured).to.equal(true);",
+                  "});",
+                  "pm.test('maskedKey is present and non-empty', function() {",
+                  "  pm.expect(json.maskedKey).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/llm-config"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Sprint Discovery",
+      "item": [
+        {
+          "name": "2.1 Student — GET /api/sprints/active",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Active sprint 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Sprint has required fields', function() {",
+                  "  pm.expect(json.sprintId).to.be.a('string');",
+                  "  pm.expect(json.startDate).to.be.a('string');",
+                  "  pm.expect(json.endDate).to.be.a('string');",
+                  "  pm.expect(json.daysRemaining).to.be.a('number');",
+                  "});",
+                  "// Override resolvedSprintId with the live active sprint",
+                  "pm.collectionVariables.set('resolvedSprintId', json.sprintId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/sprints/active"
+          }
+        },
+        {
+          "name": "2.2 Professor — GET /api/advisor/sprints/active",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Advisor active sprint 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Sprint id matches student view', function() {",
+                  "  pm.expect(json.sprintId).to.equal(pm.collectionVariables.get('resolvedSprintId'));",
+                  "});",
+                  "pm.test('Sprint fields present', function() {",
+                  "  pm.expect(json.startDate).to.be.a('string');",
+                  "  pm.expect(json.endDate).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/advisor/sprints/active"
+          }
+        },
+        {
+          "name": "2.3 Coordinator — GET All Sprints",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('All sprints 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Returns array with at least one sprint', function() {",
+                  "  pm.expect(json).to.be.an('array').with.length.gte(1);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/coordinator/sprints"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Coordinator — Sprint Refresh (Pipeline Trigger)",
+      "item": [
+        {
+          "name": "3.1 Coordinator — POST Refresh Sprint (force=true)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fall back to env sprintId if step 2.1 was skipped",
+                  "if (!pm.collectionVariables.get('resolvedSprintId')) {",
+                  "  pm.collectionVariables.set('resolvedSprintId', pm.environment.get('sprintId'));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Refresh 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Response has pipeline stats', function() {",
+                  "  pm.expect(json.sprintId).to.be.a('string');",
+                  "  pm.expect(json.groupsProcessed).to.be.a('number');",
+                  "  pm.expect(json.issuesFetched).to.be.a('number');",
+                  "  pm.expect(json.aiValidationsRun).to.be.a('number');",
+                  "  pm.expect(json.triggeredAt).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coordinator/sprints/{{resolvedSprintId}}/refresh?force=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "coordinator", "sprints", "{{resolvedSprintId}}", "refresh"],
+              "query": [{ "key": "force", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "3.2 Coordinator — POST Refresh Sprint (force=false, may 400 if sprint not ended)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('force=false returns 200 or 400', function() {",
+                  "  pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 400) {",
+                  "  var json = pm.response.json();",
+                  "  pm.test('Error message present', function() { pm.expect(json.message).to.be.a('string'); });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/coordinator/sprints/{{resolvedSprintId}}/refresh"
+          }
+        },
+        {
+          "name": "3.3 Coordinator — POST Refresh Sprint (unknown sprintId → 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unknown sprint returns 404', function() { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coordinator/sprints/00000000-0000-0000-0000-000000000000/refresh?force=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "coordinator", "sprints", "00000000-0000-0000-0000-000000000000", "refresh"],
+              "query": [{ "key": "force", "value": "true" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Coordinator — Sprint Overview",
+      "item": [
+        {
+          "name": "4.1 Coordinator — GET Sprint Overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Sprint overview 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Response has sprintId and groups array', function() {",
+                  "  pm.expect(json.sprintId).to.be.a('string');",
+                  "  pm.expect(json.groups).to.be.an('array');",
+                  "});",
+                  "if (json.groups.length > 0) {",
+                  "  var g = json.groups[0];",
+                  "  pm.test('Group overview has required fields', function() {",
+                  "    pm.expect(g.groupId).to.be.a('string');",
+                  "    pm.expect(g.groupName).to.be.a('string');",
+                  "    pm.expect(g.totalIssues).to.be.a('number');",
+                  "    pm.expect(g.mergedPRs).to.be.a('number');",
+                  "    pm.expect(g.aiPassCount).to.be.a('number');",
+                  "    pm.expect(g.aiWarnCount).to.be.a('number');",
+                  "    pm.expect(g.aiFailCount).to.be.a('number');",
+                  "    pm.expect(g).to.have.property('gradeSubmitted');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/coordinator/sprints/{{resolvedSprintId}}/overview"
+          }
+        },
+        {
+          "name": "4.2 Coordinator — GET Sprint Overview (unknown sprintId → 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unknown sprint returns 404', function() { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/coordinator/sprints/00000000-0000-0000-0000-000000000000/overview"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Professor — Advisor Group Summaries",
+      "item": [
+        {
+          "name": "5.1 Professor — GET Advisor Group Summaries",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Advisor group summaries 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Returns array', function() { pm.expect(json).to.be.an('array'); });",
+                  "if (json.length > 0) {",
+                  "  var g = json[0];",
+                  "  pm.test('Summary has required fields', function() {",
+                  "    pm.expect(g.groupId).to.be.a('string');",
+                  "    pm.expect(g.groupName).to.be.a('string');",
+                  "    pm.expect(g.totalIssues).to.be.a('number');",
+                  "    pm.expect(g).to.have.property('gradeSubmitted');",
+                  "    pm.expect(g.perStudentSummary).to.be.an('array');",
+                  "  });",
+                  "  // Override advisorGroupId so folders 6 and 7 use a real group",
+                  "  pm.collectionVariables.set('advisorGroupId', g.groupId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/advisor/sprints/{{resolvedSprintId}}/groups"
+          }
+        },
+        {
+          "name": "5.2 Professor — GET Advisor Group Summaries (includeDisbanded=true)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('includeDisbanded=true returns 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Returns array', function() { pm.expect(json).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/advisor/sprints/{{resolvedSprintId}}/groups?includeDisbanded=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "advisor", "sprints", "{{resolvedSprintId}}", "groups"],
+              "query": [{ "key": "includeDisbanded", "value": "true" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Sprint Tracking Detail",
+      "item": [
+        {
+          "name": "6.1 Professor — GET Group Tracking Detail",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Fall back to env var if step 5.1 did not populate advisorGroupId",
+                  "if (!pm.collectionVariables.get('advisorGroupId')) {",
+                  "  pm.collectionVariables.set('advisorGroupId', pm.environment.get('advisorGroupId'));",
+                  "}",
+                  "if (!pm.collectionVariables.get('advisorGroupId')) { pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Group tracking 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Tracking response has required fields', function() {",
+                  "  pm.expect(json.groupId).to.be.a('string');",
+                  "  pm.expect(json.sprintId).to.be.a('string');",
+                  "  pm.expect(json.issues).to.be.an('array');",
+                  "});",
+                  "pm.test('perStudentSummary present for professor view', function() {",
+                  "  pm.expect(json.perStudentSummary).to.be.an('array');",
+                  "});",
+                  "if (json.issues.length > 0) {",
+                  "  var issue = json.issues[0];",
+                  "  pm.test('Issue has required fields', function() {",
+                  "    pm.expect(issue.issueKey).to.be.a('string');",
+                  "    pm.expect(issue).to.have.property('storyPoints');",
+                  "    pm.expect(issue).to.have.property('prMerged');",
+                  "    pm.expect(issue).to.have.property('aiPrResult');",
+                  "    pm.expect(issue).to.have.property('aiDiffResult');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/advisor/sprints/{{resolvedSprintId}}/groups/{{advisorGroupId}}/tracking"
+          }
+        },
+        {
+          "name": "6.2 Student — GET /api/groups/{groupId}/sprints/{sprintId}/tracking",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('advisorGroupId')) { pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Student tracking 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Tracking has groupId and issues array', function() {",
+                  "  pm.expect(json.groupId).to.be.a('string');",
+                  "  pm.expect(json.sprintId).to.be.a('string');",
+                  "  pm.expect(json.issues).to.be.an('array');",
+                  "});",
+                  "pm.test('perStudentSummary absent in student view (NON_NULL policy)', function() {",
+                  "  // perStudentSummary is null in student view — Jackson NON_NULL omits it",
+                  "  // Accept either absent or null",
+                  "  var hasSummary = json.hasOwnProperty('perStudentSummary') && json.perStudentSummary !== null;",
+                  "  pm.expect(hasSummary).to.equal(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/groups/{{advisorGroupId}}/sprints/{{resolvedSprintId}}/tracking"
+          }
+        },
+        {
+          "name": "6.3 Professor — GET Tracking for unknown group (403 or 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unrelated group returns 403 or 404', function() {",
+                  "  pm.expect([403, 404]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/advisor/sprints/{{resolvedSprintId}}/groups/00000000-0000-0000-0000-000000000000/tracking"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Professor — Scrum Grade Submit & Retrieve",
+      "item": [
+        {
+          "name": "7.1 Professor — Submit Grade (first time → 200 or 201)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('advisorGroupId')) { pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Grade submit 200 or 201', function() {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('Grade response has required fields', function() {",
+                  "  pm.expect(json.gradeId).to.be.a('string');",
+                  "  pm.expect(json.groupId).to.be.a('string');",
+                  "  pm.expect(json.sprintId).to.be.a('string');",
+                  "  pm.expect(json['pointA_grade']).to.be.a('string');",
+                  "  pm.expect(json['pointB_grade']).to.be.a('string');",
+                  "  pm.expect(json.advisorId).to.be.a('string');",
+                  "  pm.expect(json.gradedAt).to.be.a('string');",
+                  "});",
+                  "pm.test('Grade values are valid enum members', function() {",
+                  "  var valid = ['A', 'B', 'C', 'D', 'F'];",
+                  "  pm.expect(valid).to.include(json['pointA_grade']);",
+                  "  pm.expect(valid).to.include(json['pointB_grade']);",
+                  "});",
+                  "pm.collectionVariables.set('gradeId', json.gradeId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pointA_grade\": \"A\",\n  \"pointB_grade\": \"B\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/advisor/sprints/{{resolvedSprintId}}/groups/{{advisorGroupId}}/grade"
+          }
+        },
+        {
+          "name": "7.2 Professor — Get Grade",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('advisorGroupId')) { pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Get grade 200', function() { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Returned grade matches submitted', function() {",
+                  "  pm.expect(json.gradeId).to.equal(pm.collectionVariables.get('gradeId'));",
+                  "  pm.expect(json['pointA_grade']).to.equal('A');",
+                  "  pm.expect(json['pointB_grade']).to.equal('B');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/advisor/sprints/{{resolvedSprintId}}/groups/{{advisorGroupId}}/grade"
+          }
+        },
+        {
+          "name": "7.3 Professor — Re-submit Grade (update → 200 or 201)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('advisorGroupId')) { pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Re-submit grade 200 or 201', function() {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "var json = pm.response.json();",
+                  "pm.test('pointA_grade updated to C', function() {",
+                  "  pm.expect(json['pointA_grade']).to.equal('C');",
+                  "  pm.expect(json['pointB_grade']).to.equal('D');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pointA_grade\": \"C\",\n  \"pointB_grade\": \"D\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/advisor/sprints/{{resolvedSprintId}}/groups/{{advisorGroupId}}/grade"
+          }
+        },
+        {
+          "name": "7.4 Professor — Submit Grade (missing pointB_grade → 400)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('advisorGroupId')) { pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Missing pointB_grade returns 400', function() {",
+                  "  pm.expect(pm.response.code).to.be.within(400, 499);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pointA_grade\": \"A\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/advisor/sprints/{{resolvedSprintId}}/groups/{{advisorGroupId}}/grade"
+          }
+        },
+        {
+          "name": "7.5 Professor — Submit Grade (invalid enum value → 400)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.collectionVariables.get('advisorGroupId')) { pm.execution.skipRequest(); }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Invalid enum value returns 400', function() {",
+                  "  pm.expect(pm.response.code).to.be.within(400, 499);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pointA_grade\": \"PASS\",\n  \"pointB_grade\": \"FAIL\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/advisor/sprints/{{resolvedSprintId}}/groups/{{advisorGroupId}}/grade"
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. RBAC Negative Tests",
+      "item": [
+        {
+          "name": "8.1 Student — Refresh sprint endpoint (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Student cannot trigger /api/coordinator/** (403)', function() {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coordinator/sprints/{{resolvedSprintId}}/refresh?force=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "coordinator", "sprints", "{{resolvedSprintId}}", "refresh"],
+              "query": [{ "key": "force", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "8.2 Student — Sprint Overview (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Student cannot access /api/coordinator/** (403)', function() {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/coordinator/sprints/{{resolvedSprintId}}/overview"
+          }
+        },
+        {
+          "name": "8.3 Student — Advisor sprint endpoint (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Student cannot access /api/advisor/** (403)', function() {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/advisor/sprints/active"
+          }
+        },
+        {
+          "name": "8.4 Coordinator — LLM config (403 — admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Coordinator cannot access /api/admin/** (403)', function() {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/llm-config"
+          }
+        },
+        {
+          "name": "8.5 Professor — Coordinator sprint refresh (403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Professor cannot trigger /api/coordinator/** (403)', function() {",
+                  "  pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/coordinator/sprints/{{resolvedSprintId}}/refresh?force=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "coordinator", "sprints", "{{resolvedSprintId}}", "refresh"],
+              "query": [{ "key": "force", "value": "true" }]
+            }
+          }
+        },
+        {
+          "name": "8.6 No token — protected advisor endpoint (401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthenticated request returns 401', function() {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/advisor/sprints/active"
+          }
+        }
+      ]
+    }
+  ]
+}

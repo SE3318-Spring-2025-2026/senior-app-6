@@ -5,14 +5,15 @@ DESCRIBE staff_user;
 INSERT
 	IGNORE
 INTO
-	staff_user (id, first_login, mail, password_hash, role)
+	staff_user (id, first_login, mail, password_hash, role, advisor_capacity)
 VALUES
 	(
 		UUID_TO_BIN ('00000000-0000-0000-0000-000000000001'),
 		FALSE,
 		'test@test.com',
 		'$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq',
-		'ADMIN'
+		'ADMIN',
+		0
 	);
 
 INSERT
@@ -28,27 +29,29 @@ VALUES
 INSERT
 	IGNORE
 INTO
-	staff_user (id, first_login, mail, password_hash, role)
+	staff_user (id, first_login, mail, password_hash, role, advisor_capacity)
 VALUES
 	(
 		UUID_TO_BIN ('00000000-0000-0000-0000-000000000003'),
 		FALSE,
 		'coordinator@test.com',
 		'$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq',
-		'COORDINATOR'
+		'COORDINATOR',
+		0
 	);
 
 INSERT
 	IGNORE
 INTO
-	staff_user (id, first_login, mail, password_hash, role)
+	staff_user (id, first_login, mail, password_hash, role, advisor_capacity)
 VALUES
 	(
 		UUID_TO_BIN ('00000000-0000-0000-0000-000000000004'),
 		FALSE,
 		'professor@test.com',
 		'$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq',
-		'PROFESSOR'
+		'PROFESSOR',
+		5
 	);
 
 INSERT IGNORE INTO password_reset_token (
@@ -129,18 +132,20 @@ VALUES
     (UUID_TO_BIN('00000000-0000-0000-0000-000000000012'), '23070006021');
 
 
-    INSERT IGNORE INTO staff_user (
+INSERT IGNORE INTO staff_user (
     id,
     first_login,
     mail,
     password_hash,
-    role
+    role,
+    advisor_capacity
 )
 VALUES (
     UUID_TO_BIN('00000000-0000-0000-0000-000000000005'),
     FALSE,
     'professorb@test.com',
     '$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq',
-    'PROFESSOR'
+    'PROFESSOR',
+    5
 );
 

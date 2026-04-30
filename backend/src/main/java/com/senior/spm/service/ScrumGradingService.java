@@ -242,14 +242,6 @@ public class ScrumGradingService {
         return buildGroupSummaryFromData(group, logs, Optional.ofNullable(grade));
     }
 
-    private AdvisorGroupSprintSummaryResponse buildGroupSummary(ProjectGroup group, UUID sprintId) {
-        List<SprintTrackingLog> logs = sprintTrackingLogRepository
-                .findByGroupIdAndSprintId(group.getId(), sprintId);
-        Optional<ScrumGrade> grade = scrumGradeRepository
-                .findByGroupIdAndSprintId(group.getId(), sprintId);
-        return buildGroupSummaryFromData(group, logs, grade);
-    }
-
     private AdvisorGroupSprintSummaryResponse buildGroupSummaryFromData(
             ProjectGroup group, List<SprintTrackingLog> logs, Optional<ScrumGrade> grade) {
 
