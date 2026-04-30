@@ -11,6 +11,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,4 +51,26 @@ public class RubricMapping {
 
     @Column(nullable = false)
     private LocalDateTime mappedAt;
+
+    @PrePersist
+    @PreUpdate
+    private void validateCriterionMatchesSubmissionDeliverable() {
+        if (submission == null || rubricCriterion == null
+                || submission.getDeliverable() == null
+                || rubricCriterion.getDeliverable() == null) {
+            return;
+        }
+        UUID submissionDeliverableId = submission.getDeliverable().getId();
+        UUID criterionDeliverableId = rubricCriterion.getDeliverable().getId();
+        if (submissionDeliverableId == null || criterionDeliverableId == null) {
+            return;
+        }
+        if (!submissionDeliverableId.equals(criterionDeliverableId)) {
+            throw new IllegalStateException(
+                "RubricMapping criterion deliverable ("
+                + criterionDeliverableId
+                + ") does not match submission deliverable ("
+                + submissionDeliverableId + ")");
+        }
+    }
 }
