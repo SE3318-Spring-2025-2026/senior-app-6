@@ -26,6 +26,7 @@ import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.InvitationNotFoundException;
 import com.senior.spm.exception.InvitationNotPendingException;
+import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.exception.NotInGroupException;
 import com.senior.spm.exception.RequestNotFoundException;
 import com.senior.spm.exception.RequestNotPendingException;
@@ -181,6 +182,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvitationNotPendingException.class)
     public ResponseEntity<ErrorMessage> handleInvitationNotPending(InvitationNotPendingException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    // Generic resource-not-found mapped to HTTP 404. Use this when a more specific
+    // *NotFoundException isn't warranted (e.g., looking up a Deliverable by id).
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorMessage> handleNotFound(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
     }
 
     // Thrown by stub endpoints (Issue #45) that are not yet implemented.

@@ -56,6 +56,7 @@ public class SecurityConfig {
                                 // P3: Professor-only endpoints live under /api/advisor/**
                                 .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")
+                                .requestMatchers("/api/deliverables/*/submissions").hasRole("STUDENT")
                                 .anyRequest().authenticated())
                 .exceptionHandling(
                         ex -> ex.accessDeniedHandler(
