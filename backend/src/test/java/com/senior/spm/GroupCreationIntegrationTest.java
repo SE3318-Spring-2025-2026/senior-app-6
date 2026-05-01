@@ -10,6 +10,7 @@ import com.senior.spm.entity.ScheduleWindow.WindowType;
 import com.senior.spm.entity.Student;
 import com.senior.spm.entity.SystemConfig;
 import com.senior.spm.repository.AdvisorRequestRepository;
+import com.senior.spm.repository.CommitteeRepository;
 import com.senior.spm.repository.GroupInvitationRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
@@ -66,6 +67,7 @@ class GroupCreationIntegrationTest {
     @Autowired GroupMembershipRepository groupMembershipRepository;
     @Autowired GroupInvitationRepository groupInvitationRepository;
     @Autowired AdvisorRequestRepository advisorRequestRepository;
+    @Autowired CommitteeRepository committeeRepository;
 
     private static final String TERM_ID = "2026-SPRING-TEST";
 
@@ -74,10 +76,13 @@ class GroupCreationIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // Delete in FK-safe order so constraints don't block teardown between tests
+        // Delete in FK-safe order so constraints don't block teardown between tests.
+        // committeeRepository.deleteAll() removes committee_group join rows first (ManyToMany owning side)
+        // before project_group rows can be deleted.
         advisorRequestRepository.deleteAll();
         groupInvitationRepository.deleteAll();
         groupMembershipRepository.deleteAll();
+        committeeRepository.deleteAll();
         projectGroupRepository.deleteAll();
         studentRepository.deleteAll();
         scheduleWindowRepository.deleteAll();
