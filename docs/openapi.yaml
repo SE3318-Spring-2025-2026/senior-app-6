@@ -670,6 +670,168 @@ components:
           format: uuid
           nullable: true
 
+    # ── P5 — Red Team ─────────────────────────────────────────────────────────
+    LlmConfigRequest:
+      type: object
+      required: [apiKey]
+      properties:
+        apiKey:
+          type: string
+
+    LlmConfigResponse:
+      type: object
+      properties:
+        configured:
+          type: boolean
+        maskedKey:
+          type: string
+          nullable: true
+
+    ActiveSprintResponse:
+      type: object
+      properties:
+        sprintId:
+          type: string
+          format: uuid
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        storyPointTarget:
+          type: integer
+        daysRemaining:
+          type: integer
+
+    PerStudentSummaryResponse:
+      type: object
+      properties:
+        assigneeGithubUsername:
+          type: string
+        completedPoints:
+          type: integer
+        aiValidationStatus:
+          type: string
+          enum: [PENDING, PASS, WARN, FAIL, SKIPPED]
+
+    TrackingIssueResponse:
+      type: object
+      properties:
+        issueKey:
+          type: string
+        assigneeGithubUsername:
+          type: string
+        storyPoints:
+          type: integer
+        prNumber:
+          type: integer
+        prMerged:
+          type: boolean
+        aiPrResult:
+          type: string
+          enum: [PENDING, PASS, WARN, FAIL, SKIPPED]
+        aiDiffResult:
+          type: string
+          enum: [PENDING, PASS, WARN, FAIL, SKIPPED]
+
+    SprintTrackingResponse:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        sprintId:
+          type: string
+          format: uuid
+        fetchedAt:
+          type: string
+          format: date-time
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrackingIssueResponse'
+        perStudentSummary:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerStudentSummaryResponse'
+
+    ScrumGradeRequest:
+      type: object
+      required: [pointA_grade, pointB_grade]
+      properties:
+        pointA_grade:
+          type: string
+          enum: [A, B, C, D, F]
+        pointB_grade:
+          type: string
+          enum: [A, B, C, D, F]
+
+    ScrumGradeResponse:
+      type: object
+      properties:
+        gradeId:
+          type: string
+          format: uuid
+        groupId:
+          type: string
+          format: uuid
+        sprintId:
+          type: string
+          format: uuid
+        advisorId:
+          type: string
+          format: uuid
+        gradedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        pointA_grade:
+          type: string
+          enum: [A, B, C, D, F]
+        pointB_grade:
+          type: string
+          enum: [A, B, C, D, F]
+
+    AdvisorGroupSprintSummaryResponse:
+      type: object
+      properties:
+        groupId:
+          type: string
+          format: uuid
+        groupName:
+          type: string
+        totalIssues:
+          type: integer
+        mergedPRs:
+          type: integer
+        aiPassCount:
+          type: integer
+        aiWarnCount:
+          type: integer
+        aiFailCount:
+          type: integer
+        aiPendingCount:
+          type: integer
+        aiSkippedCount:
+          type: integer
+        gradeSubmitted:
+          type: boolean
+        pointA_grade:
+          type: string
+          enum: [A, B, C, D, F]
+          nullable: true
+        pointB_grade:
+          type: string
+          enum: [A, B, C, D, F]
+          nullable: true
+        perStudentSummary:
+          type: array
+          items:
+            $ref: '#/components/schemas/PerStudentSummaryResponse'
+
 security:
   - bearerAuth: []
 
@@ -848,6 +1010,48 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
 
+  /admin/llm-config:
+    get:
+      summary: Get current LLM provider configuration
+      tags: [Admin]
+      responses:
+        '200':
+          description: LLM config returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LlmConfigResponse'
+        '403':
+          description: Caller is not an Admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    put:
+      summary: Set or update the LLM API key
+      tags: [Admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LlmConfigRequest'
+      responses:
+        '200':
+          description: LLM config updated
+        '400':
+          description: Missing or blank apiKey
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not an Admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
   /coordinator/students/upload:
     post:
       summary: Upload the list of eligible student IDs for the active term
@@ -882,6 +1086,24 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
 
   /coordinator/sprints:
+    get:
+      summary: List all sprints
+      tags: [Coordinator]
+      responses:
+        '200':
+          description: Returns all sprints
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sprint'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
     post:
       summary: Create a new sprint
       tags: [Coordinator]
@@ -1000,6 +1222,24 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
 
   /coordinator/deliverables:
+    get:
+      summary: List all deliverables
+      tags: [Coordinator]
+      responses:
+        '200':
+          description: Returns all deliverables
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Deliverable'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
     post:
       summary: Create a new project deliverable
       tags: [Coordinator]
@@ -1693,7 +1933,7 @@ paths:
 
   # ── P3 — Red Team ────────────────────────────────────────────────────────────
 
-  /advisors:
+  /advisor:
     get:
       tags: [Student]
       summary: Browse available advisors
@@ -2049,6 +2289,235 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
         '404':
           description: Group or advisor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  # ── P5 — Red Team (student & advisor sprint tracking) ───────────────────────
+
+  /sprints/active:
+    get:
+      tags: [Student]
+      summary: Get the currently active sprint
+      responses:
+        '200':
+          description: Active sprint returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveSprintResponse'
+        '404':
+          description: No active sprint found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /groups/{groupId}/sprints/{sprintId}/tracking:
+    get:
+      tags: [Student]
+      summary: Get sprint tracking data for the student's group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tracking data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SprintTrackingResponse'
+        '403':
+          description: Caller is not a member of the group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Group or sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /advisor/sprints/active:
+    get:
+      tags: [Professor]
+      summary: Get the currently active sprint (advisor view)
+      responses:
+        '200':
+          description: Active sprint returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveSprintResponse'
+        '404':
+          description: No active sprint found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /advisor/sprints/{sprintId}/groups:
+    get:
+      tags: [Professor]
+      summary: List the advisor's groups with sprint summary stats
+      parameters:
+        - name: sprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: includeDisbanded
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Group summaries returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AdvisorGroupSprintSummaryResponse'
+        '404':
+          description: Sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /advisor/sprints/{sprintId}/groups/{groupId}/tracking:
+    get:
+      tags: [Professor]
+      summary: Get sprint tracking data for a specific group (advisor view)
+      parameters:
+        - name: sprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tracking data returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SprintTrackingResponse'
+        '403':
+          description: Caller is not the advisor for this group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Group or sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /advisor/sprints/{sprintId}/groups/{groupId}/grade:
+    get:
+      tags: [Professor]
+      summary: Get the submitted scrum grade for a group's sprint
+      parameters:
+        - name: sprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Grade returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrumGradeResponse'
+        '403':
+          description: Caller is not the advisor for this group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Grade not yet submitted, or group/sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    post:
+      tags: [Professor]
+      summary: Submit or update the scrum grade for a group's sprint
+      parameters:
+        - name: sprintId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScrumGradeRequest'
+      responses:
+        '200':
+          description: Grade saved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScrumGradeResponse'
+        '400':
+          description: Missing or invalid grade values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not the advisor for this group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Group or sprint not found
           content:
             application/json:
               schema:
