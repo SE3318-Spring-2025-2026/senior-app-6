@@ -1,9 +1,12 @@
 package com.senior.spm.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,11 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.senior.spm.controller.request.AddGroupsToCommitteeRequest;
 import com.senior.spm.controller.request.AddProfessorsToCommitteeRequest;
 import com.senior.spm.controller.request.CreateCommitteeRequest;
+import com.senior.spm.controller.response.CommitteeSubmissionSummaryResponse;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.exception.AlreadyExistsException;
 import com.senior.spm.exception.ConflictException;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.service.CommitteeService;
+import com.senior.spm.service.DeliverableSubmissionService;
 
 import jakarta.validation.Valid;
 
@@ -28,9 +33,12 @@ import jakarta.validation.Valid;
 public class CommitteeController {
 
     private final CommitteeService committeeService;
+    private final DeliverableSubmissionService deliverableSubmissionService;
 
-    public CommitteeController(CommitteeService committeeService) {
+    public CommitteeController(CommitteeService committeeService,
+            DeliverableSubmissionService deliverableSubmissionService) {
         this.committeeService = committeeService;
+        this.deliverableSubmissionService = deliverableSubmissionService;
     }
 
     @PostMapping
@@ -72,6 +80,13 @@ public class CommitteeController {
         } catch (ConflictException | IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
         }
+    }
+
+    @GetMapping("/{id}/submissions")
+    public ResponseEntity<List<CommitteeSubmissionSummaryResponse>> getCommitteeSubmissions(@PathVariable UUID id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID requesterUUID = UUID.fromString((String) auth.getPrincipal());
+        return ResponseEntity.ok(deliverableSubmissionService.listCommitteeSubmissions(id, requesterUUID));
     }
 
     @PostMapping("/{id}/groups")

@@ -22,4 +22,10 @@ public interface CommitteeRepository extends JpaRepository<Committee, UUID> {
 
     @Query("SELECT COUNT(c) > 0 FROM Committee c JOIN c.groups g WHERE g.id = :groupId AND c.deliverable.id = :deliverableId")
     boolean existsByGroupIdAndDeliverableId(@Param("groupId") UUID groupId, @Param("deliverableId") UUID deliverableId);
+
+    @Query("SELECT COUNT(c) > 0 FROM Committee c JOIN c.professors cp JOIN c.groups g WHERE cp.professor.id = :professorId AND g.id = :groupId AND c.deliverable.id = :deliverableId")
+    boolean existsByProfessorIdAndGroupIdAndDeliverableId(
+            @Param("professorId") UUID professorId,
+            @Param("groupId") UUID groupId,
+            @Param("deliverableId") UUID deliverableId);
 }

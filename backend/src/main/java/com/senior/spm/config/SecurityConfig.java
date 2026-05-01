@@ -50,13 +50,16 @@ public class SecurityConfig {
                                 .requestMatchers("/api/coordinator/**").hasRole("COORDINATOR")
                                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/professors/**").hasRole("PROFESSOR")
+                                .requestMatchers("/api/committees/*/submissions").hasRole("PROFESSOR")
                                 .requestMatchers("/api/committees/**").hasRole("COORDINATOR")
                                 // P3: Student-facing advisor request endpoints.
                                 .requestMatchers("/api/advisor").hasRole("STUDENT")
                                 // P3: Professor-only endpoints live under /api/advisor/**
                                 .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")
+                                .requestMatchers("/api/deliverables").hasRole("STUDENT")
                                 .requestMatchers("/api/deliverables/*/submissions").hasRole("STUDENT")
+                                .requestMatchers("/api/submissions/**").hasAnyRole("STUDENT", "PROFESSOR")
                                 .anyRequest().authenticated())
                 .exceptionHandling(
                         ex -> ex.accessDeniedHandler(

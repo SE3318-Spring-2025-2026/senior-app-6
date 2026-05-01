@@ -2,12 +2,20 @@ package com.senior.spm.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.senior.spm.controller.response.CommitteeSubmissionSummaryResponse;
+import com.senior.spm.controller.response.DeliverableSubmissionDetailResponse;
 import com.senior.spm.controller.response.DeliverableSubmissionResponse;
+import com.senior.spm.controller.response.DeliverableWithStatusResponse;
+import com.senior.spm.controller.response.DeliverableWithStatusResponse.SubmissionStatus;
+import com.senior.spm.entity.Committee;
 import com.senior.spm.entity.Deliverable;
 import com.senior.spm.entity.DeliverableSubmission;
 import com.senior.spm.entity.GroupMembership;
@@ -110,6 +118,147 @@ public class DeliverableSubmissionService {
         response.setRevisionNumber(saved.getRevisionNumber());
         response.setRevision(saved.isRevision());
         return response;
+    }
+
+    @Transactional
+    public DeliverableSubmissionResponse updateSubmission(
+            UUID submissionId,
+            UUID requesterUUID,
+            String markdownContent) {
+
+        DeliverableSubmission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new NotFoundException("Submission not found"));
+
+        GroupMembership membership = groupMembershipRepository.findByStudentId(requesterUUID)
+                .orElseThrow(() -> new ForbiddenException(
+                        "Only the Team Leader can update deliverables"));
+
+        if (membership.getRole() != MemberRole.TEAM_LEADER) {
+            throw new ForbiddenException("Only the Team Leader can update deliverables");
+        }
+
+        ProjectGroup group = membership.getGroup();
+        if (!group.getId().equals(submission.getGroup().getId())) {
+            throw new ForbiddenException("Only the Team Leader can update deliverables");
+        }
+
+        if (group.getStatus() == GroupStatus.DISBANDED) {
+            throw new BusinessRuleException("Cannot update deliverable for a disbanded group");
+        }
+
+        Deliverable deliverable = submission.getDeliverable();
+        LocalDateTime now = nowUtc();
+        if (now.isAfter(deliverable.getReviewDeadline())) {
+            throw new BusinessRuleException("Final grading deadline has passed");
+        }
+
+        submission.setMarkdownContent(markdownContent);
+        submission.setUpdatedAt(now);
+        DeliverableSubmission saved = submissionRepository.save(submission);
+
+        DeliverableSubmissionResponse response = new DeliverableSubmissionResponse();
+        response.setSubmissionId(saved.getId());
+        response.setGroupId(group.getId());
+        response.setDeliverableId(deliverable.getId());
+        response.setSubmittedAt(saved.getSubmittedAt());
+        response.setRevisionNumber(saved.getRevisionNumber());
+        response.setRevision(saved.isRevision());
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public DeliverableSubmissionDetailResponse getSubmission(UUID submissionId, UUID requesterUUID, String role) {
+        DeliverableSubmission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new NotFoundException("Submission not found"));
+
+        ProjectGroup group = submission.getGroup();
+        Deliverable deliverable = submission.getDeliverable();
+
+        String normalizedRole = role == null ? "" : role.toUpperCase(Locale.ROOT);
+        if ("STUDENT".equals(normalizedRole)) {
+            GroupMembership membership = groupMembershipRepository.findByStudentId(requesterUUID)
+                    .orElseThrow(() -> new ForbiddenException(
+                            "You can only view submissions from your own group"));
+            if (!membership.getGroup().getId().equals(group.getId())) {
+                throw new ForbiddenException("You can only view submissions from your own group");
+            }
+        } else if ("PROFESSOR".equals(normalizedRole)) {
+            boolean assigned = committeeRepository.existsByProfessorIdAndGroupIdAndDeliverableId(
+                    requesterUUID, group.getId(), deliverable.getId());
+            if (!assigned) {
+                throw new ForbiddenException(
+                        "You can only view submissions assigned to your committee");
+            }
+        } else {
+            throw new ForbiddenException("Not permitted to view this submission");
+        }
+
+        DeliverableSubmissionDetailResponse response = new DeliverableSubmissionDetailResponse();
+        response.setSubmissionId(submission.getId());
+        response.setGroupId(group.getId());
+        response.setDeliverableId(deliverable.getId());
+        response.setMarkdownContent(submission.getMarkdownContent());
+        response.setSubmittedAt(submission.getSubmittedAt());
+        response.setUpdatedAt(submission.getUpdatedAt());
+        response.setRevisionNumber(submission.getRevisionNumber());
+        response.setRevision(submission.isRevision());
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public List<DeliverableWithStatusResponse> listDeliverablesForStudent(UUID requesterUUID) {
+        GroupMembership membership = groupMembershipRepository.findByStudentId(requesterUUID)
+                .orElse(null);
+
+        Set<UUID> submittedDeliverableIds = membership == null
+                ? java.util.Collections.emptySet()
+                : submissionRepository.findDeliverableIdsByGroupId(membership.getGroup().getId());
+
+        List<Deliverable> deliverables = deliverableRepository.findAll();
+        return deliverables.stream().map(d -> {
+            DeliverableWithStatusResponse dto = new DeliverableWithStatusResponse();
+            dto.setId(d.getId());
+            dto.setName(d.getName());
+            dto.setType(d.getType());
+            dto.setSubmissionDeadline(d.getSubmissionDeadline());
+            dto.setReviewDeadline(d.getReviewDeadline());
+            dto.setWeight(d.getWeight());
+            dto.setSubmissionStatus(submittedDeliverableIds.contains(d.getId())
+                    ? SubmissionStatus.SUBMITTED
+                    : SubmissionStatus.NOT_SUBMITTED);
+            return dto;
+        }).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<CommitteeSubmissionSummaryResponse> listCommitteeSubmissions(UUID committeeId, UUID requesterUUID) {
+        Committee committee = committeeRepository.findById(committeeId)
+                .orElseThrow(() -> new NotFoundException("Committee not found"));
+
+        boolean isMember = committee.getProfessors().stream()
+                .anyMatch(committeeProfessor -> committeeProfessor.getProfessor().getId().equals(requesterUUID));
+        if (!isMember) {
+            throw new ForbiddenException("You are not a member of this committee");
+        }
+
+        Deliverable deliverable = committee.getDeliverable();
+        return committee.getGroups().stream()
+                .map(group -> submissionRepository
+                        .findFirstByGroupAndDeliverableOrderBySubmittedAtDesc(group, deliverable))
+                .filter(java.util.Objects::nonNull)
+                .map(s -> {
+                    CommitteeSubmissionSummaryResponse dto = new CommitteeSubmissionSummaryResponse();
+                    dto.setSubmissionId(s.getId());
+                    dto.setGroupId(s.getGroup().getId());
+                    dto.setGroupName(s.getGroup().getGroupName());
+                    dto.setDeliverableId(s.getDeliverable().getId());
+                    dto.setSubmittedAt(s.getSubmittedAt());
+                    dto.setUpdatedAt(s.getUpdatedAt());
+                    dto.setRevisionNumber(s.getRevisionNumber());
+                    dto.setRevision(s.isRevision());
+                    return dto;
+                })
+                .toList();
     }
 
     private LocalDateTime nowUtc() {
