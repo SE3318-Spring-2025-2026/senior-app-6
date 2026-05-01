@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.senior.spm.entity.Committee;
+import com.senior.spm.entity.StaffUser;
 
 @Repository
 public interface CommitteeRepository extends JpaRepository<Committee, UUID> {
@@ -18,14 +19,23 @@ public interface CommitteeRepository extends JpaRepository<Committee, UUID> {
     boolean existsByCommitteeNameAndTermId(String committeeName, String termId);
 
     @Query("SELECT COUNT(c) > 0 FROM Committee c JOIN c.professors cp WHERE cp.professor.id = :professorId AND c.deliverable.id = :deliverableId")
-    boolean existsByProfessorIdAndDeliverableId(@Param("professorId") UUID professorId, @Param("deliverableId") UUID deliverableId);
+    boolean existsByProfessorIdAndDeliverableId(
+            @Param("professorId") UUID professorId,
+            @Param("deliverableId") UUID deliverableId);
 
     @Query("SELECT COUNT(c) > 0 FROM Committee c JOIN c.groups g WHERE g.id = :groupId AND c.deliverable.id = :deliverableId")
-    boolean existsByGroupIdAndDeliverableId(@Param("groupId") UUID groupId, @Param("deliverableId") UUID deliverableId);
+    boolean existsByGroupIdAndDeliverableId(
+            @Param("groupId") UUID groupId,
+            @Param("deliverableId") UUID deliverableId);
 
     @Query("SELECT COUNT(c) > 0 FROM Committee c JOIN c.professors cp JOIN c.groups g WHERE cp.professor.id = :professorId AND g.id = :groupId AND c.deliverable.id = :deliverableId")
     boolean existsByProfessorIdAndGroupIdAndDeliverableId(
             @Param("professorId") UUID professorId,
+            @Param("groupId") UUID groupId,
+            @Param("deliverableId") UUID deliverableId);
+
+    @Query("SELECT DISTINCT cp.professor FROM Committee c JOIN c.professors cp JOIN c.groups g WHERE g.id = :groupId AND c.deliverable.id = :deliverableId")
+    List<StaffUser> findAssignedProfessorsByGroupIdAndDeliverableId(
             @Param("groupId") UUID groupId,
             @Param("deliverableId") UUID deliverableId);
 }

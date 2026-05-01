@@ -52,9 +52,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/professors/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/committees/*/submissions").hasRole("PROFESSOR")
                                 .requestMatchers("/api/committees/**").hasRole("COORDINATOR")
-                                // P3: Student-facing advisor request endpoints.
                                 .requestMatchers("/api/advisor").hasRole("STUDENT")
-                                // P3: Professor-only endpoints live under /api/advisor/**
                                 .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")
                                 .requestMatchers("/api/deliverables").hasRole("STUDENT")
@@ -70,11 +68,13 @@ public class SecurityConfig {
                                             .getContext()
                                             .getAuthentication()
                                             .getAuthorities()
-                                            .iterator().next();
-                                    var message = "Role: " + authority.getAuthority() + " does not have permission to access this resource.";
+                                            .iterator()
+                                            .next();
+                                    var message = "Role: " + authority.getAuthority()
+                                            + " does not have permission to access this resource.";
                                     response.getWriter().write(
                                             objectMapper.writeValueAsString(
-                                                    new ErrorMessage(message + "Exception: " + exception.getMessage())
+                                                    new ErrorMessage(message + " Exception: " + exception.getMessage())
                                             ));
                                 }).authenticationEntryPoint((request, response, exception) -> {
                                     response.setStatus(401);
