@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/professors/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/committees/**").hasRole("COORDINATOR")
+                                .requestMatchers("/api/submissions/**").hasAnyRole("STUDENT", "PROFESSOR", "COORDINATOR", "ADMIN")
                                 .requestMatchers("/api/advisor").hasRole("STUDENT")
                                 .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")

@@ -89,6 +89,9 @@ public class ProjectGroup {
     @OneToMany(mappedBy = "group")
     private List<GroupInvitation> invitations;
 
+    @OneToMany(mappedBy = "group")
+    private List<Submission> submissions;
+
     @Version
     @Column(nullable = false)
     private Long version;
