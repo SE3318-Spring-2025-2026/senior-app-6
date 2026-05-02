@@ -11,7 +11,7 @@ import com.senior.spm.entity.FinalGrade;
 @Repository
 public interface FinalGradeRepository extends JpaRepository<FinalGrade, UUID> {
 
-    Optional<FinalGrade> findByStudent_Id(UUID studentEntityUUID);
+    Optional<FinalGrade> findByStudent_Id(UUID studentId);
 
-    Optional<FinalGrade> findByStudent_StudentId(String studentId11Digit);
+    Optional<FinalGrade> findByStudent_StudentId(String studentNumber);
 }
