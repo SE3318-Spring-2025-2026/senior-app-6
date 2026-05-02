@@ -43,15 +43,15 @@ public class FinalGrade {
     @JoinColumn(name = "group_id", nullable = false, foreignKey = @ForeignKey(name = "fk_fg_group"))
     private ProjectGroup group;
 
-    @Column(precision = 10, scale = 4)
+    @Column(precision = 10, scale = 4, nullable = true)
     private BigDecimal weightedTotal;
 
-    @Column(precision = 10, scale = 4)
+    @Column(precision = 10, scale = 4, nullable = true)
     private BigDecimal completionRatio;
 
-    @Column(precision = 10, scale = 4)
+    @Column(precision = 10, scale = 4, nullable = true)
     private BigDecimal finalGrade;
 
-    @Column
+    @Column(nullable = true)
     private LocalDateTime calculatedAt;
 }
