@@ -37,7 +37,7 @@ class GradeValueMapperTest {
 
     @Test
     void scrumGradeValue_F_toNumeric_returns0() {
-        assertThat(ScrumGradeValue.F.toNumeric()).isEqualTo(0);
+        assertThat(ScrumGradeValue.F.toNumeric()).isZero();
     }
 
     // ── GradeValueMapper.validateGrade — Binary ───────────────────────────────
@@ -87,12 +87,18 @@ class GradeValueMapperTest {
 
     @Test
     void toNumeric_binary_F_returns0() {
-        assertThat(GradeValueMapper.toNumeric(GradingType.Binary, "F")).isEqualTo(0);
+        assertThat(GradeValueMapper.toNumeric(GradingType.Binary, "F")).isZero();
     }
 
     @Test
     void toNumeric_binary_invalidGrade_throwsIllegalArgument() {
         assertThatThrownBy(() -> GradeValueMapper.toNumeric(GradingType.Binary, "A"))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void toNumeric_nullValue_throwsIllegalArgument() {
+        assertThatThrownBy(() -> GradeValueMapper.toNumeric(GradingType.Binary, null))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

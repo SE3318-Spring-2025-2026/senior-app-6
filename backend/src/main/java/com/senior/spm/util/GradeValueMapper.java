@@ -16,6 +16,7 @@ public final class GradeValueMapper {
     }
 
     public static int toNumeric(GradingType type, String value) {
+        if (value == null) throw new IllegalArgumentException("Grade value must not be null");
         return switch (type) {
             case Binary -> switch (value) {
                 case "S" -> 100;
