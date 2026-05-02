@@ -50,12 +50,16 @@ public class SecurityConfig {
                                 .requestMatchers("/api/coordinator/**").hasRole("COORDINATOR")
                                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/professors/**").hasRole("PROFESSOR")
+                                .requestMatchers("/api/committees/*/submissions").hasRole("PROFESSOR")
                                 .requestMatchers("/api/committees/**").hasRole("COORDINATOR")
                                 .requestMatchers("/api/advisor").hasRole("STUDENT")
                                 .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")
                                 .requestMatchers("/api/groups/*/sprints/**").hasRole("STUDENT")
                                 .requestMatchers("/api/sprints/**").hasRole("STUDENT")
+                                .requestMatchers("/api/deliverables").hasRole("STUDENT")
+                                .requestMatchers("/api/deliverables/*/submissions").hasRole("STUDENT")
+                                .requestMatchers("/api/submissions/**").hasAnyRole("STUDENT", "PROFESSOR")
                                 .anyRequest().authenticated())
                 .exceptionHandling(
                         ex -> ex.accessDeniedHandler(
