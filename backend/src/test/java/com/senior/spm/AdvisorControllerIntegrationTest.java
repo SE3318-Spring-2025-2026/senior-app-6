@@ -12,6 +12,7 @@ import com.senior.spm.entity.StaffUser.Role;
 import com.senior.spm.entity.Student;
 import com.senior.spm.entity.SystemConfig;
 import com.senior.spm.repository.AdvisorRequestRepository;
+import com.senior.spm.repository.CommitteeRepository;
 import com.senior.spm.repository.GroupInvitationRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
@@ -74,6 +75,7 @@ class AdvisorControllerIntegrationTest {
     @Autowired GroupMembershipRepository groupMembershipRepository;
     @Autowired GroupInvitationRepository groupInvitationRepository;
     @Autowired AdvisorRequestRepository advisorRequestRepository;
+    @Autowired CommitteeRepository committeeRepository;
 
     private static final String TERM_ID = "2026-SPRING-TEST";
 
@@ -89,10 +91,13 @@ class AdvisorControllerIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // FK-safe teardown
+        // FK-safe teardown.
+        // committeeRepository.deleteAll() removes committee_group join rows first (ManyToMany owning side)
+        // so that projectGroupRepository.deleteAll() is not blocked by the FK constraint.
         advisorRequestRepository.deleteAll();
         groupInvitationRepository.deleteAll();
         groupMembershipRepository.deleteAll();
+        committeeRepository.deleteAll();
         projectGroupRepository.deleteAll();
         studentRepository.deleteAll();
         staffUserRepository.deleteAll();

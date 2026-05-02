@@ -13,6 +13,7 @@ import com.senior.spm.repository.DeliverableRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.service.JWTService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,6 +84,15 @@ class CommitteeGroupAssignmentIntegrationTest {
         committee.setTermId("2026-SPRING");
         committee.setDeliverable(deliverable);
         committee = committeeRepository.save(committee);
+    }
+
+    @AfterEach
+    void tearDown() {
+        // committee_group join rows are removed when Committee rows are deleted (owning side of @ManyToMany)
+        committeeRepository.deleteAll();
+        projectGroupRepository.deleteAll();
+        staffUserRepository.deleteAll();
+        deliverableRepository.deleteAll();
     }
 
     @Test
