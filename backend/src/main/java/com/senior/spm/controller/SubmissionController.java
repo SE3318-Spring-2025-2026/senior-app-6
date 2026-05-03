@@ -21,6 +21,7 @@ import com.senior.spm.controller.response.DeliverableSubmissionResponse;
 import com.senior.spm.service.DeliverableSubmissionService;
 import com.senior.spm.controller.request.RubricMappingRequest;
 import com.senior.spm.service.SubmissionService;
+import com.senior.spm.util.SecurityUtils;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -58,9 +59,10 @@ public class SubmissionController {
     @PostMapping("/{submissionId}/rubric-mappings")
     public ResponseEntity<Void> saveRubricMappings(
             @PathVariable UUID submissionId,
-            @Valid @RequestBody List<@Valid RubricMappingRequest> mappings
+            @Valid @RequestBody List<@Valid RubricMappingRequest> mappings,
+            Authentication auth
     ) {
-        UUID requesterUUID = extractPrincipalUUID();
+        UUID requesterUUID = SecurityUtils.extractPrincipalUUID(auth);
         submissionService.saveRubricMappings(submissionId, requesterUUID, mappings);
         return ResponseEntity.ok().build();
     }
