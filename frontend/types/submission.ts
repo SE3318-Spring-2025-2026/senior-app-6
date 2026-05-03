@@ -45,3 +45,8 @@ export interface LocalMappingEntry {
   criterionName: string;
   sectionReference: string;
 }
+
+export interface RubricMappingsResponse {
+  submissionId: string;
+  mappings: RubricMappingItem[];
+}

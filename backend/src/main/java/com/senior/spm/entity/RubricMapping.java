@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,7 +26,9 @@ import lombok.Setter;
  * specific sections of the submitted markdown document.
  */
 @Entity
-@Table(name = "rubric_mapping")
+@Table(name = "rubric_mapping", uniqueConstraints = {
+    @UniqueConstraint(name = "uq_rubric_mapping_submission_section", columnNames = {"submission_id", "section_key"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -48,6 +51,9 @@ public class RubricMapping {
 
     @Column(nullable = false)
     private int sectionEnd;
+
+    @Column(length = 255)
+    private String sectionKey;
 
     @Column(nullable = false)
     private LocalDateTime mappedAt;

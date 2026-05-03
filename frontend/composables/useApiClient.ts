@@ -43,6 +43,7 @@ import type {
   StudentDeliverable,
   SubmissionCreateResponse,
   SubmissionResponse,
+  RubricMappingsResponse,
   SaveRubricMappingsRequest,
   SaveRubricMappingsResponse,
 } from '~/types/submission';
@@ -570,6 +571,24 @@ export function useApiClient() {
     return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
   }
 
+  async function fetchSubmission(submissionId: string, token?: string): Promise<SubmissionResponse> {
+    return apiCall<SubmissionResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchRubricMappings(submissionId: string, token?: string): Promise<RubricMappingsResponse> {
+    return apiCall<RubricMappingsResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}/rubric-mappings`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -627,5 +646,7 @@ export function useApiClient() {
     reviseSubmission,
     saveRubricMappings,
     fetchStudentRubric,
+    fetchSubmission,
+    fetchRubricMappings,
   };
 }
