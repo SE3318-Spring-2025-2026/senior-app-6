@@ -10,17 +10,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.senior.spm.controller.request.RubricMappingRequest;
+import com.senior.spm.entity.DeliverableSubmission;
 import com.senior.spm.entity.ProjectGroup;
 import com.senior.spm.entity.RubricCriterion;
 import com.senior.spm.entity.RubricMapping;
-import com.senior.spm.entity.Submission;
 import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.NotFoundException;
+import com.senior.spm.repository.DeliverableSubmissionRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.RubricCriterionRepository;
 import com.senior.spm.repository.RubricMappingRepository;
-import com.senior.spm.repository.SubmissionRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SubmissionService {
 
-    private final SubmissionRepository submissionRepository;
+    private final DeliverableSubmissionRepository submissionRepository;
     private final RubricCriterionRepository rubricCriterionRepository;
     private final RubricMappingRepository rubricMappingRepository;
     private final GroupMembershipRepository groupMembershipRepository;
@@ -36,7 +36,7 @@ public class SubmissionService {
     @Transactional
     public void saveRubricMappings(UUID submissionId, UUID requesterUUID,
             List<RubricMappingRequest> mappings) {
-        Submission submission = submissionRepository.findById(submissionId)
+        DeliverableSubmission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new NotFoundException("Submission not found"));
 
         ProjectGroup group = submission.getGroup();
@@ -66,7 +66,7 @@ public class SubmissionService {
             RubricMapping mapping = new RubricMapping();
             mapping.setSubmission(submission);
             mapping.setSectionKey(request.getSectionKey());
-            mapping.setCriterion(criteriaById.get(request.getCriterionId()));
+            mapping.setRubricCriterion(criteriaById.get(request.getCriterionId()));
             return mapping;
         }).collect(Collectors.toList());
 
