@@ -39,6 +39,7 @@ import type {
 import type { StudentSearchResult } from '~/types/student';
 import type { BindJiraRequest, BindGithubRequest, BindToolResponse } from '~/types/tools';
 import type { SanitizationReport } from '~/types/sanitization';
+import type { SubmissionResponse, RubricMappingsResponse } from '~/types/submission';
 
 async function apiCall<T>(
   endpoint: string,
@@ -507,6 +508,24 @@ export function useApiClient() {
     return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
   }
 
+  async function fetchSubmission(submissionId: string, token?: string): Promise<SubmissionResponse> {
+    return apiCall<SubmissionResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchRubricMappings(submissionId: string, token?: string): Promise<RubricMappingsResponse> {
+    return apiCall<RubricMappingsResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}/rubric-mappings`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -558,6 +577,8 @@ export function useApiClient() {
     searchStudents,
     sendGroupInvitation,
     fetchGroupInvitations,
-    cancelGroupInvitation
+    cancelGroupInvitation,
+    fetchSubmission,
+    fetchRubricMappings,
   };
 }
