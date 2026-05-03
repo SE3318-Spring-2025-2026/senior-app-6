@@ -81,3 +81,13 @@ export interface ProfessorCommittee {
   groups: ProfessorCommitteeGroup[];
   rubrics?: ProfessorCommitteeRubricCriterion[];
 }
+
+export interface CommitteeSubmission {
+  submissionId: string;
+  deliverableId: string;
+  groupId: string;
+  groupName: string;
+  deliverableName: string;
+  submittedAt: string;
+  commentCount: number;
+}

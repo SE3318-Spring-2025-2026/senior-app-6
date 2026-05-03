@@ -11,6 +11,7 @@
 		Scale,
 		Users,
 		UserCheck,
+		ClipboardList,
 	} from "lucide-vue-next";
 import type { ProfessorCommittee, ProfessorCommitteeRubricCriterion } from "~/types/committee";
 import type { Deliverable } from "~/types/deliverable";
@@ -177,13 +178,22 @@ interface DeadlineInfo
               View your committee assignments, student groups, and upcoming deadlines.
             </p>
           </div>
-          <NuxtLink
-            to="/professor/dashboard"
-            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-          >
-            <ArrowLeft class="mr-2 inline h-4 w-4" />
-            Back
-          </NuxtLink>
+          <div class="flex items-center gap-2">
+            <NuxtLink
+              to="/professor/pending-reviews"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500 bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 shadow-sm"
+            >
+              <ClipboardList class="h-4 w-4" />
+              Pending Reviews
+            </NuxtLink>
+            <NuxtLink
+              to="/professor/dashboard"
+              class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+            >
+              <ArrowLeft class="mr-2 inline h-4 w-4" />
+              Back
+            </NuxtLink>
+          </div>
         </div>
       </header>
 

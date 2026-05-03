@@ -23,6 +23,7 @@ import type {
   AddGroupsToCommitteeRequest,
   ProfessorCommittee,
 	CommitteeProfessorAssignment,
+  CommitteeSubmission,
 } from '~/types/committee';
 import type {
   Deliverable,
@@ -566,28 +567,40 @@ export function useApiClient() {
       token
     );
   }
+  
+async function fetchProfessorCommittees(token?: string): Promise<ProfessorCommittee[]> {
+  return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
+}
 
-  async function fetchProfessorCommittees(token?: string): Promise<ProfessorCommittee[]> {
-    return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
-  }
+async function fetchCommitteeSubmissions(
+  committeeId: string,
+  token?: string
+): Promise<CommitteeSubmission[]> {
+  return apiCall<CommitteeSubmission[]>(
+    `/committees/${encodeURIComponent(committeeId)}/submissions`,
+    "GET",
+    undefined,
+    token
+  );
+}
 
-  async function fetchSubmission(submissionId: string, token?: string): Promise<SubmissionResponse> {
-    return apiCall<SubmissionResponse>(
-      `/submissions/${encodeURIComponent(submissionId)}`,
-      "GET",
-      undefined,
-      token
-    );
-  }
+async function fetchSubmission(submissionId: string, token?: string): Promise<SubmissionResponse> {
+  return apiCall<SubmissionResponse>(
+    `/submissions/${encodeURIComponent(submissionId)}`,
+    "GET",
+    undefined,
+    token
+  );
+}
 
-  async function fetchRubricMappings(submissionId: string, token?: string): Promise<RubricMappingsResponse> {
+async function fetchRubricMappings(submissionId: string, token?: string): Promise<RubricMappingsResponse> {
     return apiCall<RubricMappingsResponse>(
-      `/submissions/${encodeURIComponent(submissionId)}/rubric-mappings`,
-      "GET",
-      undefined,
-      token
-    );
-  }
+    `/submissions/${encodeURIComponent(submissionId)}/rubric-mappings`,
+    "GET",
+    undefined,
+    token
+  );
+}
 
   return {
     getAuthToken,
@@ -616,6 +629,7 @@ export function useApiClient() {
     addCommitteeProfessors,
     addCommitteeGroups,
     fetchProfessorCommittees,
+    fetchCommitteeSubmissions,
     createGroup,
     fetchMyGroup,
     fetchAvailableAdvisors,
