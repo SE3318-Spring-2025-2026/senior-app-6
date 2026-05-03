@@ -23,6 +23,7 @@ import type {
   AddGroupsToCommitteeRequest,
   ProfessorCommittee,
 	CommitteeProfessorAssignment,
+  CommitteeSubmission,
 } from '~/types/committee';
 import type {
   Deliverable,
@@ -507,6 +508,18 @@ export function useApiClient() {
     return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
   }
 
+  async function fetchCommitteeSubmissions(
+    committeeId: string,
+    token?: string
+  ): Promise<CommitteeSubmission[]> {
+    return apiCall<CommitteeSubmission[]>(
+      `/committees/${encodeURIComponent(committeeId)}/submissions`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -534,6 +547,7 @@ export function useApiClient() {
     addCommitteeProfessors,
     addCommitteeGroups,
     fetchProfessorCommittees,
+    fetchCommitteeSubmissions,
     createGroup,
     fetchMyGroup,
     fetchAvailableAdvisors,
