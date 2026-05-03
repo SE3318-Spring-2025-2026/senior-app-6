@@ -257,7 +257,7 @@ public class CoordinatorController {
         try {
             GroupDetailResponse group = groupService.getGroupDetail(groupId);
             return ResponseEntity.status(HttpStatus.OK).body(group);
-        } catch (com.senior.spm.exception.GroupNotFoundException e) {
+        } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -284,9 +284,7 @@ public class CoordinatorController {
                 result = groupService.coordinatorRemoveStudent(groupId, request.getStudentId());
             }
             return ResponseEntity.status(HttpStatus.OK).body(result);
-        } catch (com.senior.spm.exception.GroupNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
-        } catch (com.senior.spm.exception.StudentNotFoundException e) {
+        } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         } catch (com.senior.spm.exception.ForbiddenException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
@@ -306,7 +304,7 @@ public class CoordinatorController {
         try {
             GroupDetailResponse result = groupService.disbandGroup(groupId);
             return ResponseEntity.status(HttpStatus.OK).body(result);
-        } catch (com.senior.spm.exception.GroupNotFoundException e) {
+        } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         } catch (com.senior.spm.exception.BusinessRuleException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));

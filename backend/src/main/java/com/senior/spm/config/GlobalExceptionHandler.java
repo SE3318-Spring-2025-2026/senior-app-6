@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.exception.AdvisorAtCapacityException;
 import com.senior.spm.exception.RepositoryException;
-import com.senior.spm.exception.AdvisorNotFoundException;
 import com.senior.spm.exception.AlreadyInGroupException;
 import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.DuplicateGroupNameException;
@@ -23,13 +22,9 @@ import com.senior.spm.exception.DuplicateInvitationException;
 import com.senior.spm.exception.DuplicateRequestException;
 import com.senior.spm.exception.ExternalToolValidationException;
 import com.senior.spm.exception.ForbiddenException;
-import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.NotFoundException;
-import com.senior.spm.exception.InvitationNotFoundException;
 import com.senior.spm.exception.InvitationNotPendingException;
-import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.exception.NotInGroupException;
-import com.senior.spm.exception.RequestNotFoundException;
 import com.senior.spm.exception.RequestNotPendingException;
 import com.senior.spm.exception.ScheduleWindowClosedException;
 
@@ -126,25 +121,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
     }
 
+    // All *NotFoundException subclasses (GroupNotFoundException, StudentNotFoundException,
+    // AdvisorNotFoundException, InvitationNotFoundException, RequestNotFoundException, etc.)
+    // extend NotFoundException and are handled here.
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorMessage> handleNotFound(NotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
-    }
-
-    // Thrown when a group with the given UUID does not exist.
-    @ExceptionHandler(GroupNotFoundException.class)
-    public ResponseEntity<ErrorMessage> handleGroupNotFound(GroupNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
-    }
-
-    /**
-     * Map missing invitations to HTTP 404 Not Found.
-     *
-     * @param ex invitation not found domain exception
-     * @return not found response with a user-facing error message
-     */
-    @ExceptionHandler(InvitationNotFoundException.class)
-    public ResponseEntity<ErrorMessage> handleInvitationNotFound(InvitationNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
     }
 
@@ -154,23 +135,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
     }
 
-    // Thrown when an advisor request with the given ID does not exist.
-    @ExceptionHandler(RequestNotFoundException.class)
-    public ResponseEntity<ErrorMessage> handleRequestNotFound(RequestNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
-    }
-
     // Thrown when attempting to cancel/respond to an advisor request that is no longer PENDING.
     @ExceptionHandler(RequestNotPendingException.class)
     public ResponseEntity<ErrorMessage> handleRequestNotPending(RequestNotPendingException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
-    }
-
-    // Thrown when an advisor (StaffUser with role=Professor) cannot be found by ID,
-    // or the resolved user is not a Professor.
-    @ExceptionHandler(AdvisorNotFoundException.class)
-    public ResponseEntity<ErrorMessage> handleAdvisorNotFound(AdvisorNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
     }
 
     // Thrown when a group tries to send a second advisor request while a PENDING one already
@@ -179,22 +147,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorMessage> handleDuplicateRequest(DuplicateRequestException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(ex.getMessage()));
     }
+
     /**
      * Map non-pending invitation lifecycle actions to HTTP 400 Bad Request.
-     *
-     * @param ex invitation state domain exception
-     * @return bad request response with a user-facing error message
      */
     @ExceptionHandler(InvitationNotPendingException.class)
     public ResponseEntity<ErrorMessage> handleInvitationNotPending(InvitationNotPendingException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
-    }
-
-    // Generic resource-not-found mapped to HTTP 404. Use this when a more specific
-    // *NotFoundException isn't warranted (e.g., looking up a Deliverable by id).
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorMessage> handleNotFound(NotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
     }
 
     // Thrown by stub endpoints (Issue #45) that are not yet implemented.
