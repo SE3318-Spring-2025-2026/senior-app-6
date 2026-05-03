@@ -1,4 +1,5 @@
 package com.senior.spm.controller;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -6,22 +7,22 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.senior.spm.controller.request.RubricMappingRequest;
 import com.senior.spm.controller.request.UpdateDeliverableSubmissionRequest;
 import com.senior.spm.controller.response.DeliverableSubmissionDetailResponse;
 import com.senior.spm.controller.response.DeliverableSubmissionResponse;
 import com.senior.spm.service.DeliverableSubmissionService;
-import com.senior.spm.controller.request.RubricMappingRequest;
 import com.senior.spm.service.SubmissionService;
-import com.senior.spm.util.SecurityUtils;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -59,10 +60,9 @@ public class SubmissionController {
     @PostMapping("/{submissionId}/rubric-mappings")
     public ResponseEntity<Void> saveRubricMappings(
             @PathVariable UUID submissionId,
-            @Valid @RequestBody List<@Valid RubricMappingRequest> mappings,
-            Authentication auth
+            @Valid @RequestBody List<@Valid RubricMappingRequest> mappings
     ) {
-        UUID requesterUUID = SecurityUtils.extractPrincipalUUID(auth);
+        UUID requesterUUID = extractPrincipalUUID();
         submissionService.saveRubricMappings(submissionId, requesterUUID, mappings);
         return ResponseEntity.ok().build();
     }
