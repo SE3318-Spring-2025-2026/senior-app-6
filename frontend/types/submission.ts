@@ -48,5 +48,5 @@ export interface LocalMappingEntry {
 
 export interface RubricMappingsResponse {
   submissionId: string;
-  mappings: RubricMappingItem[];
+  mappings: RubricMappingEntry[];
 }
