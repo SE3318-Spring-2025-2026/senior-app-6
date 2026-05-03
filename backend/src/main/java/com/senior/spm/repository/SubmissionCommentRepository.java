@@ -49,4 +49,12 @@ public interface SubmissionCommentRepository extends JpaRepository<SubmissionCom
      * @return the number of comments
      */
     long countBySubmission(DeliverableSubmission submission);
+
+    /**
+     * Finds all comments for a given submission ID, ordered by creation time.
+     * 
+     * @param submissionId the submission ID
+     * @return list of comments for the submission, ordered by creation time ascending
+     */
+    List<SubmissionComment> findBySubmissionIdOrderByCreatedAtAsc(UUID submissionId);
 }

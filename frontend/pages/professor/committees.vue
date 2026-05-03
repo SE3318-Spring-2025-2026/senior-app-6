@@ -6,6 +6,7 @@
 		ChevronDown,
 		ChevronUp,
 		Clock,
+		Eye,
 		Loader2,
 		Scale,
 		Users,
@@ -344,10 +345,10 @@ interface DeadlineInfo
                       Group Name
                     </th>
                     <th class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Members
+                      Status
                     </th>
-                    <th class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Advisor
+                    <th class="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -362,6 +363,22 @@ interface DeadlineInfo
                     </td>
                     <td class="px-4 py-3 text-slate-600 dark:text-slate-400">
                       {{ group.status }}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <NuxtLink
+                        v-if="group.submissionId"
+                        :to="`/professor/submission-review/${group.submissionId}`"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                      >
+                        <Eye class="h-3.5 w-3.5" />
+                        Teslimi İncele
+                      </NuxtLink>
+                      <span
+                        v-else
+                        class="text-xs text-slate-400 dark:text-slate-500 italic"
+                      >
+                        Teslim yok
+                      </span>
                     </td>
                   </tr>
                 </tbody>

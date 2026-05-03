@@ -50,4 +50,19 @@ public interface RubricMappingRepository extends JpaRepository<RubricMapping, UU
      * @return true if mapping exists
      */
     boolean existsBySubmissionAndRubricCriterion(DeliverableSubmission submission, RubricCriterion rubricCriterion);
+
+    /**
+     * Finds all rubric mappings for a given submission ID.
+     * 
+     * @param submissionId the submission ID
+     * @return list of rubric mappings for the submission
+     */
+    List<RubricMapping> findBySubmissionId(UUID submissionId);
+
+    /**
+     * Deletes all rubric mappings for a given submission ID.
+     * 
+     * @param submissionId the submission ID
+     */
+    void deleteBySubmissionId(UUID submissionId);
 }

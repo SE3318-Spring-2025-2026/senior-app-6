@@ -2,7 +2,9 @@ package com.senior.spm.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,5 +75,38 @@ public class SubmissionCommentService {
                 saved.getSectionReference(),
                 saved.getCreatedAt()
         );
+    }
+
+    public List<SubmissionCommentResponse> getComments(UUID submissionId, UUID requesterId) {
+        DeliverableSubmission submission = deliverableSubmissionRepository.findById(submissionId)
+                .orElseThrow(() -> new NotFoundException("Submission not found"));
+
+        UUID groupId = submission.getGroup().getId();
+        UUID deliverableId = submission.getDeliverable().getId();
+
+        // Check if requester is either a group member or assigned committee member
+        boolean isGroupMember = submission.getGroup().getMembers().stream()
+                .anyMatch(membership -> membership.getStudent().getId().equals(requesterId));
+
+        boolean isCommitteeMember = committeeRepository.existsByProfessorIdAndGroupIdAndDeliverableId(
+                requesterId, groupId, deliverableId);
+
+        if (!isGroupMember && !isCommitteeMember) {
+            throw new ForbiddenException("Access denied: You are not authorized to view these comments");
+        }
+
+        List<SubmissionComment> comments = submissionCommentRepository.findBySubmissionIdOrderByCreatedAtAsc(submissionId);
+
+        return comments.stream()
+                .map(comment -> new SubmissionCommentResponse(
+                        comment.getId(),
+                        submission.getId(),
+                        comment.getCommenter().getId(),
+                        comment.getCommenter().getMail(),
+                        comment.getCommentText(),
+                        comment.getSectionReference(),
+                        comment.getCreatedAt()
+                ))
+                .collect(Collectors.toList());
     }
 }
