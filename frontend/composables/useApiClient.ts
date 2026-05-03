@@ -39,6 +39,13 @@ import type {
 import type { StudentSearchResult } from '~/types/student';
 import type { BindJiraRequest, BindGithubRequest, BindToolResponse } from '~/types/tools';
 import type { SanitizationReport } from '~/types/sanitization';
+import type {
+  StudentDeliverable,
+  SubmissionCreateResponse,
+  SubmissionResponse,
+  SaveRubricMappingsRequest,
+  SaveRubricMappingsResponse,
+} from '~/types/submission';
 
 async function apiCall<T>(
   endpoint: string,
@@ -453,6 +460,62 @@ export function useApiClient() {
     );
   }
 
+  async function fetchStudentDeliverables(token?: string): Promise<StudentDeliverable[]> {
+    return apiCall<StudentDeliverable[]>("/deliverables", "GET", undefined, token);
+  }
+
+  async function submitDeliverable(
+    deliverableId: string,
+    content: string,
+    token?: string
+  ): Promise<SubmissionCreateResponse> {
+    return apiCall<SubmissionCreateResponse>(
+      `/deliverables/${encodeURIComponent(deliverableId)}/submissions`,
+      "POST",
+      { content },
+      token
+    );
+  }
+
+  async function reviseSubmission(
+    submissionId: string,
+    content: string,
+    token?: string
+  ): Promise<SubmissionResponse> {
+    return apiCall<SubmissionResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}`,
+      "PUT",
+      { content },
+      token
+    );
+  }
+
+  async function saveRubricMappings(
+    submissionId: string,
+    payload: SaveRubricMappingsRequest,
+    token?: string
+  ): Promise<SaveRubricMappingsResponse> {
+    return apiCall<SaveRubricMappingsResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}/rubric-mappings`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
+  async function fetchStudentRubric(
+    deliverableId: string,
+    token?: string
+  ): Promise<RubricCriterionResponse[]> {
+    // Student-facing rubric endpoint — uses coordinator path; handle 403 gracefully
+    return apiCall<RubricCriterionResponse[]>(
+      `/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   async function createCommittee(
     payload: CreateCommitteeRequest,
     token?: string
@@ -558,6 +621,11 @@ export function useApiClient() {
     searchStudents,
     sendGroupInvitation,
     fetchGroupInvitations,
-    cancelGroupInvitation
+    cancelGroupInvitation,
+    fetchStudentDeliverables,
+    submitDeliverable,
+    reviseSubmission,
+    saveRubricMappings,
+    fetchStudentRubric,
   };
 }
