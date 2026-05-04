@@ -25,7 +25,7 @@
 				deliverables.value = await fetchStudentDeliverables(token);
 			}
 		} catch {
-			deliverablesError.value = "Teslim listesi yüklenemedi.";
+			deliverablesError.value = "Failed to load deliverables.";
 		} finally {
 			loadingDeliverables.value = false;
 		}
@@ -81,13 +81,16 @@
           </p>
         </div>
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <NuxtLink
+          to="/student/deliverables"
+          class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600"
+        >
           <FileCheck class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
           <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Deliverables</h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Aşağıdaki listeden teslim işlemi yapabilirsiniz.
+            View all deliverables, deadlines, and submission status.
           </p>
-        </div>
+        </NuxtLink>
 
         <NuxtLink
           to="/student/group"
@@ -105,12 +108,12 @@
       <section class="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
         <div class="flex items-center gap-2 px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60">
           <FileCheck class="w-4 h-4 text-emerald-500" />
-          <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Teslimler</h2>
+          <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Deliverables</h2>
         </div>
 
         <!-- Loading -->
         <div v-if="loadingDeliverables" class="px-6 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-          Yükleniyor…
+          Loading…
         </div>
 
         <!-- Error -->
@@ -121,7 +124,7 @@
 
         <!-- Empty -->
         <div v-else-if="deliverables.length === 0" class="px-6 py-8 text-center text-sm text-slate-400 dark:text-slate-500">
-          Henüz teslim tanımlanmamış.
+          No deliverables have been published yet.
         </div>
 
         <!-- List -->
@@ -134,7 +137,7 @@
             <!-- Status icon -->
             <span class="flex-shrink-0">
               <CheckCircle2
-                v-if="d.submissionStatus === 'Graded' || d.submissionStatus === 'Submitted'"
+                v-if="d.submissionStatus === 'SUBMITTED'"
                 class="w-5 h-5 text-emerald-500"
               />
               <Clock v-else class="w-5 h-5 text-slate-400 dark:text-slate-500" />
@@ -145,17 +148,16 @@
               <p class="text-sm font-medium text-slate-800 dark:text-slate-100 truncate">{{ d.name }}</p>
               <div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
                 <span class="text-xs text-slate-500 dark:text-slate-400">
-                  Son teslim: {{ formatDate(d.submissionDeadline) }}
+                  Due: {{ formatDate(d.submissionDeadline) }}
                 </span>
                 <span
                   class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
                   :class="{
-                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300': d.submissionStatus === 'Graded',
-                    'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300': d.submissionStatus === 'Submitted',
-                    'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400': d.submissionStatus === 'Not Submitted',
+                    'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300': d.submissionStatus === 'SUBMITTED',
+                    'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400': d.submissionStatus === 'NOT_SUBMITTED',
                   }"
                 >
-                  {{ d.submissionStatus === 'Graded' ? 'Notlandırıldı' : d.submissionStatus === 'Submitted' ? 'Teslim Edildi' : 'Teslim Edilmedi' }}
+                  {{ d.submissionStatus === 'SUBMITTED' ? 'Submitted' : 'Not Submitted' }}
                 </span>
               </div>
             </div>
@@ -164,12 +166,12 @@
             <NuxtLink
               :to="`/student/submit/${d.id}`"
               class="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all border"
-              :class="d.submissionStatus === 'Not Submitted'
+              :class="d.submissionStatus === 'NOT_SUBMITTED'
                 ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 shadow-sm'
                 : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600 dark:hover:bg-slate-600'"
             >
               <Send class="w-3.5 h-3.5" />
-              {{ d.submissionStatus === 'Not Submitted' ? 'Teslim Et' : 'Güncelle' }}
+              {{ d.submissionStatus === 'NOT_SUBMITTED' ? 'Submit' : 'Update' }}
             </NuxtLink>
           </li>
         </ul>

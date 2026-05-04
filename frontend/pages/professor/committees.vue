@@ -371,13 +371,13 @@ interface DeadlineInfo
                         class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
                       >
                         <Eye class="h-3.5 w-3.5" />
-                        Teslimi İncele
+                        Review Submission
                       </NuxtLink>
                       <span
                         v-else
                         class="text-xs text-slate-400 dark:text-slate-500 italic"
                       >
-                        Teslim yok
+                        No submission
                       </span>
                     </td>
                   </tr>

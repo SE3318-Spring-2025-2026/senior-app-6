@@ -60,10 +60,10 @@ const totalWeight = computed(() =>
     <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex-shrink-0">
       <Scale class="w-4 h-4 text-indigo-500" />
       <h2 class="font-semibold text-sm text-slate-700 dark:text-slate-200">
-        Rubrik Kriterleri
+        Rubric Criteria
       </h2>
       <span class="ml-auto text-xs text-slate-500 dark:text-slate-400">
-        {{ totalWeight }}% toplam
+        {{ totalWeight }}% total
       </span>
     </div>
 
@@ -77,11 +77,11 @@ const totalWeight = computed(() =>
       >
         <Link2 class="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         <span v-if="hasSelection">
-          Seçili metin: <em class="not-italic font-semibold">"{{ truncate(selectionText) }}"</em>
-          — Eşlemek için aşağıdan kriter seçin.
+          Selected text: <em class="not-italic font-semibold">"{{ truncate(selectionText) }}"</em>
+          — Pick a criterion below to map it.
         </span>
         <span v-else>
-          Önce editörden bir metin seçin, ardından bir kritere tıklayın.
+          Select text in the editor first, then click a criterion.
         </span>
       </p>
     </div>
@@ -93,13 +93,13 @@ const totalWeight = computed(() =>
     >
       <AlertCircle class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
       <p class="text-xs text-amber-700 dark:text-amber-300">
-        Kriter ID'leri yüklenemedi. Eşlemeler kriter adıyla kaydedilecek.
+        Criterion IDs could not be loaded. Mappings will be saved by criterion name.
       </p>
     </div>
 
     <!-- Loading -->
     <div v-if="loading" class="flex-1 flex items-center justify-center">
-      <p class="text-sm text-slate-400 dark:text-slate-500">Rubrik yükleniyor…</p>
+      <p class="text-sm text-slate-400 dark:text-slate-500">Loading rubric…</p>
     </div>
 
     <!-- Empty -->
@@ -108,7 +108,7 @@ const totalWeight = computed(() =>
       class="flex-1 flex items-center justify-center p-6"
     >
       <p class="text-sm text-slate-400 dark:text-slate-500 text-center">
-        Bu teslim için rubrik tanımlanmamış.
+        No rubric has been defined for this deliverable.
       </p>
     </div>
 
@@ -146,7 +146,7 @@ const totalWeight = computed(() =>
                 class="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5"
               >
                 <CheckCircle2 class="w-3 h-3" />
-                {{ mappingCount(criterion.criterionName) }} bölüm
+                {{ mappingCount(criterion.criterionName) }} section(s)
               </span>
             </div>
           </div>
@@ -159,11 +159,11 @@ const totalWeight = computed(() =>
             :class="hasSelection
               ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 shadow-sm'
               : 'bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-700 cursor-not-allowed'"
-            :title="hasSelection ? 'Seçili metni bu kritere eşle' : 'Önce editörde metin seçin'"
+            :title="hasSelection ? 'Map selected text to this criterion' : 'Select text in the editor first'"
             @click="emit('link', criterion)"
           >
             <Link2 class="w-3 h-3" />
-            Eşle
+            Map
           </button>
         </div>
 
@@ -187,7 +187,7 @@ const totalWeight = computed(() =>
             <button
               type="button"
               class="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded text-red-400 hover:text-red-600 dark:hover:text-red-400"
-              title="Eşlemeyi kaldır"
+              title="Remove mapping"
               @click="emit('removeMapping', mapping.localId)"
             >
               <Trash2 class="w-3 h-3" />
@@ -204,7 +204,7 @@ const totalWeight = computed(() =>
     >
       <p class="text-xs text-slate-600 dark:text-slate-400">
         <span class="font-semibold text-indigo-600 dark:text-indigo-400">{{ mappings.length }}</span>
-        bölüm eşlendi — Teslim sırasında kaydedilecek.
+        section(s) mapped — Will be saved on submission.
       </p>
     </div>
   </div>
