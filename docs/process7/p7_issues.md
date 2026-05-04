@@ -16,8 +16,8 @@
 | Yağmur | Fullstack | #249, #251 | 4 |
 | Batuhan | QA | #253, #255 | 3 |
 | Bilge | QA | #254, #258 | 4 |
-| Demir | QA + PR Review | #245 | 2 |
-| **Total** | | | **35** |
+| Demir | QA + PR Review | #245, P7-08a | 4 |
+| **Total** | | | **37** |
 
 > Demir carries all PR review overhead for the sprint (~4pt untracked) — formal story points intentionally lower.
 > Blue Team's `blue_main_sprint4` branch (with P6 `DeliverableSubmission`) will be merged
@@ -569,7 +569,7 @@ response DTOs: `FinalGradeResponse.java`, `DeliverableBreakdown.java` (NEW)
 
 | Field | Value |
 |-------|-------|
-| **Assignee** | Batuhan | --> demir yaptım
+| **Assignee** | Demir |
 | **Priority** | 🟠 High |
 | **Story Points** | 2 |
 | **Labels** | `qa`, `testing`, `backend`, `unit-test`, `p7` |
@@ -651,7 +651,7 @@ response DTOs: `FinalGradeResponse.java`, `DeliverableBreakdown.java` (NEW)
 |-------|-------|
 | **Assignee** | Batuhan |
 | **Priority** | 🟡 Medium |
-| **Story Points** | 2 |
+| **Story Points** | 3 |
 | **Labels** | `feature`, `backend`, `observability` |
 
 **Problem:**
@@ -818,8 +818,8 @@ per checklist item. Open a bug issue for any failure.
 | Arda | S4-04, P7-07 | 4 |
 | Efecan | P7-05, S4-09b | 4 |
 | Yağmur | P7-04, P7-06 | 4 |
-| Batuhan | P7-08a, S4-08 | 4 |
+| Batuhan | S4-08 | 3 |
 | Bilge | P7-08b, S4-10 | 4 |
-| Demir | S4-07 | 3 |
-| **Total** | | **36** |
+| Demir | P7-08a, S4-07 | 4 |
+| **Total** | | **37** |
 
