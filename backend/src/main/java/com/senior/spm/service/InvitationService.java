@@ -30,6 +30,7 @@ import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.StudentRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Coordinates the group invitation lifecycle for Process 2.
@@ -39,6 +40,7 @@ import lombok.RequiredArgsConstructor;
  * lock enforcement on accept, and the transactional accept flow that creates
  * group membership while auto-denying competing pending invitations.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InvitationService {
@@ -104,6 +106,8 @@ public class InvitationService {
         invitation.setStatus(InvitationStatus.PENDING);
         invitation.setSentAt(nowUtc());
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                requesterUUID, "INVITATION_SENT", targetStudent.getId(), targetStudentId);
         return toSendInvitationResponse(groupInvitationRepository.save(invitation));
     }
 
@@ -200,6 +204,8 @@ public class InvitationService {
         if (!accept) {
             invitation.setStatus(InvitationStatus.DECLINED);
             invitation.setRespondedAt(nowUtc());
+            log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                    studentUUID, "INVITATION_RESPONDED", invitationId, "DECLINED");
             return toStatusOnlyResponse(groupInvitationRepository.save(invitation));
         }
 
@@ -239,6 +245,8 @@ public class InvitationService {
         // Bulk update excludes the accepted invitation id so the final state is deterministic.
         groupInvitationRepository.autoDenyOtherPendingInvitationsExcept(studentUUID, invitationId);
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                studentUUID, "INVITATION_RESPONDED", invitationId, "ACCEPTED");
         return groupService.getGroupDetail(group.getId());
     }
 

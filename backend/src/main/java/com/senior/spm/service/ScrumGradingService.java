@@ -37,7 +37,9 @@ import com.senior.spm.repository.SprintRepository;
 import com.senior.spm.repository.SprintTrackingLogRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ScrumGradingService {
@@ -90,6 +92,8 @@ public class ScrumGradingService {
             grade.setPointAGrade(request.getPointAGrade());
             grade.setPointBGrade(request.getPointBGrade());
             grade.setGradedAt(LocalDateTime.now());
+            log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                    advisorId, "SCRUM_GRADE_SUBMITTED", groupId, sprintId);
             return scrumGradeRepository.save(grade);
         }
 
@@ -97,6 +101,8 @@ public class ScrumGradingService {
         grade.setPointAGrade(request.getPointAGrade());
         grade.setPointBGrade(request.getPointBGrade());
         grade.setUpdatedAt(LocalDateTime.now());
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                advisorId, "SCRUM_GRADE_SUBMITTED", groupId, sprintId);
         return scrumGradeRepository.save(grade);
     }
 

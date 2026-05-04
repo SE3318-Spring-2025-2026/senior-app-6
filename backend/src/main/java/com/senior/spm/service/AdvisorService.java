@@ -36,7 +36,9 @@ import com.senior.spm.service.dto.AdvisorRequestSummary;
 import com.senior.spm.service.dto.AdvisorRespondResponse;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdvisorService {
@@ -175,6 +177,8 @@ public class AdvisorService {
         request.setSentAt(now);
         AdvisorRequest saved = advisorRequestRepository.save(request);
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                requesterUUID, "ADVISOR_REQUEST_SENT", advisorId, groupId);
         return AdvisorRequestResponse.builder()
                 .requestId(saved.getId())
                 .groupId(group.getId())
@@ -420,6 +424,8 @@ public class AdvisorService {
             request.setRespondedAt(now);
             advisorRequestRepository.save(request);
 
+            log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                    professorId, "ADVISOR_REQUEST_RESPONDED", request.getGroup().getId(), "REJECTED");
             return AdvisorRespondResponse.builder()
                 .requestId(request.getId())
                 .status(AdvisorRequest.RequestStatus.REJECTED)
@@ -456,6 +462,8 @@ public class AdvisorService {
         // Auto-reject all other PENDING requests for this group (same group, different advisors)
         advisorRequestRepository.bulkUpdateStatusForGroup(AdvisorRequest.RequestStatus.AUTO_REJECTED, group.getId(), request.getId());
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                professorId, "ADVISOR_REQUEST_RESPONDED", group.getId(), "ACCEPTED");
         return AdvisorRespondResponse.builder()
             .requestId(request.getId())
             .status(AdvisorRequest.RequestStatus.ACCEPTED)

@@ -24,3 +24,6 @@ llm.api.timeout-seconds=15
 
 # The actual API key is NOT stored here — it is stored encrypted in the
 # system_config table under the key 'llm_api_key', use admin ui .
+
+# Dev-only: activate trace event logging (do not set in production)
+logging.level.com.senior.spm=TRACE
