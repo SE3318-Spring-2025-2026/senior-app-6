@@ -1,27 +1,33 @@
+export type StudentDeliverableSubmissionStatus = "NOT_SUBMITTED" | "SUBMITTED";
+
 export interface StudentDeliverable {
   id: string;
   name: string;
   type: "Proposal" | "SoW" | "Demonstration";
   submissionDeadline: string;
   reviewDeadline: string;
-  submissionStatus: "Not Submitted" | "Submitted" | "Graded";
+  weight: number;
+  submissionStatus: StudentDeliverableSubmissionStatus;
 }
 
 export interface SubmissionCreateResponse {
   submissionId: string;
   deliverableId: string;
   groupId: string;
-  status: string;
   submittedAt: string;
+  revisionNumber: number;
+  isRevision: boolean;
 }
 
 export interface SubmissionResponse {
   submissionId: string;
   deliverableId: string;
   groupId: string;
-  content: string;
+  markdownContent: string;
   submittedAt: string;
-  revisedAt: string | null;
+  updatedAt: string | null;
+  revisionNumber: number;
+  isRevision: boolean;
 }
 
 export interface RubricMappingEntry {

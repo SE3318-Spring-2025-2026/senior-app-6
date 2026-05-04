@@ -62,7 +62,7 @@ async function load() {
 
   try {
     const token = getAuthToken();
-    if (!token) throw new Error("Kimlik doğrulaması gerekiyor.");
+    if (!token) throw new Error("Authentication is required.");
 
     // Fetch submission content
     const sub = await fetchSubmission(submissionId.value, token);
@@ -89,7 +89,7 @@ async function load() {
     const msg =
       err && typeof err === "object" && "message" in err
         ? String((err as { message: string }).message)
-        : "Teslim yüklenirken hata oluştu.";
+        : "An error occurred while loading the submission.";
     loadError.value = msg;
   } finally {
     loading.value = false;
@@ -108,14 +108,14 @@ onMounted(load);
         @click="router.back()"
       >
         <ArrowLeft class="w-4 h-4" />
-        Geri
+        Back
       </button>
 
       <div class="h-5 w-px bg-slate-200 dark:bg-slate-700" />
 
       <FileText class="w-4 h-4 text-indigo-500 flex-shrink-0" />
       <h1 class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
-        Teslim İnceleme
+        Submission Review
         <span
           v-if="submission"
           class="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400"
@@ -132,7 +132,7 @@ onMounted(load);
         <span class="flex items-center gap-1">
           <Calendar class="w-3 h-3" />
           {{ formatDate(submission.revisedAt ?? submission.submittedAt) }}
-          <span v-if="submission.revisedAt" class="text-amber-500">(revize)</span>
+          <span v-if="submission.revisedAt" class="text-amber-500">(revised)</span>
         </span>
         <span class="flex items-center gap-1">
           <Users class="w-3 h-3" />
@@ -145,7 +145,7 @@ onMounted(load);
         <button
           class="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           :class="leftPanelVisible ? 'text-indigo-500' : 'text-slate-400'"
-          :title="leftPanelVisible ? 'Doküman panelini gizle' : 'Doküman panelini göster'"
+          :title="leftPanelVisible ? 'Hide document panel' : 'Show document panel'"
           @click="leftPanelVisible = !leftPanelVisible"
         >
           <PanelLeft class="w-4 h-4" />
@@ -153,7 +153,7 @@ onMounted(load);
         <button
           class="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           :class="rightPanelVisible ? 'text-indigo-500' : 'text-slate-400'"
-          :title="rightPanelVisible ? 'Rubrik panelini gizle' : 'Rubrik panelini göster'"
+          :title="rightPanelVisible ? 'Hide rubric panel' : 'Show rubric panel'"
           @click="rightPanelVisible = !rightPanelVisible"
         >
           <PanelRight class="w-4 h-4" />
@@ -168,7 +168,7 @@ onMounted(load);
     >
       <div class="flex flex-col items-center gap-3">
         <Loader2 class="w-8 h-8 text-indigo-500 animate-spin" />
-        <p class="text-sm text-slate-500 dark:text-slate-400">Teslim yükleniyor…</p>
+        <p class="text-sm text-slate-500 dark:text-slate-400">Loading submission…</p>
       </div>
     </div>
 
@@ -180,13 +180,13 @@ onMounted(load);
       <div class="max-w-md w-full bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 p-6 flex gap-4">
         <AlertCircle class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
         <div>
-          <p class="font-semibold text-sm text-red-700 dark:text-red-300">Yükleme hatası</p>
+          <p class="font-semibold text-sm text-red-700 dark:text-red-300">Load error</p>
           <p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ loadError }}</p>
           <button
             class="mt-3 text-sm text-red-600 dark:text-red-400 underline hover:no-underline"
             @click="load"
           >
-            Tekrar dene
+            Try again
           </button>
         </div>
       </div>
@@ -202,16 +202,16 @@ onMounted(load);
         v-show="leftPanelVisible"
         class="flex flex-col overflow-hidden border-r border-slate-200 dark:border-slate-700 transition-all duration-200"
         :class="rightPanelVisible ? 'flex-1' : 'flex-1'"
-        aria-label="Teslim dokümanı"
+        aria-label="Submission document"
       >
         <!-- Section header -->
         <div class="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 flex items-center gap-2">
           <FileText class="w-3.5 h-3.5 text-slate-400" />
           <span class="text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-            Doküman
+            Document
           </span>
           <span class="ml-auto text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
-            Salt Okunur
+            Read-only
           </span>
         </div>
 
@@ -221,7 +221,7 @@ onMounted(load);
             v-if="!submission.content"
             class="flex items-center justify-center h-full"
           >
-            <p class="text-sm text-slate-400 dark:text-slate-500">Bu teslimde içerik bulunamadı.</p>
+            <p class="text-sm text-slate-400 dark:text-slate-500">No content found in this submission.</p>
           </div>
           <MarkdownViewer
             v-else
@@ -236,7 +236,7 @@ onMounted(load);
         v-show="rightPanelVisible"
         class="flex flex-col overflow-hidden bg-white dark:bg-slate-900 transition-all duration-200"
         :class="leftPanelVisible ? 'w-80 flex-shrink-0 lg:w-96' : 'flex-1'"
-        aria-label="Değerlendirme rubriği"
+        aria-label="Evaluation rubric"
       >
         <RubricPanel
           :criteria="rubricCriteria"

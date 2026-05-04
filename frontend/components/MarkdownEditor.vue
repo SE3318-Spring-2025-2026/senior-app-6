@@ -121,10 +121,10 @@ defineExpose({ selectionText, selectionStart, selectionEnd, hasSelection });
     >
       <span v-if="hasSelection" class="flex items-center gap-1.5 font-medium">
         <span class="inline-block w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-        Metin seçildi ({{ selectionText.length }} karakter) — Sağ panelden bir kriter seçerek eşleyin
+        Text selected ({{ selectionText.length }} characters) — Pick a criterion from the right panel to map it
       </span>
       <span v-else>
-        Bir bölümü seçmek için metni işaretleyin, ardından sağdaki kritere tıklayın
+        Highlight text to select a section, then click a criterion on the right
       </span>
     </div>
 
@@ -147,11 +147,11 @@ defineExpose({ selectionText, selectionStart, selectionEnd, hasSelection });
         ref="textareaRef"
         :value="modelValue"
         :disabled="disabled"
-        placeholder="Markdown içeriğinizi buraya yazın…
+        placeholder="Write your markdown content here…
 
-# Proje Başlığı
+# Project Title
 
-## Giriş
+## Introduction
 ..."
         class="relative w-full h-full resize-none bg-transparent outline-none font-mono text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 p-4 leading-relaxed caret-indigo-500"
         :class="disabled ? 'cursor-not-allowed opacity-60' : ''"

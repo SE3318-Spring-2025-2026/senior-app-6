@@ -50,10 +50,10 @@ const totalWeight = computed(() =>
     <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex-shrink-0">
       <Scale class="w-4 h-4 text-indigo-500" />
       <h2 class="font-semibold text-sm text-slate-700 dark:text-slate-200">
-        Değerlendirme Rubriği
+        Grading Rubric
       </h2>
       <span class="ml-auto text-xs text-slate-500 dark:text-slate-400">
-        Toplam Ağırlık: {{ totalWeight }}%
+        Total Weight: {{ totalWeight }}%
       </span>
     </div>
 
@@ -61,7 +61,7 @@ const totalWeight = computed(() =>
     <div class="px-4 py-2 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
       <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
         <MousePointerClick class="w-3 h-3" />
-        Bir kritere tıklayarak belgede ilgili bölümü vurgulayabilirsiniz.
+        Click a criterion to highlight the matching section in the document.
       </p>
     </div>
 
@@ -71,7 +71,7 @@ const totalWeight = computed(() =>
       class="flex-1 flex items-center justify-center p-6"
     >
       <p class="text-sm text-slate-400 dark:text-slate-500 text-center">
-        Bu teslim için rubrik tanımlanmamış.
+        No rubric has been defined for this deliverable.
       </p>
     </div>
 
@@ -89,7 +89,7 @@ const totalWeight = computed(() =>
         role="button"
         tabindex="0"
         :aria-pressed="isSelected(criterion.criterionName)"
-        :aria-label="`Kriter: ${criterion.criterionName}`"
+        :aria-label="`Criterion: ${criterion.criterionName}`"
         @click="handleCriterionClick(criterion)"
         @keydown.enter.prevent="handleCriterionClick(criterion)"
         @keydown.space.prevent="handleCriterionClick(criterion)"
@@ -125,14 +125,14 @@ const totalWeight = computed(() =>
               </span>
               <!-- Weight -->
               <span class="text-[11px] text-slate-500 dark:text-slate-400">
-                Ağırlık: {{ criterion.weight }}%
+                Weight: {{ criterion.weight }}%
               </span>
               <!-- Mapping indicator -->
               <span
                 v-if="hasMappedSection(criterion.criterionName)"
                 class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium"
               >
-                ✓ Bölüm eşlenmiş
+                ✓ Section mapped
               </span>
             </div>
           </div>
@@ -146,7 +146,7 @@ const totalWeight = computed(() =>
       class="px-4 py-2 border-t border-slate-200 dark:border-slate-700 bg-indigo-50 dark:bg-indigo-900/20 flex-shrink-0"
     >
       <p class="text-xs text-indigo-600 dark:text-indigo-400 truncate">
-        <span class="font-medium">Seçili:</span> {{ selectedCriterionName }}
+        <span class="font-medium">Selected:</span> {{ selectedCriterionName }}
       </p>
     </div>
   </div>

@@ -468,26 +468,26 @@ export function useApiClient() {
 
   async function submitDeliverable(
     deliverableId: string,
-    content: string,
+    markdownContent: string,
     token?: string
   ): Promise<SubmissionCreateResponse> {
     return apiCall<SubmissionCreateResponse>(
       `/deliverables/${encodeURIComponent(deliverableId)}/submissions`,
       "POST",
-      { content },
+      { markdownContent },
       token
     );
   }
 
   async function reviseSubmission(
     submissionId: string,
-    content: string,
+    markdownContent: string,
     token?: string
   ): Promise<SubmissionResponse> {
     return apiCall<SubmissionResponse>(
       `/submissions/${encodeURIComponent(submissionId)}`,
       "PUT",
-      { content },
+      { markdownContent },
       token
     );
   }

@@ -67,11 +67,11 @@ function formatDate(dateStr: string): string {
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} dk önce`;
+  if (mins < 60) return `${mins} min ago`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} sa önce`;
+  if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  return `${days} gün önce`;
+  return `${days}d ago`;
 }
 
 async function load() {
@@ -81,7 +81,7 @@ async function load() {
 
   try {
     const token = getAuthToken();
-    if (!token) throw new Error("Kimlik doğrulaması gerekiyor.");
+    if (!token) throw new Error("Authentication required.");
 
     const committeeList = await fetchProfessorCommittees(token);
     committees.value = committeeList;
@@ -119,7 +119,7 @@ async function load() {
     loadError.value =
       err && typeof err === "object" && "message" in err
         ? String((err as { message: string }).message)
-        : "Veriler yüklenemedi.";
+        : "Failed to load data.";
   } finally {
     loading.value = false;
   }
@@ -155,7 +155,7 @@ onMounted(load);
               @click="load"
             >
               <RefreshCw class="h-4 w-4" :class="loading ? 'animate-spin' : ''" />
-              Yenile
+              Refresh
             </button>
             <NuxtLink
               to="/professor/dashboard"
@@ -184,9 +184,9 @@ onMounted(load);
       >
         <AlertCircle class="mt-0.5 h-5 w-5 shrink-0" />
         <div>
-          <p class="font-medium">Yükleme hatası</p>
+          <p class="font-medium">Loading error</p>
           <p class="mt-1 text-sm">{{ loadError }}</p>
-          <button class="mt-3 text-sm underline" @click="load">Tekrar dene</button>
+          <button class="mt-3 text-sm underline" @click="load">Try again</button>
         </div>
       </div>
 
@@ -203,7 +203,7 @@ onMounted(load);
             <input
               v-model="search"
               type="text"
-              placeholder="Grup, teslim veya komite ara…"
+              placeholder="Search group, submission or committee…"
               class="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 placeholder-slate-400 transition focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500"
             />
           </div>
@@ -213,7 +213,7 @@ onMounted(load);
             v-model="filterCommittee"
             class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 focus:border-blue-500 focus:outline-none dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
           >
-            <option value="all">Tüm Komiteler</option>
+            <option value="all">All Committees</option>
             <option
               v-for="c in committees"
               :key="c.committeeId"
@@ -226,7 +226,7 @@ onMounted(load);
           <!-- Count badge -->
           <span class="ml-auto text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
             <span class="font-semibold text-slate-700 dark:text-slate-200">{{ filteredRows.length }}</span>
-            /{{ rows.length }} teslim
+            /{{ rows.length }} submissions
           </span>
         </div>
 
@@ -237,7 +237,7 @@ onMounted(load);
         >
           <InboxIcon class="h-12 w-12 text-slate-300 dark:text-slate-600" />
           <p class="mt-4 text-sm font-medium text-slate-500 dark:text-slate-400">
-            {{ committees.length === 0 ? 'Henüz bir komiteye atanmadınız.' : 'Bekleyen teslim yok.' }}
+            {{ committees.length === 0 ? "You haven't been assigned to a committee yet." : 'No pending submissions.' }}
           </p>
         </div>
 
@@ -246,9 +246,9 @@ onMounted(load);
           v-else-if="filteredRows.length === 0"
           class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white py-12 dark:border-slate-600 dark:bg-slate-800"
         >
-          <p class="text-sm text-slate-400 dark:text-slate-500">Aramanızla eşleşen teslim bulunamadı.</p>
+          <p class="text-sm text-slate-400 dark:text-slate-500">No submissions match your search.</p>
           <button class="mt-2 text-sm text-blue-500 underline" @click="search = ''; filterCommittee = 'all'">
-            Filtreleri temizle
+            Clear filters
           </button>
         </div>
 
@@ -261,22 +261,22 @@ onMounted(load);
             <thead>
               <tr class="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/50">
                 <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Grup
+                  Group
                 </th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Teslim Adı
+                  Submission Name
                 </th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden md:table-cell">
-                  Komite
+                  Committee
                 </th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden lg:table-cell">
-                  Teslim Tarihi
+                  Submission Date
                 </th>
                 <th class="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Yorum
+                  Comment
                 </th>
                 <th class="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  İşlem
+                  Action
                 </th>
               </tr>
             </thead>
@@ -342,7 +342,7 @@ onMounted(load);
                     class="inline-flex items-center gap-1.5 rounded-lg border border-blue-600 bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:border-blue-700"
                   >
                     <Eye class="h-3.5 w-3.5" />
-                    İncele
+                    Review
                   </NuxtLink>
                 </td>
               </tr>
@@ -353,8 +353,8 @@ onMounted(load);
           <div class="border-t border-slate-100 dark:border-slate-700 px-5 py-3 flex items-center gap-2 bg-slate-50 dark:bg-slate-800/60">
             <CheckCircle2 class="h-4 w-4 text-slate-400" />
             <p class="text-xs text-slate-500 dark:text-slate-400">
-              Toplam <span class="font-semibold text-slate-700 dark:text-slate-200">{{ rows.length }}</span> teslim,
-              <span class="font-semibold text-slate-700 dark:text-slate-200">{{ committees.length }}</span> komitede.
+              Total <span class="font-semibold text-slate-700 dark:text-slate-200">{{ rows.length }}</span> submissions in
+              <span class="font-semibold text-slate-700 dark:text-slate-200">{{ committees.length }}</span> committees.
             </p>
           </div>
         </div>

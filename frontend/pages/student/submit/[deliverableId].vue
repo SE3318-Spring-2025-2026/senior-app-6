@@ -61,7 +61,7 @@ async function load() {
   loadError.value = null;
   try {
     const token = getAuthToken();
-    if (!token) throw new Error("Kimlik doğrulaması gerekiyor.");
+    if (!token) throw new Error("Authentication required.");
 
     // Get deliverable name from student deliverables list
     try {
@@ -79,7 +79,7 @@ async function load() {
       rubricCriteria.value = [];
     }
   } catch (err: unknown) {
-    loadError.value = parseError(err, "Veriler yüklenemedi.");
+    loadError.value = parseError(err, "Failed to load data.");
   } finally {
     loadingRubric.value = false;
   }
@@ -113,7 +113,7 @@ function handleRemoveMapping(localId: string) {
 
 async function handleSubmit() {
   if (!markdownContent.value.trim()) {
-    submitError.value = "Teslim içeriği boş olamaz.";
+    submitError.value = "Submission content cannot be empty.";
     return;
   }
 
@@ -122,7 +122,7 @@ async function handleSubmit() {
 
   try {
     const token = getAuthToken();
-    if (!token) throw new Error("Kimlik doğrulaması gerekiyor.");
+    if (!token) throw new Error("Authentication required.");
 
     // 1. POST submission content
     const result = await submitDeliverable(deliverableId.value, markdownContent.value, token);
@@ -143,13 +143,13 @@ async function handleSubmit() {
         );
       } catch {
         // Mappings failed but submission succeeded — show warning, not error
-        submitError.value = "Teslim kaydedildi ancak bölüm eşlemeleri kaydedilemedi.";
+        submitError.value = "Submission saved but section mappings could not be saved.";
       }
     }
 
     submitSuccess.value = true;
   } catch (err: unknown) {
-    submitError.value = parseError(err, "Teslim sırasında bir hata oluştu.");
+    submitError.value = parseError(err, "An error occurred while submitting.");
   } finally {
     submitting.value = false;
   }
@@ -176,13 +176,13 @@ onMounted(load);
         @click="router.back()"
       >
         <ArrowLeft class="w-4 h-4" />
-        Geri
+        Back
       </button>
 
       <div class="h-5 w-px bg-slate-200 dark:bg-slate-700" />
       <FileText class="w-4 h-4 text-indigo-500 flex-shrink-0" />
       <h1 class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
-        {{ deliverableName || "Teslim Yaz" }}
+        {{ deliverableName || "Write Submission" }}
       </h1>
 
       <div class="ml-auto flex items-center gap-2">
@@ -190,7 +190,7 @@ onMounted(load);
         <button
           class="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           :class="rubricPanelVisible ? 'text-indigo-500' : 'text-slate-400'"
-          title="Rubrik panelini aç/kapat"
+          title="Toggle rubric panel"
           @click="rubricPanelVisible = !rubricPanelVisible"
         >
           <PanelRight class="w-4 h-4" />
@@ -208,7 +208,7 @@ onMounted(load);
           <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
           <CheckCircle2 v-else-if="submitSuccess" class="w-4 h-4" />
           <Send v-else class="w-4 h-4" />
-          {{ submitSuccess ? "Teslim Edildi" : submitting ? "Gönderiliyor…" : "Teslim Et" }}
+          {{ submitSuccess ? "Submitted" : submitting ? "Submitting…" : "Submit" }}
         </button>
       </div>
     </header>
@@ -227,8 +227,8 @@ onMounted(load);
       class="flex items-start gap-3 px-4 py-3 bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-200 dark:border-emerald-800 text-sm text-emerald-700 dark:text-emerald-300 flex-shrink-0"
     >
       <CheckCircle2 class="w-4 h-4 flex-shrink-0 mt-0.5" />
-      Teslim başarıyla kaydedildi!
-      <span v-if="localMappings.length > 0"> {{ localMappings.length }} bölüm eşlemesiyle birlikte.</span>
+      Submission saved successfully!
+      <span v-if="localMappings.length > 0"> With {{ localMappings.length }} section mapping(s).</span>
     </div>
 
     <!-- Main load error -->
@@ -239,10 +239,10 @@ onMounted(load);
       <div class="max-w-sm w-full bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 p-6 flex gap-4">
         <AlertCircle class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
         <div>
-          <p class="font-semibold text-sm text-red-700 dark:text-red-300">Yükleme hatası</p>
+          <p class="font-semibold text-sm text-red-700 dark:text-red-300">Loading error</p>
           <p class="text-sm text-red-600 dark:text-red-400 mt-1">{{ loadError }}</p>
           <button class="mt-3 text-sm underline text-red-600 dark:text-red-400" @click="load">
-            Tekrar dene
+            Try again
           </button>
         </div>
       </div>
@@ -254,16 +254,16 @@ onMounted(load);
       <!-- Left: Markdown editor -->
       <section
         class="flex flex-col overflow-hidden border-r border-slate-200 dark:border-slate-700 flex-1 bg-white dark:bg-slate-900"
-        aria-label="Markdown editörü"
+        aria-label="Markdown editor"
       >
         <!-- Section header -->
         <div class="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 flex items-center gap-2">
           <FileText class="w-3.5 h-3.5 text-slate-400" />
           <span class="text-xs font-medium text-slate-600 dark:text-slate-300 uppercase tracking-wide">
-            Markdown Editörü
+            Markdown Editor
           </span>
           <span class="ml-auto text-xs text-slate-400">
-            {{ markdownContent.length }} karakter
+            {{ markdownContent.length }} characters
           </span>
         </div>
 
@@ -280,7 +280,7 @@ onMounted(load);
       <section
         v-show="rubricPanelVisible"
         class="w-80 lg:w-96 flex-shrink-0 flex flex-col overflow-hidden bg-white dark:bg-slate-900"
-        aria-label="Rubrik bölüm eşleme"
+        aria-label="Rubric section mapping"
       >
         <RubricLinkingPanel
           :criteria="rubricCriteria"
