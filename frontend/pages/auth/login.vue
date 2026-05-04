@@ -134,6 +134,7 @@ import type { StaffUser } from "~/types/user";
 			studentSubmitting.value = false;
 		}
 	}
+
 </script>
 
 <template>

@@ -13,7 +13,7 @@
 		UserCheck,
 		ClipboardList,
 	} from "lucide-vue-next";
-import type { ProfessorCommittee, ProfessorCommitteeRubricCriterion } from "~/types/committee";
+import type { ProfessorCommittee, ProfessorCommitteeRubricCriterion, CommitteeSubmissionSummary } from "~/types/committee";
 import type { Deliverable } from "~/types/deliverable";
 
 	definePageMeta({
@@ -29,11 +29,13 @@ interface DeadlineInfo
 	dateStr: string
 }
 
-	const { getAuthToken, fetchProfessorCommittees, fetchDeliverables, fetchRubric } = useApiClient();
+  const { getAuthToken, fetchProfessorCommittees, fetchDeliverables, fetchRubric, fetchCommitteeSubmissions } = useApiClient();
 
 	const committees = ref<ProfessorCommittee[]>([]);
 	const deliverables = ref<Deliverable[]>([]);
 	const rubricsByDeliverable = ref<Record<string, ProfessorCommitteeRubricCriterion[]>>({});
+  const submissionsByCommittee = ref<Record<string, CommitteeSubmissionSummary[]>>({});
+  const loadingSubmissions = ref<Record<string, boolean>>({});
 	const loading = ref(true);
 	const loadError = ref<string | null>(null);
 	const expandedCommittees = ref<Set<string>>(new Set());
@@ -74,6 +76,9 @@ interface DeadlineInfo
 			next.delete(id);
 		} else {
 			next.add(id);
+      if (!submissionsByCommittee.value[id]) {
+        loadCommitteeSubmissions(id);
+      }
 		}
 		expandedCommittees.value = next;
 	}
@@ -105,6 +110,19 @@ interface DeadlineInfo
 			rubricsByDeliverable.value[deliverableId] = [];
 		}
 	}
+
+  async function loadCommitteeSubmissions(committeeId: string) {
+    try {
+      loadingSubmissions.value[committeeId] = true;
+      const token = getAuthToken();
+      if (!token) return;
+      submissionsByCommittee.value[committeeId] = await fetchCommitteeSubmissions(committeeId, token);
+    } catch {
+      submissionsByCommittee.value[committeeId] = [];
+    } finally {
+      loadingSubmissions.value[committeeId] = false;
+    }
+  }
 
 	function formatDate(dateStr: string): string {
 		return new Intl.DateTimeFormat("en-US", {
@@ -470,6 +488,7 @@ interface DeadlineInfo
                     <div v-else class="mt-2 space-y-1.5">
                       <div
                         v-for="criterion in rubricsByDeliverable[deliverable.id]"
+                        :key="`${deliverable.id}-${criterion.criterionName}`"
                         class="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2 dark:bg-slate-700/50"
                       >
                         <span class="text-sm text-slate-900 dark:text-white">
@@ -494,6 +513,42 @@ interface DeadlineInfo
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <h4 class="mb-3 mt-6 text-sm font-medium text-slate-700 dark:text-slate-300">
+              Submitted Work
+            </h4>
+            <div
+              v-if="loadingSubmissions[committee.committeeId]"
+              class="rounded-lg border border-dashed border-slate-300 py-6 text-center text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400"
+            >
+              Loading submissions…
+            </div>
+            <div
+              v-else-if="!submissionsByCommittee[committee.committeeId] || submissionsByCommittee[committee.committeeId].length === 0"
+              class="rounded-lg border border-dashed border-slate-300 py-6 text-center text-sm text-slate-500 dark:border-slate-600 dark:text-slate-400"
+            >
+              No submissions are available for review yet.
+            </div>
+            <div v-else class="mt-2 space-y-2">
+              <div
+                v-for="submission in submissionsByCommittee[committee.committeeId]"
+                :key="submission.submissionId"
+                class="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/40 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p class="font-medium text-slate-900 dark:text-white">{{ submission.groupName }} • {{ submission.deliverableName }}</p>
+                  <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Submitted {{ formatDate(submission.submittedAt) }} • {{ submission.commentCount }} comment{{ submission.commentCount === 1 ? '' : 's' }}
+                  </p>
+                </div>
+                <NuxtLink
+                  :to="`/professor/submissions/${submission.submissionId}`"
+                  class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+                >
+                  Review submission
+                </NuxtLink>
               </div>
             </div>
           </div>

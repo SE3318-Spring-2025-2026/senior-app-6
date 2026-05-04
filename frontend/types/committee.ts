@@ -67,6 +67,16 @@ export interface ProfessorCommitteeRubricCriterion {
   weight: number;
 }
 
+export interface CommitteeSubmissionSummary {
+  submissionId: string;
+  deliverableId: string;
+  groupId: string;
+  groupName: string;
+  deliverableName: string;
+  submittedAt: string;
+  commentCount: number;
+}
+
 export interface ProfessorCommittee {
   committeeId: string;
   committeeName: string;

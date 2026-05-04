@@ -22,14 +22,24 @@ import type {
   AddProfessorsToCommitteeRequest,
   AddGroupsToCommitteeRequest,
   ProfessorCommittee,
-	CommitteeProfessorAssignment,
+  CommitteeProfessorAssignment,
   CommitteeSubmission,
+  CommitteeSubmissionSummary,
+
 } from '~/types/committee';
 import type {
   Deliverable,
   CreateDeliverableRequest,
   UpdateDeliverableRequest,
+  CreateDeliverableSubmissionRequest,
+  DeliverableSubmissionDetailResponse,
+  DeliverableSubmissionResponse,
 } from '~/types/deliverable';
+import type {
+  CreateSubmissionCommentRequest,
+  SubmissionComment,
+  SubmissionCommentResponse,
+} from '~/types/comment';
 import type { Sprint, CreateSprintRequest } from '~/types/sprint';
 import type { GradingCriterion, RubricCriterionResponse } from '~/types/rubric';
 import type {
@@ -196,6 +206,98 @@ export function useApiClient() {
 
   async function fetchDeliverables(token?: string): Promise<Deliverable[]> {
     return apiCall<Deliverable[]>("/coordinator/deliverables", "GET", undefined, token);
+  }
+
+  async function createDeliverableSubmission(
+    deliverableId: string,
+    payload: CreateDeliverableSubmissionRequest,
+    token?: string
+  ): Promise<DeliverableSubmissionResponse> {
+    return apiCall<DeliverableSubmissionResponse>(
+      `/deliverables/${encodeURIComponent(deliverableId)}/submissions`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
+  async function updateDeliverableSubmission(
+    submissionId: string,
+    payload: CreateDeliverableSubmissionRequest,
+    token?: string
+  ): Promise<DeliverableSubmissionResponse> {
+    return apiCall<DeliverableSubmissionResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}`,
+      "PUT",
+      payload,
+      token
+    );
+  }
+
+  async function fetchDeliverableSubmission(
+    submissionId: string,
+    token?: string
+  ): Promise<DeliverableSubmissionDetailResponse> {
+    return apiCall<DeliverableSubmissionDetailResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchSubmissionComments(
+    submissionId: string,
+    token?: string
+  ): Promise<SubmissionComment[]> {
+    const comments = await apiCall<Array<{
+      commentId: string;
+      submissionId: string;
+      authorId: string;
+      authorName?: string;
+      authorRole?: SubmissionComment['authorRole'];
+      content: string;
+      sectionReference?: string | null;
+      createdAt: string;
+      updatedAt?: string | null;
+    }>>(`/submissions/${encodeURIComponent(submissionId)}/comments`, 'GET', undefined, token);
+
+    return comments.map((comment) => ({
+      id: comment.commentId,
+      submissionId: comment.submissionId,
+      authorId: comment.authorId,
+      authorName: comment.authorName || 'Committee member',
+      authorRole: comment.authorRole,
+      content: comment.content,
+      sectionReference: comment.sectionReference ?? null,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt ?? null,
+    }));
+  }
+
+  async function createSubmissionComment(
+    submissionId: string,
+    payload: CreateSubmissionCommentRequest,
+    token?: string
+  ): Promise<SubmissionCommentResponse> {
+    return apiCall<SubmissionCommentResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}/comments`,
+      'POST',
+      payload,
+      token
+    );
+  }
+
+  async function fetchCommitteeSubmissions(
+    committeeId: string,
+    token?: string
+  ): Promise<CommitteeSubmissionSummary[]> {
+    return apiCall<CommitteeSubmissionSummary[]>(
+      `/committees/${encodeURIComponent(committeeId)}/submissions`,
+      'GET',
+      undefined,
+      token
+    );
   }
 
   async function fetchSprints(token?: string): Promise<Sprint[]> {
@@ -616,6 +718,12 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     validateResetToken,
     resetPassword,
     fetchDeliverables,
+    createDeliverableSubmission,
+    updateDeliverableSubmission,
+    fetchDeliverableSubmission,
+    fetchSubmissionComments,
+    createSubmissionComment,
+    fetchCommitteeSubmissions,
     fetchSprints,
     fetchRubric,
     updateRubric,
@@ -629,9 +737,9 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     addCommitteeProfessors,
     addCommitteeGroups,
     fetchProfessorCommittees,
-    fetchCommitteeSubmissions,
     createGroup,
     fetchMyGroup,
+
     fetchAvailableAdvisors,
     sendAdvisorRequest,
     fetchAdvisorRequest,
