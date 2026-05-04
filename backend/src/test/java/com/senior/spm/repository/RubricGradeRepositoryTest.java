@@ -102,9 +102,10 @@ class RubricGradeRepositoryTest extends RepositoryTestBase {
     @Test
     void findBySubmissionId_doesNotReturnGradesFromOtherSubmissions() {
         ProjectGroup group = makeGroup("G1", "T1", ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
+        ProjectGroup group2 = makeGroup("G2", "T1", ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
         Deliverable deliverable = makeDeliverable("Proposal");
         DeliverableSubmission s1 = makeSubmission(group, deliverable);
-        DeliverableSubmission s2 = makeSubmission(group, deliverable);
+        DeliverableSubmission s2 = makeSubmission(group2, deliverable);
         RubricCriterion criterion = makeCriterion(deliverable, "Criterion 1");
         StaffUser reviewer = makeProfessor("reviewer@test.com");
 
