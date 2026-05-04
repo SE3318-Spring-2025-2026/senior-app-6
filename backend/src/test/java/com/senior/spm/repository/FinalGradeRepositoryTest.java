@@ -21,76 +21,99 @@ class FinalGradeRepositoryTest extends RepositoryTestBase {
     @Autowired
     FinalGradeRepository repo;
 
-    private FinalGrade makeFinalGrade(Student student, ProjectGroup group) {
+    private FinalGrade makeFinalGrade(Student student, ProjectGroup group, String termId) {
         FinalGrade fg = new FinalGrade();
         fg.setStudent(student);
         fg.setGroup(group);
+        fg.setTermId(termId);
         return em.persistAndFlush(fg);
     }
 
-    // ── findByStudent_Id ──────────────────────────────────────────────────────
+    // ── findByStudent_IdAndTermId ─────────────────────────────────────────────
 
     @Test
-    void findByStudent_Id_returnsGradeWhenExists() {
+    void findByStudent_IdAndTermId_returnsGradeWhenExists() {
         Student s = makeStudent("12345678901");
         ProjectGroup g = makeGroup("G1", "T1", ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
-        FinalGrade fg = makeFinalGrade(s, g);
+        FinalGrade fg = makeFinalGrade(s, g, "2025-F");
 
-        var result = repo.findByStudent_Id(s.getId());
+        var result = repo.findByStudent_IdAndTermId(s.getId(), "2025-F");
 
         assertThat(result).isPresent();
         assertThat(result.get().getId()).isEqualTo(fg.getId());
     }
 
     @Test
-    void findByStudent_Id_returnsEmptyWhenNoGrade() {
+    void findByStudent_IdAndTermId_returnsEmptyWhenNoGrade() {
         Student s = makeStudent("12345678901");
 
-        var result = repo.findByStudent_Id(s.getId());
+        var result = repo.findByStudent_IdAndTermId(s.getId(), "2025-F");
 
         assertThat(result).isEmpty();
     }
 
     @Test
-    void findByStudent_Id_doesNotMatchDifferentStudent() {
+    void findByStudent_IdAndTermId_doesNotMatchDifferentStudent() {
         Student s1 = makeStudent("12345678901");
         Student s2 = makeStudent("98765432100");
         ProjectGroup g = makeGroup("G1", "T1", ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
-        makeFinalGrade(s1, g);
+        makeFinalGrade(s1, g, "2025-F");
 
-        var result = repo.findByStudent_Id(s2.getId());
+        var result = repo.findByStudent_IdAndTermId(s2.getId(), "2025-F");
 
         assertThat(result).isEmpty();
     }
 
-    // ── findByStudent_StudentId ───────────────────────────────────────────────
-
     @Test
-    void findByStudent_StudentId_returnsGradeWhenExists() {
+    void findByStudent_IdAndTermId_doesNotMatchDifferentTerm() {
         Student s = makeStudent("12345678901");
         ProjectGroup g = makeGroup("G1", "T1", ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
-        FinalGrade fg = makeFinalGrade(s, g);
+        makeFinalGrade(s, g, "2025-F");
 
-        var result = repo.findByStudent_StudentId("12345678901");
+        var result = repo.findByStudent_IdAndTermId(s.getId(), "2026-S");
+
+        assertThat(result).isEmpty();
+    }
+
+    // ── findByStudent_StudentIdAndTermId ──────────────────────────────────────
+
+    @Test
+    void findByStudent_StudentIdAndTermId_returnsGradeWhenExists() {
+        Student s = makeStudent("12345678901");
+        ProjectGroup g = makeGroup("G1", "T1", ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
+        FinalGrade fg = makeFinalGrade(s, g, "2025-F");
+
+        var result = repo.findByStudent_StudentIdAndTermId("12345678901", "2025-F");
 
         assertThat(result).isPresent();
         assertThat(result.get().getId()).isEqualTo(fg.getId());
     }
 
     @Test
-    void findByStudent_StudentId_returnsEmptyWhenNoGrade() {
-        var result = repo.findByStudent_StudentId("99999999999");
+    void findByStudent_StudentIdAndTermId_returnsEmptyWhenNoGrade() {
+        var result = repo.findByStudent_StudentIdAndTermId("99999999999", "2025-F");
 
         assertThat(result).isEmpty();
     }
 
     @Test
-    void findByStudent_StudentId_doesNotMatchDifferentStudentId() {
+    void findByStudent_StudentIdAndTermId_doesNotMatchDifferentStudentId() {
         Student s = makeStudent("12345678901");
         ProjectGroup g = makeGroup("G1", "T1", ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
-        makeFinalGrade(s, g);
+        makeFinalGrade(s, g, "2025-F");
 
-        var result = repo.findByStudent_StudentId("99999999999");
+        var result = repo.findByStudent_StudentIdAndTermId("99999999999", "2025-F");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void findByStudent_StudentIdAndTermId_doesNotMatchDifferentTerm() {
+        Student s = makeStudent("12345678901");
+        ProjectGroup g = makeGroup("G1", "T1", ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
+        makeFinalGrade(s, g, "2025-F");
+
+        var result = repo.findByStudent_StudentIdAndTermId("12345678901", "2026-S");
 
         assertThat(result).isEmpty();
     }
@@ -98,16 +121,27 @@ class FinalGradeRepositoryTest extends RepositoryTestBase {
     // ── unique constraint ─────────────────────────────────────────────────────
 
     @Test
-    void uniqueConstraint_uqFgStudent_preventsSecondGradeForSameStudent() {
+    void uniqueConstraint_uqFgStudentTerm_preventsDuplicateStudentTermPair() {
         Student s = makeStudent("12345678901");
         ProjectGroup g = makeGroup("G1", "T1", ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
-        makeFinalGrade(s, g);
+        makeFinalGrade(s, g, "2025-F");
 
         FinalGrade duplicate = new FinalGrade();
         duplicate.setStudent(s);
         duplicate.setGroup(g);
+        duplicate.setTermId("2025-F");
 
         assertThatThrownBy(() -> em.persistAndFlush(duplicate))
                 .isInstanceOf(PersistenceException.class);
+    }
+
+    @Test
+    void uniqueConstraint_uqFgStudentTerm_allowsSameStudentDifferentTerm() {
+        Student s = makeStudent("12345678901");
+        ProjectGroup g = makeGroup("G1", "T1", ProjectGroup.GroupStatus.ADVISOR_ASSIGNED);
+        makeFinalGrade(s, g, "2025-F");
+        makeFinalGrade(s, g, "2026-S");
+
+        assertThat(repo.count()).isEqualTo(2);
     }
 }
