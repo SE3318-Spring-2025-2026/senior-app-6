@@ -106,9 +106,10 @@ public class InvitationService {
         invitation.setStatus(InvitationStatus.PENDING);
         invitation.setSentAt(nowUtc());
 
+        GroupInvitation saved = groupInvitationRepository.save(invitation);
         log.trace("[EVENT] userId={} action={} entityId={} detail={}",
-                requesterUUID, "INVITATION_SENT", targetStudent.getId(), targetStudentId);
-        return toSendInvitationResponse(groupInvitationRepository.save(invitation));
+                requesterUUID, "INVITATION_SENT", saved.getId(), targetStudentId);
+        return toSendInvitationResponse(saved);
     }
 
     /**
@@ -204,9 +205,10 @@ public class InvitationService {
         if (!accept) {
             invitation.setStatus(InvitationStatus.DECLINED);
             invitation.setRespondedAt(nowUtc());
+            InvitationActionResponse response = toStatusOnlyResponse(groupInvitationRepository.save(invitation));
             log.trace("[EVENT] userId={} action={} entityId={} detail={}",
                     studentUUID, "INVITATION_RESPONDED", invitationId, "DECLINED");
-            return toStatusOnlyResponse(groupInvitationRepository.save(invitation));
+            return response;
         }
 
         ProjectGroup group = projectGroupRepository.findById(invitation.getGroup().getId())

@@ -62,7 +62,7 @@ public class AuthService {
                     staffUser.get().isFirstLogin());
 
             log.trace("[EVENT] userId={} action={} entityId={} detail={}",
-                    staffUser.get().getId(), "STAFF_LOGIN", staffUser.get().getId(), staffUser.get().getMail());
+                    staffUser.get().getId(), "STAFF_LOGIN", staffUser.get().getId(), "staff-password-auth");
             return new LoginResponse(token, userInfo);
         }
 
@@ -130,7 +130,7 @@ public class AuthService {
                 "STUDENT");
 
         log.trace("[EVENT] userId={} action={} entityId={} detail={}",
-                studentOpt.get().getId(), "STUDENT_LOGIN", studentOpt.get().getId(), githubUser.login());
+                studentOpt.get().getId(), "STUDENT_LOGIN", studentOpt.get().getId(), "github-oauth");
         return new GithubLoginResponse(token, userInfo);
     }
 }
