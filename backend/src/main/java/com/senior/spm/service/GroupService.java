@@ -35,7 +35,9 @@ import com.senior.spm.repository.ScheduleWindowRepository;
 import com.senior.spm.repository.StudentRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GroupService {
@@ -107,6 +109,8 @@ public class GroupService {
 
         groupMembershipRepository.save(membership);
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                studentUUID, "GROUP_CREATED", savedGroup.getId(), groupName);
         // 8. Return GroupDetailResponse
         return toGroupDetailResponse(savedGroup, studentUUID);
     }

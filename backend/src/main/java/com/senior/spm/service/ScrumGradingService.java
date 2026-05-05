@@ -37,7 +37,9 @@ import com.senior.spm.repository.SprintRepository;
 import com.senior.spm.repository.SprintTrackingLogRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ScrumGradingService {
@@ -82,22 +84,26 @@ public class ScrumGradingService {
         Sprint sprint = findSprintOrThrow(sprintId);
 
         Optional<ScrumGrade> existing = scrumGradeRepository.findByGroupIdAndSprintId(groupId, sprintId);
+        ScrumGrade grade;
         if (existing.isEmpty()) {
-            ScrumGrade grade = new ScrumGrade();
-            grade.setGroup(group);
-            grade.setSprint(sprint);
-            grade.setAdvisor(group.getAdvisor());
+            ScrumGrade newGrade = new ScrumGrade();
+            newGrade.setGroup(group);
+            newGrade.setSprint(sprint);
+            newGrade.setAdvisor(group.getAdvisor());
+            newGrade.setPointAGrade(request.getPointAGrade());
+            newGrade.setPointBGrade(request.getPointBGrade());
+            newGrade.setGradedAt(LocalDateTime.now());
+            grade = scrumGradeRepository.save(newGrade);
+        } else {
+            grade = existing.get();
             grade.setPointAGrade(request.getPointAGrade());
             grade.setPointBGrade(request.getPointBGrade());
-            grade.setGradedAt(LocalDateTime.now());
-            return scrumGradeRepository.save(grade);
+            grade.setUpdatedAt(LocalDateTime.now());
+            grade = scrumGradeRepository.save(grade);
         }
-
-        ScrumGrade grade = existing.get();
-        grade.setPointAGrade(request.getPointAGrade());
-        grade.setPointBGrade(request.getPointBGrade());
-        grade.setUpdatedAt(LocalDateTime.now());
-        return scrumGradeRepository.save(grade);
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                advisorId, "SCRUM_GRADE_SUBMITTED", groupId, sprintId);
+        return grade;
     }
 
     // -------------------------------------------------------------------------

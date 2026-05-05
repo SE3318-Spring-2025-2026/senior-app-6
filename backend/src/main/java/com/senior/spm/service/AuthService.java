@@ -15,6 +15,9 @@ import com.senior.spm.repository.PasswordResetTokenRepository;
 import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.repository.StudentRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class AuthService {
 
@@ -58,6 +61,8 @@ public class AuthService {
                     staffUser.get().getRole(),
                     staffUser.get().isFirstLogin());
 
+            log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                    staffUser.get().getId(), "STAFF_LOGIN", staffUser.get().getId(), "staff-password-auth");
             return new LoginResponse(token, userInfo);
         }
 
@@ -124,6 +129,8 @@ public class AuthService {
                 studentOpt.get().getGithubUsername(),
                 "STUDENT");
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                studentOpt.get().getId(), "STUDENT_LOGIN", studentOpt.get().getId(), "github-oauth");
         return new GithubLoginResponse(token, userInfo);
     }
 }
