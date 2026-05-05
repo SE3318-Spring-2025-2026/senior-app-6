@@ -60,12 +60,6 @@ public class GlobalExceptionHandler {
                 .body(new ErrorMessage("Invalid request body: " + ex.getMessage()));
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ErrorMessage> handleRuntimeException(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorMessage("An unexpected error occurred: " + ex.getMessage()));
-    }
-
     @ExceptionHandler(ScheduleWindowClosedException.class)
     public ResponseEntity<ErrorMessage> handleScheduleWindowClosed(ScheduleWindowClosedException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
@@ -81,12 +75,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(ex.getMessage()));
     }
 
-    /**
-     * Map duplicate pending invitations to HTTP 409 Conflict.
-     *
-     * @param ex duplicate invitation domain exception
-     * @return conflict response with a user-facing error message
-     */
     @ExceptionHandler(DuplicateInvitationException.class)
     public ResponseEntity<ErrorMessage> handleDuplicateInvitation(DuplicateInvitationException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorMessage(ex.getMessage()));
@@ -97,25 +85,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
     }
 
-    // Maps JiraValidationException and GitHubValidationException (both extend
-    // ExternalToolValidationException) to HTTP 422 Unprocessable Entity.
-    // The exception message is the exact user-facing string defined in the API spec
-    // (e.g. "JIRA validation failed: API token is invalid or expired").
     @ExceptionHandler(ExternalToolValidationException.class)
     public ResponseEntity<ErrorMessage> handleExternalToolValidation(ExternalToolValidationException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(new ErrorMessage(ex.getMessage()));
     }
 
-    // Thrown when the authenticated user does not hold the required role or ownership
-    // (e.g., a non-TEAM_LEADER attempting to bind tool integrations or send invitations).
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorMessage> handleForbidden(ForbiddenException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorMessage(ex.getMessage()));
     }
 
-    // Thrown when a request violates a domain business rule (e.g., binding tools on a
-    // DISBANDED group, or responding to a locked roster). Distinct from validation
-    // errors (400 from @Valid) — these are semantic, not structural, rejections.
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<ErrorMessage> handleBusinessRule(BusinessRuleException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
@@ -129,7 +108,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
     }
 
-    // Thrown when an advisor has reached their maximum group capacity.
     @ExceptionHandler(AdvisorAtCapacityException.class)
     public ResponseEntity<ErrorMessage> handleAdvisorAtCapacity(AdvisorAtCapacityException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
@@ -162,5 +140,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorMessage> handleUnsupportedOperation(UnsupportedOperationException ex) {
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED)
                 .body(new ErrorMessage("This endpoint is not yet implemented"));
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorMessage> handleRuntimeException(RuntimeException ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ErrorMessage("An unexpected error occurred: " + ex.getMessage()));
     }
 }

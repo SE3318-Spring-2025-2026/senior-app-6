@@ -59,7 +59,7 @@ function parseErrorMessage(error: unknown, fallback: string): string {
 function parseAssignmentError(error: unknown): string {
   const rawMessage = parseErrorMessage(error, "Failed to assign professors to committee.");
   if (/(scheduling|schedule|conflict|overlap|timeslot|time slot)/i.test(rawMessage)) {
-    return "Atama kaydedilemedi. Seçtiğiniz profesörlerden en az birinde takvim çakışması var. Lütfen farklı bir seçim yapın.";
+    return "Could not save the assignment. At least one of the selected professors has a scheduling conflict. Please pick a different selection.";
   }
   return rawMessage;
 }
@@ -142,7 +142,7 @@ async function handleAssignProfessors() {
   if (!selectedCommittee.value) return;
 
   if (!selectedAdvisorId.value) {
-    assignmentError.value = "Tam olarak 1 birincil danışman seçmeniz gerekiyor.";
+    assignmentError.value = "You must select exactly 1 primary advisor.";
     return;
   }
 
