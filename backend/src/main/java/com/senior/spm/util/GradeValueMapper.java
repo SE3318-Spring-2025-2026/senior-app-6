@@ -1,6 +1,7 @@
 package com.senior.spm.util;
 
 import com.senior.spm.entity.RubricCriterion.GradingType;
+import com.senior.spm.entity.ScrumGrade.ScrumGradeValue;
 
 public final class GradeValueMapper {
 
@@ -10,8 +11,10 @@ public final class GradeValueMapper {
         if (value == null) return false;
         return switch (type) {
             case Binary -> value.equals("S") || value.equals("F");
-            case Soft   -> value.equals("A") || value.equals("B") || value.equals("C")
-                        || value.equals("D") || value.equals("F");
+            case Soft   -> {
+                try { ScrumGradeValue.valueOf(value); yield true; }
+                catch (IllegalArgumentException e) { yield false; }
+            }
         };
     }
 
@@ -23,14 +26,12 @@ public final class GradeValueMapper {
                 case "F" -> 0;
                 default  -> throw new IllegalArgumentException("Invalid Binary grade: " + value);
             };
-            case Soft -> switch (value) {
-                case "A" -> 100;
-                case "B" -> 80;
-                case "C" -> 60;
-                case "D" -> 50;
-                case "F" -> 0;
-                default  -> throw new IllegalArgumentException("Invalid Soft grade: " + value);
-            };
+            case Soft -> {
+                try { yield ScrumGradeValue.valueOf(value).toNumeric(); }
+                catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("Invalid Soft grade: " + value);
+                }
+            }
         };
     }
 }
