@@ -46,6 +46,7 @@ public class FinalGrade {
     @Column(nullable = false)
     private String termId;
 
+
     @Column(precision = 10, scale = 4, nullable = true)
     private BigDecimal weightedTotal;
 
