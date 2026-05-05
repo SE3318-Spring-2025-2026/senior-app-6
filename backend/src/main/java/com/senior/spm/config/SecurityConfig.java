@@ -60,6 +60,8 @@ public class SecurityConfig {
                                 .requestMatchers("/api/deliverables").hasRole("STUDENT")
                                 .requestMatchers("/api/deliverables/*/submissions").hasRole("STUDENT")
                                 .requestMatchers("/api/submissions/**").hasAnyRole("STUDENT", "PROFESSOR")
+                                // P7 — grade/calculate: fine-grained auth enforced in GradingController
+                                .requestMatchers("/api/students/*/grade/calculate").authenticated()
                                 .anyRequest().authenticated())
                 .exceptionHandling(
                         ex -> ex.accessDeniedHandler(

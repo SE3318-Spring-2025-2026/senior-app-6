@@ -832,6 +832,65 @@ components:
           items:
             $ref: '#/components/schemas/PerStudentSummaryResponse'
 
+    # ── P7 — Final Grade Calculation ──────────────────────────────────────────
+    DeliverableBreakdown:
+      type: object
+      properties:
+        deliverableId:
+          type: string
+          format: uuid
+        deliverableName:
+          type: string
+        baseGrade:
+          type: number
+          description: "B — Base Deliverable Grade (stub 0.0 until Issue #249 ships)"
+        scrumScalar:
+          type: number
+          description: "AVG(pointAGrade.toNumeric()) / 100 across contributing sprints"
+        reviewScalar:
+          type: number
+          description: "AVG(pointBGrade.toNumeric()) / 100 across contributing sprints"
+        deliverableScalar:
+          type: number
+          description: "DS = (ScrumScalar + ReviewScalar) / 2.0"
+        scaledGrade:
+          type: number
+          description: "ScaledGrade = B x DS"
+        weight:
+          type: number
+          description: Deliverable weight percentage as configured by coordinator
+        weightedContribution:
+          type: number
+          description: "ScaledGrade x (weight / 100)"
+
+    FinalGradeResponse:
+      type: object
+      properties:
+        studentId:
+          type: string
+          pattern: '^[0-9]{11}$'
+          description: 11-digit student number
+        groupId:
+          type: string
+          format: uuid
+        deliverableBreakdown:
+          type: array
+          description: Per-deliverable intermediate values (computed on-the-fly, not persisted)
+          items:
+            $ref: '#/components/schemas/DeliverableBreakdown'
+        weightedTotal:
+          type: number
+          description: "SUM(ScaledGrade x deliverable.weight / 100)"
+        completionRatio:
+          type: number
+          description: "C_i = completedStoryPoints / targetStoryPoints (not capped at 1.0)"
+        finalGrade:
+          type: number
+          description: "G_i = WeightedTotal x C_i"
+        calculatedAt:
+          type: string
+          format: date-time
+
 security:
   - bearerAuth: []
 
@@ -3168,3 +3227,70 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+
+  # ── P7 — Final Grade Calculation ─────────────────────────────────────────
+  /students/{studentId}/grade/calculate:
+    get:
+      tags: [Student, Professor, Coordinator]
+      summary: "Calculate (and upsert) the final grade for a student (Process 7.2)"
+      description: |
+        Computes the final grade on-the-fly and upserts the result to the FinalGrade table.
+        Auth rules:
+        - COORDINATOR: always allowed.
+        - PROFESSOR: allowed only if caller is the advisor of the student's group.
+        - STUDENT: allowed only if calling for themselves.
+        NOTE: GET with side-effects (upsert) — documented in endpoints_p7.md D3.
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{11}$'
+          description: 11-digit student number (not a UUID)
+      responses:
+        '200':
+          description: Final grade calculated and upserted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinalGradeResponse'
+              example:
+                studentId: "01234567890"
+                groupId: "uuid"
+                deliverableBreakdown:
+                  - deliverableId: "uuid"
+                    deliverableName: "Proposal"
+                    baseGrade: 0.0
+                    scrumScalar: 0.85
+                    reviewScalar: 0.80
+                    deliverableScalar: 0.825
+                    scaledGrade: 0.0
+                    weight: 30
+                    weightedContribution: 0.0
+                weightedTotal: 0.0
+                completionRatio: 0.95
+                finalGrade: 0.0
+                calculatedAt: "2026-05-01T14:30:00"
+        '400':
+          description: studentId does not match pattern ^[0-9]{11}$
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is unauthorized to view this grade
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                message: "Caller is unauthorized to view this grade"
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                message: "Student not found"
