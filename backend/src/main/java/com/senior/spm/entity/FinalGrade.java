@@ -22,8 +22,8 @@ import lombok.Setter;
 @Table(
     name = "final_grade",
     uniqueConstraints = @UniqueConstraint(
-        name = "uq_fg_student",
-        columnNames = {"student_id"}
+        name = "uq_fg_student_term",
+        columnNames = {"student_id", "term_id"}
     )
 )
 @Getter
@@ -42,6 +42,10 @@ public class FinalGrade {
     @ManyToOne
     @JoinColumn(name = "group_id", nullable = false, foreignKey = @ForeignKey(name = "fk_fg_group"))
     private ProjectGroup group;
+
+    @Column(nullable = false)
+    private String termId;
+
 
     @Column(precision = 10, scale = 4, nullable = true)
     private BigDecimal weightedTotal;

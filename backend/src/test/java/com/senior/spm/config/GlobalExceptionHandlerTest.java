@@ -142,7 +142,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void groupNotFoundException_mapsTo404() {
         var ex = new GroupNotFoundException("Group not found");
-        var response = handler.handleGroupNotFound(ex);
+        var response = handler.handleNotFound(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());
@@ -172,7 +172,7 @@ class GlobalExceptionHandlerTest {
     @Test
     void requestNotFoundException_mapsTo404() {
         var ex = new RequestNotFoundException("Request not found");
-        var response = handler.handleRequestNotFound(ex);
+        var response = handler.handleNotFound(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody().getMessage()).isEqualTo(ex.getMessage());

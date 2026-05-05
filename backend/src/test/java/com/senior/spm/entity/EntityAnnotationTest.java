@@ -261,9 +261,16 @@ class EntityAnnotationTest {
     }
 
     @Test
-    void finalGrade_uniqueConstraint_isNamedCorrectlyAndCoversStudentId() {
-        UniqueConstraint uc = findConstraint(FinalGrade.class, "uq_fg_student");
-        assertThat(uc.columnNames()).containsExactly("student_id");
+    void finalGrade_uniqueConstraint_isCompositeAndNamedCorrectly() {
+        UniqueConstraint uc = findConstraint(FinalGrade.class, "uq_fg_student_term");
+        assertThat(uc.columnNames()).containsExactlyInAnyOrder("student_id", "term_id");
+    }
+
+    @Test
+    void finalGrade_termId_isNotNullable() throws Exception {
+        Field f = FinalGrade.class.getDeclaredField("termId");
+        jakarta.persistence.Column col = f.getAnnotation(jakarta.persistence.Column.class);
+        assertThat(col.nullable()).isFalse();
     }
 
     @Test

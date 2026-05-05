@@ -70,11 +70,13 @@ public class SecurityConfig {
                                             .getContext()
                                             .getAuthentication()
                                             .getAuthorities()
-                                            .iterator().next();
-                                    var message = "Role: " + authority.getAuthority() + " does not have permission to access this resource.";
+                                            .iterator()
+                                            .next();
+                                    var message = "Role: " + authority.getAuthority()
+                                            + " does not have permission to access this resource.";
                                     response.getWriter().write(
                                             objectMapper.writeValueAsString(
-                                                    new ErrorMessage(message + "Exception: " + exception.getMessage())
+                                                    new ErrorMessage(message + " Exception: " + exception.getMessage())
                                             ));
                                 }).authenticationEntryPoint((request, response, exception) -> {
                                     response.setStatus(401);

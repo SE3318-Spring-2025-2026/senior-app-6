@@ -7,6 +7,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,7 @@ import com.senior.spm.repository.CommitteeRepository;
 import com.senior.spm.repository.DeliverableRepository;
 import com.senior.spm.repository.DeliverableSubmissionRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
+import com.senior.spm.service.event.DeliverableSubmissionCreatedEvent;
 
 import lombok.RequiredArgsConstructor;
 
@@ -47,6 +49,7 @@ public class DeliverableSubmissionService {
     private final DeliverableRepository deliverableRepository;
     private final GroupMembershipRepository groupMembershipRepository;
     private final CommitteeRepository committeeRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
      * Create the initial (or revision) submission for a deliverable on behalf of the team leader.
@@ -109,6 +112,14 @@ public class DeliverableSubmissionService {
         }
 
         DeliverableSubmission saved = submissionRepository.save(submission);
+
+        applicationEventPublisher.publishEvent(
+                new DeliverableSubmissionCreatedEvent(
+                        saved.getId(),
+                        group.getId(),
+                        deliverable.getId()
+                )
+        );
 
         DeliverableSubmissionResponse response = new DeliverableSubmissionResponse();
         response.setSubmissionId(saved.getId());
