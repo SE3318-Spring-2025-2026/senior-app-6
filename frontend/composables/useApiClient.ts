@@ -191,6 +191,13 @@ export function useApiClient() {
     return apiCall<void>("/coordinator/students/upload", "POST", { studentIds }, token);
   }
 
+  async function updateSystemConfig(
+    config: { activeTermId?: string; maxTeamSize?: number },
+    token?: string
+  ): Promise<void> {
+    return apiCall<void>("/coordinator/system-config", "PATCH", config, token);
+  }
+
   async function validateResetToken(token: string): Promise<void> {
     return apiCall<void>(`/auth/reset-password?token=${encodeURIComponent(token)}`, "GET");
   }
@@ -759,5 +766,6 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     fetchStudentRubric,
     fetchSubmission,
     fetchRubricMappings,
+    updateSystemConfig,
   };
 }
