@@ -28,6 +28,7 @@ import com.senior.spm.controller.request.RubricRequest;
 import com.senior.spm.controller.request.SanitizationTriggerRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
+import com.senior.spm.controller.request.UpdateAdvisorCapacityRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
 import com.senior.spm.controller.request.UpdateDeliverableWeightRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
@@ -49,8 +50,10 @@ import com.senior.spm.exception.AlreadyExistsException;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.ScrumGradeRepository;
+import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.repository.SprintRepository;
 import com.senior.spm.repository.SprintTrackingLogRepository;
+import com.senior.spm.entity.StaffUser;
 import com.senior.spm.service.AdvisorService;
 import com.senior.spm.service.DeliverableService;
 import com.senior.spm.service.GroupService;
@@ -81,6 +84,7 @@ public class CoordinatorController {
     private final ProjectGroupRepository projectGroupRepository;
     private final TermConfigService termConfigService;
     private final SanitizationService sanitizationService;
+    private final StaffUserRepository staffUserRepository;
 
     public CoordinatorController(SprintService sprintService,
             DeliverableService deliverableService,
@@ -94,7 +98,8 @@ public class CoordinatorController {
             ScrumGradeRepository scrumGradeRepository,
             ProjectGroupRepository projectGroupRepository,
             TermConfigService termConfigService,
-            SanitizationService sanitizationService) {
+            SanitizationService sanitizationService,
+            StaffUserRepository staffUserRepository) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
         this.studentService = studentService;
@@ -108,6 +113,7 @@ public class CoordinatorController {
         this.projectGroupRepository = projectGroupRepository;
         this.termConfigService = termConfigService;
         this.sanitizationService = sanitizationService;
+        this.staffUserRepository = staffUserRepository;
     }
 
     @PostMapping("/sprints")
@@ -505,4 +511,38 @@ public class CoordinatorController {
         return (int) logs.stream().filter(l -> result == l.getAiPrResult()).count()
              + (int) logs.stream().filter(l -> result == l.getAiDiffResult()).count();
     }
+
+    /**
+     * Updates the advisor capacity for a professor.
+     * Returns 404 if not found, 400 if the user is not a Professor.
+     */
+    @PatchMapping("/advisors/{advisorId}/capacity")
+    public ResponseEntity<?> updateAdvisorCapacity(@PathVariable UUID advisorId,
+            @Valid @RequestBody UpdateAdvisorCapacityRequest request) {
+        var staffUserOpt = staffUserRepository.findById(advisorId);
+        if (staffUserOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ErrorMessage("Advisor not found"));
+        }
+        StaffUser staffUser = staffUserOpt.get();
+        if (staffUser.getRole() != StaffUser.Role.Professor) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorMessage("Target user is not a Professor"));
+        }
+        staffUser.setAdvisorCapacity(request.getCapacity());
+        staffUserRepository.save(staffUser);
+
+        long currentGroupCount = projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(
+                staffUser.getId(), termConfigService.getActiveTermId(), ProjectGroup.GroupStatus.DISBANDED);
+
+        return ResponseEntity.ok(AdvisorCapacityResponse.builder()
+                .advisorId(staffUser.getId())
+                .name(staffUser.getMail())
+                .mail(staffUser.getMail())
+                .currentGroupCount((int) currentGroupCount)
+                .capacity(staffUser.getAdvisorCapacity())
+                .atCapacity(currentGroupCount >= staffUser.getAdvisorCapacity())
+                .build());
+    }
+
 }
