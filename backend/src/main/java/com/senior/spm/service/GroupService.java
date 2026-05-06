@@ -130,6 +130,15 @@ public class GroupService {
         return toGroupDetailResponse(group, studentUUID);
     }
 
+    @Transactional(readOnly = true)
+    public UUID getAdvisorIdForStudent(UUID studentUUID) {
+        return groupMembershipRepository.findByStudentId(studentUUID)
+            .map(GroupMembership::getGroup)
+            .map(ProjectGroup::getAdvisor)
+            .map(com.senior.spm.entity.Professor::getId)
+            .orElse(null);
+    }
+
     /**
      * Validates and binds a JIRA workspace to the group.
      *
