@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -26,7 +27,8 @@ import lombok.Setter;
  */
 @Entity
 @Table(name = "rubric_mapping", uniqueConstraints = {
-    @UniqueConstraint(name = "uq_rubric_mapping_submission_section", columnNames = {"submission_id", "section_key"})
+    @UniqueConstraint(name = "uq_rubric_mapping_submission_criterion_range",
+        columnNames = {"submission_id", "rubric_criterion_id", "section_start", "section_end"})
 })
 @Getter
 @Setter
@@ -51,7 +53,8 @@ public class RubricMapping {
     @Column(nullable = false)
     private int sectionEnd;
 
-    @Column(length = 255)
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     private String sectionKey;
 
     @Column(nullable = false)

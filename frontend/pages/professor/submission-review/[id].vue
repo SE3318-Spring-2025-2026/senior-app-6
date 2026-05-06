@@ -9,7 +9,11 @@ import {
   PanelLeft,
   PanelRight,
 } from "lucide-vue-next";
-import type { SubmissionResponse, RubricMappingItem } from "~/types/submission";
+import type {
+  SubmissionResponse,
+  RubricMappingEntry,
+  SubmissionComment,
+} from "~/types/submission";
 import type { RubricCriterionResponse } from "~/types/rubric";
 
 definePageMeta({
@@ -19,21 +23,33 @@ definePageMeta({
 
 const route = useRoute();
 const router = useRouter();
-const { getAuthToken, fetchSubmission, fetchRubricMappings, fetchRubric } =
-  useApiClient();
+const {
+  getAuthToken,
+  fetchSubmission,
+  fetchRubricMappings,
+  fetchRubric,
+  fetchSubmissionComments,
+  createSubmissionComment,
+} = useApiClient();
 
 const submissionId = computed(() => route.params.id as string);
 
 // Data
 const submission = ref<SubmissionResponse | null>(null);
 const rubricCriteria = ref<RubricCriterionResponse[]>([]);
-const rubricMappings = ref<RubricMappingItem[]>([]);
+const rubricMappings = ref<RubricMappingEntry[]>([]);
 const loading = ref(true);
 const loadError = ref<string | null>(null);
 
 // Highlight / selection state
 const selectedCriterionName = ref<string | null>(null);
 const highlightRef = ref<string | null>(null);
+
+// Comments state
+const comments = ref<SubmissionComment[]>([]);
+const commentsLoading = ref(false);
+const postingComment = ref(false);
+const commentsError = ref<string | null>(null);
 
 // Panel visibility toggles (for small screens or manual collapse)
 const leftPanelVisible = ref(true);
@@ -85,6 +101,16 @@ async function load() {
         rubricCriteria.value = [];
       }
     }
+
+    // Fetch existing comments
+    commentsLoading.value = true;
+    try {
+      comments.value = await fetchSubmissionComments(submissionId.value, token);
+    } catch {
+      comments.value = [];
+    } finally {
+      commentsLoading.value = false;
+    }
   } catch (err: unknown) {
     const msg =
       err && typeof err === "object" && "message" in err
@@ -93,6 +119,28 @@ async function load() {
     loadError.value = msg;
   } finally {
     loading.value = false;
+  }
+}
+
+async function handleCreateComment(commentText: string) {
+  postingComment.value = true;
+  commentsError.value = null;
+  try {
+    const token = getAuthToken();
+    if (!token) throw new Error("Authentication is required.");
+    const created = await createSubmissionComment(
+      submissionId.value,
+      { commentText },
+      token
+    );
+    comments.value = [...comments.value, created];
+  } catch (err: unknown) {
+    commentsError.value =
+      err && typeof err === "object" && "message" in err
+        ? String((err as { message: string }).message)
+        : "Failed to post comment.";
+  } finally {
+    postingComment.value = false;
   }
 }
 
@@ -113,35 +161,8 @@ onMounted(load);
 
       <div class="h-5 w-px bg-slate-200 dark:bg-slate-700" />
 
-      <FileText class="w-4 h-4 text-indigo-500 flex-shrink-0" />
-      <h1 class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
-        Submission Review
-        <span
-          v-if="submission"
-          class="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400"
-        >
-          — {{ submission.submissionId.slice(0, 8) }}…
-        </span>
-      </h1>
-
-      <!-- Submission meta -->
-      <div
-        v-if="submission && !loading"
-        class="ml-auto flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400"
-      >
-        <span class="flex items-center gap-1">
-          <Calendar class="w-3 h-3" />
-          {{ formatDate(submission.revisedAt ?? submission.submittedAt) }}
-          <span v-if="submission.revisedAt" class="text-amber-500">(revised)</span>
-        </span>
-        <span class="flex items-center gap-1">
-          <Users class="w-3 h-3" />
-          {{ submission.groupId.slice(0, 8) }}…
-        </span>
-      </div>
-
-      <!-- Panel toggles -->
-      <div class="flex items-center gap-1 ml-4">
+      <!-- Panel toggles (moved here so they don't sit under the floating theme button) -->
+      <div class="flex items-center gap-1">
         <button
           class="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           :class="leftPanelVisible ? 'text-indigo-500' : 'text-slate-400'"
@@ -159,7 +180,37 @@ onMounted(load);
           <PanelRight class="w-4 h-4" />
         </button>
       </div>
+
+      <div class="h-5 w-px bg-slate-200 dark:bg-slate-700" />
+
+      <FileText class="w-4 h-4 text-indigo-500 flex-shrink-0" />
+      <h1 class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">
+        Submission Review
+        <span
+          v-if="submission"
+          class="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400"
+        >
+          — {{ submission.submissionId.slice(0, 8) }}…
+        </span>
+      </h1>
+
     </header>
+
+    <!-- Submission meta sub-bar -->
+    <div
+      v-if="submission && !loading"
+      class="flex items-center gap-4 px-4 py-1.5 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 text-xs text-slate-500 dark:text-slate-400 flex-shrink-0"
+    >
+      <span class="flex items-center gap-1">
+        <Calendar class="w-3 h-3" />
+        {{ formatDate(submission.updatedAt ?? submission.submittedAt) }}
+        <span v-if="submission.updatedAt" class="text-amber-500">(revised)</span>
+      </span>
+      <span class="flex items-center gap-1">
+        <Users class="w-3 h-3" />
+        {{ submission.groupId.slice(0, 8) }}…
+      </span>
+    </div>
 
     <!-- Loading -->
     <div
@@ -218,33 +269,44 @@ onMounted(load);
         <!-- Markdown content -->
         <div class="flex-1 overflow-y-auto px-6 py-6">
           <div
-            v-if="!submission.content"
+            v-if="!submission.markdownContent"
             class="flex items-center justify-center h-full"
           >
             <p class="text-sm text-slate-400 dark:text-slate-500">No content found in this submission.</p>
           </div>
           <MarkdownViewer
             v-else
-            :content="submission.content"
+            :content="submission.markdownContent"
             :highlight-ref="highlightRef"
           />
         </div>
       </section>
 
-      <!-- Right: Rubric panel -->
+      <!-- Right: Rubric + Comments stack -->
       <section
         v-show="rightPanelVisible"
-        class="flex flex-col overflow-hidden bg-white dark:bg-slate-900 transition-all duration-200"
+        class="flex flex-col overflow-hidden bg-white dark:bg-slate-900 transition-all duration-200 border-l border-slate-200 dark:border-slate-700"
         :class="leftPanelVisible ? 'w-80 flex-shrink-0 lg:w-96' : 'flex-1'"
-        aria-label="Evaluation rubric"
+        aria-label="Evaluation rubric and comments"
       >
-        <RubricPanel
-          :criteria="rubricCriteria"
-          :mappings="rubricMappings"
-          :selected-criterion-name="selectedCriterionName"
-          @select="handleCriterionSelect"
-          @deselect="handleCriterionDeselect"
-        />
+        <div class="flex-1 min-h-0 overflow-hidden border-b border-slate-200 dark:border-slate-700">
+          <RubricPanel
+            :criteria="rubricCriteria"
+            :mappings="rubricMappings"
+            :selected-criterion-name="selectedCriterionName"
+            @select="handleCriterionSelect"
+            @deselect="handleCriterionDeselect"
+          />
+        </div>
+        <div class="flex-1 min-h-0 overflow-hidden">
+          <CommentsPanel
+            :comments="comments"
+            :loading="commentsLoading"
+            :posting="postingComment"
+            :error="commentsError"
+            @submit="handleCreateComment"
+          />
+        </div>
       </section>
     </div>
   </div>

@@ -39,8 +39,7 @@ public class SubmissionCommentController {
         SubmissionCommentResponse response = submissionCommentService.createComment(
                 id,
                 reviewerId,
-                request.getCommentText(),
-                request.getSectionReference()
+                request.getCommentText()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

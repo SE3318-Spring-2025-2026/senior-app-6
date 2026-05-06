@@ -44,7 +44,8 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers(HttpMethod.GET, "/api/coordinator/deliverables/*/rubric").hasRole("STUDENT")
+                                .requestMatchers(HttpMethod.GET, "/api/coordinator/deliverables/*/rubric").hasAnyRole("STUDENT", "PROFESSOR")
+                                .requestMatchers(HttpMethod.GET, "/api/submissions/*/rubric-mappings").hasAnyRole("STUDENT", "PROFESSOR")
                                 .requestMatchers("/api/deliverables/*/submissions").hasRole("STUDENT")
                                 .requestMatchers("/api/committees/*/submissions").hasRole("PROFESSOR")
                                 .requestMatchers("/api/advisor").hasRole("STUDENT")

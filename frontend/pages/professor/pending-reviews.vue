@@ -264,7 +264,7 @@ onMounted(load);
                   Group
                 </th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Submission Name
+                  Deliverable
                 </th>
                 <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden md:table-cell">
                   Committee
@@ -273,7 +273,7 @@ onMounted(load);
                   Submission Date
                 </th>
                 <th class="px-5 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Comment
+                  Comments
                 </th>
                 <th class="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Action

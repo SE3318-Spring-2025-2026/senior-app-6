@@ -8,6 +8,7 @@ export interface StudentDeliverable {
   reviewDeadline: string;
   weight: number;
   submissionStatus: StudentDeliverableSubmissionStatus;
+  submissionId: string | null;
 }
 
 export interface SubmissionCreateResponse {
@@ -33,6 +34,8 @@ export interface SubmissionResponse {
 export interface RubricMappingEntry {
   criterionId: string;
   sectionKey: string;
+  sectionStart: number;
+  sectionEnd: number;
 }
 
 export interface SaveRubricMappingsRequest {
@@ -50,9 +53,24 @@ export interface LocalMappingEntry {
   criterionId: string;
   criterionName: string;
   sectionKey: string;
+  sectionStart: number;
+  sectionEnd: number;
 }
 
 export interface RubricMappingsResponse {
   submissionId: string;
   mappings: RubricMappingEntry[];
+}
+
+export interface SubmissionComment {
+  id: string;
+  submissionId: string;
+  reviewerId: string;
+  reviewerEmail: string;
+  commentText: string;
+  createdAt: string;
+}
+
+export interface CreateSubmissionCommentRequest {
+  commentText: string;
 }

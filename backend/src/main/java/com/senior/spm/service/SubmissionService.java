@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.senior.spm.controller.request.RubricMappingRequest;
+import com.senior.spm.controller.response.RubricMappingResponse;
 import com.senior.spm.entity.DeliverableSubmission;
 import com.senior.spm.entity.ProjectGroup;
 import com.senior.spm.entity.RubricCriterion;
@@ -19,6 +20,7 @@ import com.senior.spm.entity.RubricMapping;
 import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.NotFoundException;
+import com.senior.spm.repository.CommitteeRepository;
 import com.senior.spm.repository.DeliverableSubmissionRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.RubricCriterionRepository;
@@ -34,6 +36,7 @@ public class SubmissionService {
     private final RubricCriterionRepository rubricCriterionRepository;
     private final RubricMappingRepository rubricMappingRepository;
     private final GroupMembershipRepository groupMembershipRepository;
+    private final CommitteeRepository committeeRepository;
 
     @Transactional
     public void saveRubricMappings(UUID submissionId, UUID requesterUUID,
@@ -63,6 +66,7 @@ public class SubmissionService {
         }
 
         rubricMappingRepository.deleteBySubmissionId(submissionId);
+        rubricMappingRepository.flush();
 
         List<RubricMapping> mappingEntities = mappings.stream().map(request -> {
             RubricMapping mapping = new RubricMapping();
@@ -70,13 +74,42 @@ public class SubmissionService {
             mapping.setSectionKey(request.getSectionKey());
             mapping.setRubricCriterion(criteriaById.get(request.getCriterionId()));
             mapping.setMappedAt(LocalDateTime.now(ZoneId.of("UTC")));
-            mapping.setSectionStart(0);
-            mapping.setSectionEnd(0);
+            mapping.setSectionStart(request.getSectionStart());
+            mapping.setSectionEnd(request.getSectionEnd());
             return mapping;
         }).collect(Collectors.toList());
 
         if (!mappingEntities.isEmpty()) {
             rubricMappingRepository.saveAll(mappingEntities);
         }
+    }
+
+    public RubricMappingResponse getRubricMappings(UUID submissionId, UUID requesterUUID) {
+        DeliverableSubmission submission = submissionRepository.findById(submissionId)
+                .orElseThrow(() -> new NotFoundException("Submission not found"));
+
+        UUID groupId = submission.getGroup().getId();
+        UUID deliverableId = submission.getDeliverable().getId();
+
+        boolean isGroupMember = groupMembershipRepository
+                .findByGroupIdAndStudentId(groupId, requesterUUID)
+                .isPresent();
+        boolean isCommitteeMember = committeeRepository
+                .existsByProfessorIdAndGroupIdAndDeliverableId(requesterUUID, groupId, deliverableId);
+
+        if (!isGroupMember && !isCommitteeMember) {
+            throw new ForbiddenException("Access denied: You are not authorized to view these mappings");
+        }
+
+        List<RubricMappingResponse.Mapping> mappings = rubricMappingRepository
+                .findBySubmissionId(submissionId).stream()
+                .map(m -> new RubricMappingResponse.Mapping(
+                        m.getRubricCriterion().getId(),
+                        m.getSectionKey(),
+                        m.getSectionStart(),
+                        m.getSectionEnd()))
+                .collect(Collectors.toList());
+
+        return new RubricMappingResponse(submissionId, mappings);
     }
 }
