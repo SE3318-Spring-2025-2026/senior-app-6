@@ -15,10 +15,10 @@ const renderedHtml = computed(() => {
 </script>
 
 <template>
-  <div 
+  <div
     class="prose prose-slate dark:prose-invert max-w-none prose-img:rounded-xl prose-img:shadow-md"
     v-html="renderedHtml"
-  />
+  ></div>
 </template>
 
 <style>

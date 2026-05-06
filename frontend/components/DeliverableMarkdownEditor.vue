@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Editor as ToastEditor } from "@toast-ui/editor";
 import "@toast-ui/editor/dist/toastui-editor.css";
+import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { useColorMode } from "#imports";
 
 const props = withDefaults(defineProps<{
 	modelValue: string;
@@ -18,6 +20,7 @@ const emit = defineEmits<{
 
 const host = ref<HTMLDivElement | null>(null);
 let editor: ToastEditor | null = null;
+const colorMode = useColorMode();
 
 function fileToDataUrl(blob: Blob): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -32,6 +35,13 @@ function fileToDataUrl(blob: Blob): Promise<string> {
 		reader.onerror = () => reject(new Error("Failed to read image data"));
 		reader.readAsDataURL(blob);
 	});
+}
+
+function applyTheme(dark: boolean): void {
+	if (!host.value) {
+		return;
+	}
+	host.value.classList.toggle("toastui-editor-dark", dark);
 }
 
 onMounted(() => {
@@ -61,7 +71,14 @@ onMounted(() => {
 			emit("update:modelValue", editor.getMarkdown());
 		}
 	});
+
+	applyTheme(colorMode.value === "dark");
 });
+
+watch(
+	() => colorMode.value,
+	(value) => applyTheme(value === "dark")
+);
 
 watch(
 	() => props.modelValue,
@@ -81,7 +98,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-	<div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-		<div ref="host" />
+	<div
+		class="overflow-hidden rounded-2xl shadow-sm"
+		:class="colorMode.value === 'dark' ? 'ring-1 ring-slate-700' : 'ring-1 ring-slate-200'">
+		<div ref="host"></div>
 	</div>
 </template>
+
+<style scoped>
+:deep(.toastui-editor-defaultUI) {
+	border: none;
+}
+</style>
