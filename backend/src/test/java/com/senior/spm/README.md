@@ -35,6 +35,35 @@ These integration tests were added because the student upload endpoint does not 
 
 ---
 
+## Submission Integration Tests
+
+### Description
+
+This integration test class verifies submission rules and role-based access control at both API and database level.
+
+### Implemented Test Cases
+
+1. Valid submission → 201 Created  
+2. Expired deadline → 400 Bad Request  
+3. Missing committee assignment → 400 Bad Request  
+4. Admin submission attempt → 403 Forbidden  
+5. Member submission/update attempt → 403 Forbidden  
+6. Unauthorized professor access/comment → 403 Forbidden  
+7. Assigned professor access → 200 OK  
+
+### Technical Notes
+
+* Tests are implemented using `SpringBootTest` and `MockMvc`.
+* `JWTService` is used to generate role-based tokens (student, admin, professor).
+* Seed data is provided via `data.sql` to ensure deterministic test scenarios.
+* Submission records are cleaned before each test to ensure isolation.
+
+### Purpose
+
+These tests ensure that submission validation rules (deadline and committee assignment) and RBAC constraints are correctly enforced according to system requirements.
+
+---
+
 ## Other Test Classes
 
 ### Config
@@ -90,8 +119,12 @@ These integration tests were added because the student upload endpoint does not 
 | `CapacityGuardSanitizationIntegrationTest` | Capacity guard and sanitization race conditions |
 | `P3AdvisorLifecycleIntegrationTest` | Full P3 advisor request lifecycle via API |
 | `P3RbacSecurityTest` | Role-based access control for all P3 endpoints |
+<<<<<<< HEAD
 | `ScrumGradingControllerTest` | Grade submit (201/200 upsert), wrong-advisor 403, invalid enum 400, GET 404 when no grade |
 | `P5SecurityTest` | URL-pattern guards for `/api/sprints/**`, `/api/advisor/sprints/**`, `/api/groups/*/sprints/**` |
+=======
+| `SubmissionControllerIntegrationTest` | Submission validation (deadline, committee assignment) and RBAC enforcement for Issues #203 and #204 |
+>>>>>>> 5b67318 (Add submission integration tests and QA seed data (Issues #203, #204))
 
 ### DTO
 | Class | Summary |
