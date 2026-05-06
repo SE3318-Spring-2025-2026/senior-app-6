@@ -1,5 +1,5 @@
 import { useAuthStore } from '~/stores/auth';
-import type { ApiError } from '~/types/api';
+import type { ApiError, LlmConfigResponse } from '~/types/api';
 import type { GithubLoginResponse, LoginResponse } from '~/types/auth';
 import type {
   GroupDetailResponse,
@@ -14,6 +14,11 @@ import type {
   AdvisorCapacityResponse,
   AdvisorRequestResponse,
   AdvisorOverrideResponse,
+  ActiveSprintResponse,
+  AdvisorGroupSprintSummaryResponse,
+  SprintTrackingResponse,
+  SubmitScrumGradeRequest,
+  ScrumGradeResponse,
 } from '~/types/advisor';
 import type {
   CommitteeSummaryResponse,
@@ -203,6 +208,23 @@ export function useApiClient() {
     return apiCall<Sprint[]>("/coordinator/sprints", "GET", undefined, token);
   }
 
+  async function fetchActiveSprint(token?: string): Promise<ActiveSprintResponse> {
+    return apiCall<ActiveSprintResponse>("/sprints/active", "GET", undefined, token);
+  }
+
+  async function fetchSprintTracking(
+    groupId: string,
+    sprintId: string,
+    token?: string
+  ): Promise<SprintTrackingResponse> {
+    return apiCall<SprintTrackingResponse>(
+      `/groups/${encodeURIComponent(groupId)}/sprints/${encodeURIComponent(sprintId)}/tracking`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   async function fetchRubric(deliverableId: string, token?: string): Promise<RubricCriterionResponse[]> {
     return apiCall<RubricCriterionResponse[]>(`/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`, "GET", undefined, token);
   }
@@ -236,6 +258,14 @@ export function useApiClient() {
 
   async function registerProfessor(mail: string, token?: string): Promise<{ resetToken: string }> {
     return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", { mail }, token);
+  }
+
+  async function fetchLlmConfig(token?: string): Promise<LlmConfigResponse> {
+    return apiCall<LlmConfigResponse>("/admin/llm-config", "GET", undefined, token);
+  }
+
+  async function updateLlmKey(apiKey: string, token?: string): Promise<{ message: string }> {
+    return apiCall<{ message: string }>("/admin/llm-config", "PUT", { apiKey }, token);
   }
 
   async function createGroup(data: CreateGroupRequest, token?: string): Promise<GroupDetailResponse> {
@@ -418,6 +448,64 @@ export function useApiClient() {
 
   async function fetchAdvisorRequests(token?: string): Promise<AdvisorRequestItem[]> {
     return apiCall<AdvisorRequestItem[]>("/advisor/requests", "GET", undefined, token);
+  }
+
+  async function fetchAdvisorActiveSprint(token?: string): Promise<ActiveSprintResponse> {
+    return apiCall<ActiveSprintResponse>("/advisor/sprints/active", "GET", undefined, token);
+  }
+
+  async function fetchAdvisorSprintGroups(
+    sprintId: string,
+    token?: string,
+    includeDisbanded?: boolean
+  ): Promise<AdvisorGroupSprintSummaryResponse[]> {
+    const query = includeDisbanded ? "?includeDisbanded=true" : "";
+    return apiCall<AdvisorGroupSprintSummaryResponse[]>(
+      `/advisor/sprints/${encodeURIComponent(sprintId)}/groups${query}`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchAdvisorGroupTracking(
+    sprintId: string,
+    groupId: string,
+    token?: string
+  ): Promise<SprintTrackingResponse> {
+    return apiCall<SprintTrackingResponse>(
+      `/advisor/sprints/${encodeURIComponent(sprintId)}/groups/${encodeURIComponent(groupId)}/tracking`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function submitAdvisorGroupGrade(
+    sprintId: string,
+    groupId: string,
+    payload: SubmitScrumGradeRequest,
+    token?: string
+  ): Promise<ScrumGradeResponse> {
+    return apiCall<ScrumGradeResponse>(
+      `/advisor/sprints/${encodeURIComponent(sprintId)}/groups/${encodeURIComponent(groupId)}/grade`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
+  async function fetchAdvisorGroupGrade(
+    sprintId: string,
+    groupId: string,
+    token?: string
+  ): Promise<ScrumGradeResponse> {
+    return apiCall<ScrumGradeResponse>(
+      `/advisor/sprints/${encodeURIComponent(sprintId)}/groups/${encodeURIComponent(groupId)}/grade`,
+      "GET",
+      undefined,
+      token
+    );
   }
 
   async function fetchAdvisorRequestDetail(requestId: string, token?: string): Promise<AdvisorRequestDetail> {
@@ -669,9 +757,16 @@ async function createSubmissionComment(
     disbandCoordinatorGroup,
     bindJiraTool,
     bindGithubTool,
+    fetchActiveSprint,
+    fetchSprintTracking,
     fetchPendingInvitations,
     respondToInvitation,
     fetchAdvisorRequests,
+    fetchAdvisorActiveSprint,
+    fetchAdvisorSprintGroups,
+    fetchAdvisorGroupTracking,
+    submitAdvisorGroupGrade,
+    fetchAdvisorGroupGrade,
     fetchAdvisorRequestDetail,
     respondToAdvisorRequest,
     searchStudents,
@@ -687,5 +782,7 @@ async function createSubmissionComment(
     fetchRubricMappings,
     fetchSubmissionComments,
     createSubmissionComment,
+    fetchLlmConfig,
+    updateLlmKey,
   };
 }

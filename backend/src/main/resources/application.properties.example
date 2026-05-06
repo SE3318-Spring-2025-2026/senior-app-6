@@ -8,16 +8,19 @@ spring.sql.init.mode=always
 jwt.secret=
 jwt.expiration=604800000
 
-# AES-256-GCM key for encrypting GitHub PATs and JIRA API tokens at rest (NFR-7).
-# Must be a Base64-encoded value that decodes to exactly 32 bytes (256 bits).
-# Generate a key with: openssl rand -base64 32
 encryption.key=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 
-# --- Swagger / springdoc (Development by default) ---
-# Swagger UI is enabled in development.
 springdoc.swagger-ui.enabled=true
 springdoc.swagger-ui.path=/swagger-ui.html
 springdoc.api-docs.enabled=true
 springdoc.api-docs.path=/v3/api-docs
+
+llm.api.base-url=https://generativelanguage.googleapis.com
+llm.api.model.pr-review=gemini-2.5-flash-lite
+llm.api.model.diff-match=gemini-2.5-flash-lite
+llm.api.timeout-seconds=15
+
+# The actual API key is NOT stored here — it is stored encrypted in the
+# system_config table under the key 'llm_api_key', use admin ui .

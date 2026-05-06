@@ -68,12 +68,29 @@
           </p>
         </NuxtLink>
 
+      <NuxtLink                                                                                                                                                                             
+          to="/professor/sprint"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-amber-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800
+        dark:hover:border-amber-600"
+        >
+          <ClipboardList class="h-8 w-8 text-amber-600 dark:text-amber-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 transition-colors group-hover:text-amber-600 dark:text-white dark:group-hover:text-amber-400">
+            Sprint Panel
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Track group sprint progress, AI checks, and submit Point A/B grades.
+          </p>
+        </NuxtLink>
+
         <NuxtLink
           to="/professor/pending-reviews"
-          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800
+        dark:hover:border-emerald-600"
         >
-          <ClipboardList class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Pending Reviews</h3>
+          <BookOpen class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+            Pending Reviews
+          </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             View and review student deliverable submissions assigned to your committees.
           </p>

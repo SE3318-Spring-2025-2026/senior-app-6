@@ -2,6 +2,7 @@ package com.senior.spm.controller.request;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import java.time.LocalDate;
 
 @Data
 public class BindJiraRequest {
@@ -17,4 +18,6 @@ public class BindJiraRequest {
 
     @NotBlank(message = "JIRA API token is required")
     private String jiraApiToken;
+
+    private LocalDate jiraTokenExpiresAt;
 }

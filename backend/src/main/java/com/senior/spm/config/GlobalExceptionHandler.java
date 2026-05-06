@@ -23,6 +23,7 @@ import com.senior.spm.exception.DuplicateRequestException;
 import com.senior.spm.exception.ExternalToolValidationException;
 import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GroupNotFoundException;
+import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.exception.InvitationNotFoundException;
 import com.senior.spm.exception.InvitationNotPendingException;
 import com.senior.spm.exception.NotFoundException;
@@ -104,6 +105,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
     }
 
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorMessage> handleNotFound(NotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
+    }
+
+    // Thrown when a group with the given UUID does not exist.
     @ExceptionHandler(GroupNotFoundException.class)
     public ResponseEntity<ErrorMessage> handleGroupNotFound(GroupNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));

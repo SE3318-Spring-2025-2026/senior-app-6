@@ -1,5 +1,6 @@
 package com.senior.spm.repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import com.senior.spm.entity.GroupInvitation;
 import com.senior.spm.entity.GroupMembership;
 import com.senior.spm.entity.ProjectGroup;
 import com.senior.spm.entity.ScheduleWindow;
+import com.senior.spm.entity.Sprint;
 import com.senior.spm.entity.StaffUser;
 import com.senior.spm.entity.Student;
 
@@ -94,6 +96,13 @@ abstract class RepositoryTestBase {
         req.setStatus(status);
         req.setSentAt(sentAt);
         return em.persistAndFlush(req);
+    }
+
+    protected Sprint makeSprint(LocalDate startDate, LocalDate endDate) {
+        Sprint s = new Sprint();
+        s.setStartDate(startDate);
+        s.setEndDate(endDate);
+        return em.persistAndFlush(s);
     }
 
     protected ScheduleWindow makeScheduleWindow(String termId, ScheduleWindow.WindowType type,

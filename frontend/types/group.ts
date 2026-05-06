@@ -34,6 +34,11 @@ export interface GroupDetailResponse {
   members: MemberResponse[]
   advisorId?: string | null
   advisorMail?: string | null
+  githubRepoName?: string | null
+  githubTokenValid?: boolean | null
+  githubPatExpiresAt?: string | null
+  jiraTokenValid?: boolean | null
+  jiraTokenExpiresAt?: string | null
 }
 
 export interface GroupSummaryResponse {
@@ -50,3 +55,4 @@ export interface CoordinatorGroupMemberActionRequest {
   studentId: string
   action: "ADD" | "REMOVE"
 }
+

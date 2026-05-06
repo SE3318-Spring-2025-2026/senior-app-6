@@ -1,18 +1,6 @@
 # Process 5 — API Endpoints (MERGED FINAL)
 ## Sprint Tracking, Scrum Grading & AI Validation (Sub-Processes 5.1–5.5)
 
-> **Sources (authoritative):**
-> - `docs/phase1_2.md` — Process 5 Steps 1–10 (primary spec)
-> - Current codebase on `main` (field names, patterns, security rules)
-> - Ver1 (`red_notes/process5/ver1/endpoints_p5.md`) — full endpoint scope
-> - Ver2 (`red_notes/process5/ver2/endpoints_p5.md`) — per-student aggregation, stricter QA
->
-> **Merge decisions & corrections from spec re-read:**
-> - Pipeline trigger: `TOOLS_BOUND`+ (Step 1 says "TOOLS_BOUND" — not ADVISOR_ASSIGNED only)
-> - Grade field names: `pointA_grade`, `pointB_grade` (Steps 8–9 are explicit)
-> - Error body key: `"message"` (matches `GlobalExceptionHandler` → `ErrorMessage` class)
-> - Per-student aggregate: computed via GROUP BY at read time — no separate entity
-> - AI states: PENDING, PASS, WARN, FAIL, SKIPPED (PENDING = not yet run; SKIPPED = no PR found)
 
 ---
 
@@ -39,6 +27,23 @@
 | 400 | Business rule violation |
 | 403 | Role / ownership mismatch |
 | 404 | Resource not found |
+
+---
+
+## Controller Architecture
+
+Rule: **endpoint prefix determines the controller** — no new class if a matching base-path controller already exists.
+
+| Controller | Base Path | Action | P5 Endpoints |
+|---|---|---|---|
+| `AdvisorController` | `/api/advisor` | **Extend existing** | All 5 advisor sprint/grading endpoints |
+| `GroupController` | `/api/groups` | **Extend existing** | `GET /api/groups/{groupId}/sprints/{sprintId}/tracking` |
+| `CoordinatorSprintController` | `/api/coordinator` | **New class** (same pattern as `SanitizationController`) | `POST .../refresh`, `GET .../overview` — CoordinatorController is already large |
+| `StudentSprintController` | `/api/sprints` | **New class** (new prefix, no existing controller) | `GET /api/sprints/active` only |
+
+> **Principal extraction:** `AdvisorController`, `GroupController`, and new `StudentSprintController` all need `extractPrincipalUUID()`.
+> This helper is already **duplicated** in `AdvisorController` and `GroupController`.
+> Extract once into `com.senior.spm.util.SecurityUtils.extractPrincipalUUID()` and have all controllers call it.
 
 ---
 
@@ -115,17 +120,7 @@ D   // 50
 F   // 0
 ```
 
-### `Sprint` Entity — Blue Team Dependency
 
-`Sprint` (Blue Team, `Sprint.java`) currently has **no `termId` field**.
-`SprintRepository` has **zero custom query methods**.
-
-**Required from Blue Team before #P5-05 can work:**
-1. Add `String termId` column to `Sprint` entity.
-2. Add `List<Sprint> findByEndDate(LocalDate date)` to `SprintRepository`.
-3. Add `Optional<Sprint> findByTermIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(String, LocalDate, LocalDate)` for "active sprint" lookup.
-
-**Workaround until fixed:** `findAll()` + `startDate ≤ today ≤ endDate` filter in service layer.
 
 ### New Repository Methods
 
@@ -135,7 +130,18 @@ F   // 0
 |--------|---------|
 | `findByGroupIdAndSprintId(UUID, UUID)` | tracking reads, grading ownership check |
 | `findBySprintId(UUID)` | coordinator overview |
-| `deleteByGroupIdAndSprintId(UUID, UUID)` | re-fetch on manual refresh |
+| `deleteBySprintId(UUID)` | coordinator refresh — deletes ALL rows for a sprint across all groups before re-run |
+| `deleteByGroupIdAndSprintId(UUID, UUID)` | reserved for per-group re-fetch (future use) |
+
+**Additions to existing repositories (no new classes):**
+
+| Repository | Method to add | Used by |
+|---|---|---|
+| `ProjectGroupRepository` | `findByTermIdAndStatusIn(String, List<GroupStatus>)` | orchestrator group filter (5.0), coordinator overview (5.7) |
+| `ProjectGroupRepository` | `findByAdvisor_IdAndTermId(UUID, String)` | advisor group list (5.5a) — **does not exist yet, add in #154** |
+| `GroupMembershipRepository` | `existsByGroupIdAndStudentId(UUID, UUID)` | student membership guard (5.6) |
+| `SprintRepository` | `findByEndDate(LocalDate)` | daily orchestrator trigger (5.0) |
+| `SprintRepository` | `findByTermIdAndStartDateLessThanEqualAndEndDateGreaterThanEqual(String, LocalDate, LocalDate)` | active sprint lookup (5.5a, 5.6) |
 
 **`ScrumGradeRepository`**
 
@@ -169,6 +175,12 @@ Groups with no advisor still get tracked — data is ready when advisor is assig
                → prMerged=false or null: set aiDiffResult=SKIPPED (no diff available)
 ```
 
+**JIRA sprint resolution (no stored jiraSprintId):** `JiraSprintService.fetchSprintStories(group)` resolves the active sprint internally:
+1. `GET /rest/agile/1.0/board?projectKeyOrId={group.jiraProjectKey}` → extract `boardId`
+2. `GET /rest/agile/1.0/board/{boardId}/sprint?state=active` → extract `jiraSprintId`
+3. `GET /rest/agile/1.0/sprint/{jiraSprintId}/issue` → fetch issues
+If board not found or no active sprint → log WARN + return empty list (skip this group's JIRA fetch).
+
 **JIRA credentials:** `group.jiraProjectKey` + `group.jiraEmail` + `SymmetricEncryptionService.decrypt(group.encryptedJiraToken)`.
 **GitHub credentials:** `group.githubOrgName` + `SymmetricEncryptionService.decrypt(group.encryptedGithubPat)`.
 **AI credentials:** `SystemConfigRepository.findById("llm_api_key")` + `SymmetricEncryptionService.decrypt(configValue)`.
@@ -179,7 +191,7 @@ Groups with no advisor still get tracked — data is ready when advisor is assig
 
 ## 5.5a — Advisor Reads Sprint Data
 
-### `GET /api/advisor/sprints/active` — SP: 1 | Difficulty: Easy
+### `GET /api/advisor/sprints/active` — SP: 1
 **Auth:** Staff JWT (Role = `Professor`) | **Issue:** #P5-06 service scope
 
 Returns the currently active sprint. `termId` resolved server-side via `TermConfigService.getActiveTermId()`.
@@ -204,7 +216,7 @@ HTTP 404
 
 ---
 
-### `GET /api/advisor/sprints/{sprintId}/groups` — SP: 2 | Difficulty: Easy
+### `GET /api/advisor/sprints/{sprintId}/groups` — SP: 2
 **Auth:** Staff JWT (Role = `Professor`) | **Issue:** #P5-06 service scope
 
 Returns all groups the authenticated advisor is assigned to for the given sprint.
@@ -248,7 +260,7 @@ HTTP 404
 
 ---
 
-### `GET /api/advisor/sprints/{sprintId}/groups/{groupId}/tracking` — SP: 2 | Difficulty: Medium
+### `GET /api/advisor/sprints/{sprintId}/groups/{groupId}/tracking` — SP: 2
 **Auth:** Staff JWT (Role = `Professor`, must be advisor for `groupId`) | **Issue:** #P5-06 service scope
 
 Returns per-issue tracking detail for a specific group in the sprint.
@@ -294,7 +306,7 @@ HTTP 403 / 404 / 404 / 404
 
 ## 5.5b — Advisor Scrum Grading
 
-### `POST /api/advisor/sprints/{sprintId}/groups/{groupId}/grade` — SP: 3 | Difficulty: Medium
+### `POST /api/advisor/sprints/{sprintId}/groups/{groupId}/grade` — SP: 3
 **Auth:** Staff JWT (Role = `Professor`, must be advisor for `groupId`) | **Issue:** #P5-06 controller scope
 
 Submits or updates Point A (Scrum performance) and Point B (Work/Code Review quality).
@@ -351,7 +363,7 @@ HTTP 400 / 400 / 403 / 404 / 404
 
 ---
 
-### `GET /api/advisor/sprints/{sprintId}/groups/{groupId}/grade` — SP: 1 | Difficulty: Easy
+### `GET /api/advisor/sprints/{sprintId}/groups/{groupId}/grade` — SP: 1
 **Auth:** Staff JWT (Role = `Professor`, must be advisor for `groupId`) | **Issue:** #P5-06 controller scope
 
 Returns current submitted grade for the group/sprint pair.
@@ -380,7 +392,7 @@ HTTP 403 / 404 / 404
 
 ## 5.6 — Student Sprint Tracking View
 
-### `GET /api/sprints/active` — SP: 1 | Difficulty: Easy
+### `GET /api/sprints/active` — SP: 1
 **Auth:** Student JWT | **Issue:** #P5-06 service scope (shared with advisor endpoint 1)
 
 Returns the active sprint for the current term. Students use this to know their sprint context (FR-7).
@@ -404,7 +416,7 @@ HTTP 404
 
 ---
 
-### `GET /api/groups/{groupId}/sprints/{sprintId}/tracking` — SP: 2 | Difficulty: Easy
+### `GET /api/groups/{groupId}/sprints/{sprintId}/tracking` — SP: 2
 **Auth:** Student JWT (must be member of `groupId`) | **Issue:** #P5-06 controller scope
 
 Returns sprint tracking data for the student's group. AI validation results visible to students
@@ -431,15 +443,17 @@ sprint not yet processed — student sees "data pending" state.
 }
 ```
 
+> `fetchedAt` = `max(fetchedAt)` across all `SprintTrackingLog` rows for this group+sprint; `null` when `issues` is empty.
 > Student view intentionally omits `perStudentSummary` — individual detail per-issue is shown directly.
 
 **Errors:**
 ```json
 { "message": "You are not a member of this group" }
-{ "message": "Group not found" }
 { "message": "Sprint not found" }
 ```
-HTTP 403 / 404 / 404
+HTTP 403 / 404
+
+> Non-existent `groupId` also returns 403 (membership check returns false) — intentional, avoids leaking group existence.
 
 > Empty `issues: []` with HTTP 200 — NOT 404 — when sprint not yet processed.
 
@@ -447,7 +461,7 @@ HTTP 403 / 404 / 404
 
 ## 5.7 — Coordinator Sprint Override
 
-### `POST /api/coordinator/sprints/{sprintId}/refresh` — SP: 2 | Difficulty: Medium
+### `POST /api/coordinator/sprints/{sprintId}/refresh` — SP: 2
 **Auth:** Staff JWT (Role = `Coordinator`) | **Issue:** #P5-07
 
 Manually triggers the full sprint tracking pipeline (5.1→5.4) for all `TOOLS_BOUND`+
@@ -480,7 +494,7 @@ HTTP 404 / 400
 
 ---
 
-### `GET /api/coordinator/sprints/{sprintId}/overview` — SP: 2 | Difficulty: Medium
+### `GET /api/coordinator/sprints/{sprintId}/overview` — SP: 2
 **Auth:** Staff JWT (Role = `Coordinator`) | **Issue:** #P5-07
 
 Returns high-level summary of ALL groups' sprint tracking and grading status.
@@ -522,19 +536,19 @@ HTTP 404
 
 ## Endpoint Summary Table
 
-| # | Method | Path | Auth | Sub-process | Issue | SP | Difficulty |
-|---|--------|------|------|-------------|-------|----|------------|
-| 1 | GET | `/api/advisor/sprints/active` | Staff (Professor) | 5.5 | #P5-06 | 1 | Easy |
-| 2 | GET | `/api/advisor/sprints/{sprintId}/groups` | Staff (Professor) | 5.5 | #P5-06 | 2 | Easy |
-| 3 | GET | `/api/advisor/sprints/{sprintId}/groups/{groupId}/tracking` | Staff (Professor) | 5.5 | #P5-06 | 2 | Medium |
-| 4 | POST | `/api/advisor/sprints/{sprintId}/groups/{groupId}/grade` | Staff (Professor) | 5.5 | #P5-06 | 3 | Medium |
-| 5 | GET | `/api/advisor/sprints/{sprintId}/groups/{groupId}/grade` | Staff (Professor) | 5.5 | #P5-06 | 1 | Easy |
-| 6 | GET | `/api/sprints/active` | Student | 5.6 | #P5-06 | 1 | Easy |
-| 7 | GET | `/api/groups/{groupId}/sprints/{sprintId}/tracking` | Student (member) | 5.6 | #P5-06 | 2 | Easy |
-| 8 | POST | `/api/coordinator/sprints/{sprintId}/refresh` | Staff (Coordinator) | 5.7 | #P5-07 | 2 | Medium |
-| 9 | GET | `/api/coordinator/sprints/{sprintId}/overview` | Staff (Coordinator) | 5.7 | #P5-07 | 2 | Medium |
+| # | Method | Path | Auth | Sub-process | Issue | SP |
+|---|--------|------|------|-------------|-------|----|
+| 1 | GET | `/api/advisor/sprints/active` | Staff (Professor) | 5.5 | #P5-06 | 1 |
+| 2 | GET | `/api/advisor/sprints/{sprintId}/groups` | Staff (Professor) | 5.5 | #P5-06 | 2 |
+| 3 | GET | `/api/advisor/sprints/{sprintId}/groups/{groupId}/tracking` | Staff (Professor) | 5.5 | #P5-06 | 2 |
+| 4 | POST | `/api/advisor/sprints/{sprintId}/groups/{groupId}/grade` | Staff (Professor) | 5.5 | #P5-06 | 3 |
+| 5 | GET | `/api/advisor/sprints/{sprintId}/groups/{groupId}/grade` | Staff (Professor) | 5.5 | #P5-06 | 1 |
+| 6 | GET | `/api/sprints/active` | Student | 5.6 | #P5-06 | 1 |
+| 7 | GET | `/api/groups/{groupId}/sprints/{sprintId}/tracking` | Student (member) | 5.6 | #P5-06 | 2 |
+| 8 | POST | `/api/coordinator/sprints/{sprintId}/refresh` | Staff (Coordinator) | 5.7 | #P5-07 | 2 |
+| 9 | GET | `/api/coordinator/sprints/{sprintId}/overview` | Staff (Coordinator) | 5.7 | #P5-07 | 2 |
 
-**REST Total SP: 16 | Scheduler / Services SP: 14 | Grand Total: ~30 SP** _(see estimated_issues_p5.md)_
+**REST Total SP: 16 | Scheduler / Services SP: 15 | Grand Total: ~31 SP** _(see estimated_issues_p5.md)_
 
 ---
 
@@ -565,3 +579,5 @@ HTTP 404
 | Advisor field | `group.getAdvisor()` → `@ManyToOne StaffUser` (NOT a UUID field; access `.getId()`) |
 | Scheduler pattern | `SanitizationService.java` — self-proxy + `REQUIRES_NEW` per group |
 | Coordinator trigger | `SanitizationController.java` — `@PostMapping`, optional body, `force` flag |
+| Principal extraction | `SecurityUtils.extractPrincipalUUID()` (new shared util) — do NOT copy-paste the private helper from `AdvisorController`/`GroupController` |
+| Path variable naming | P5 coordinator endpoints use `{sprintId}`; existing `CoordinatorController` uses `{id}` — both are valid, `{sprintId}` is preferred for new code |

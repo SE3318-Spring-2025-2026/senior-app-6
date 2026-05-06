@@ -40,8 +40,10 @@ class GitHubValidationServiceTest {
 
     private static final String ORG_NAME = "my-org";
     private static final String PAT = "ghp_testtoken";
+    private static final String REPO = "test-repo";
     private static final String STEP1_URL = "https://api.github.com/orgs/" + ORG_NAME;
     private static final String STEP2_URL = "https://api.github.com/orgs/" + ORG_NAME + "/repos?per_page=1";
+    private static final String STEP3_URL = "https://api.github.com/repos/" + ORG_NAME + "/" + REPO;
 
     // ── Happy path ───────────────────────────────────────────────────────────
 
@@ -51,11 +53,14 @@ class GitHubValidationServiceTest {
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
         when(restTemplate.exchange(eq(STEP2_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+        when(restTemplate.exchange(eq(STEP3_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
-        assertThatNoException().isThrownBy(() -> service.validate(ORG_NAME, PAT));
+        assertThatNoException().isThrownBy(() -> service.validate(ORG_NAME, PAT, REPO));
 
         verify(restTemplate).exchange(eq(STEP1_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class));
         verify(restTemplate).exchange(eq(STEP2_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class));
+        verify(restTemplate).exchange(eq(STEP3_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class));
     }
 
     // ── Step 1 failures — fail-fast: Step 2 must never be called ─────────
@@ -65,7 +70,7 @@ class GitHubValidationServiceTest {
         when(restTemplate.exchange(eq(STEP1_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
 
-        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT))
+        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT, REPO))
                 .isInstanceOf(GitHubValidationException.class)
                 .hasMessage("GitHub validation failed: PAT is invalid or expired");
 
@@ -77,7 +82,7 @@ class GitHubValidationServiceTest {
         when(restTemplate.exchange(eq(STEP1_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
 
-        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT))
+        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT, REPO))
                 .isInstanceOf(GitHubValidationException.class)
                 .hasMessage("GitHub validation failed: Organization 'my-org' not found");
 
@@ -89,7 +94,7 @@ class GitHubValidationServiceTest {
         when(restTemplate.exchange(eq(STEP1_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
-        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT))
+        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT, REPO))
                 .isInstanceOf(GitHubValidationException.class)
                 .hasMessage("GitHub validation failed: PAT is invalid or expired");
 
@@ -101,7 +106,7 @@ class GitHubValidationServiceTest {
         when(restTemplate.exchange(eq(STEP1_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
                 .thenThrow(new ResourceAccessException("Connection timed out"));
 
-        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT))
+        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT, REPO))
                 .isInstanceOf(GitHubValidationException.class)
                 .hasMessage("GitHub validation failed: PAT is invalid or expired");
 
@@ -117,7 +122,7 @@ class GitHubValidationServiceTest {
         when(restTemplate.exchange(eq(STEP2_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.FORBIDDEN));
 
-        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT))
+        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT, REPO))
                 .isInstanceOf(GitHubValidationException.class)
                 .hasMessage("GitHub validation failed: PAT lacks required 'repo' scope");
     }
@@ -129,7 +134,7 @@ class GitHubValidationServiceTest {
         when(restTemplate.exchange(eq(STEP2_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
-        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT))
+        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT, REPO))
                 .isInstanceOf(GitHubValidationException.class)
                 .hasMessage("GitHub validation failed: PAT lacks required 'repo' scope");
     }
@@ -141,7 +146,7 @@ class GitHubValidationServiceTest {
         when(restTemplate.exchange(eq(STEP2_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
                 .thenThrow(new ResourceAccessException("Connection timed out"));
 
-        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT))
+        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT, REPO))
                 .isInstanceOf(GitHubValidationException.class)
                 .hasMessage("GitHub validation failed: PAT lacks required 'repo' scope");
     }
@@ -155,7 +160,7 @@ class GitHubValidationServiceTest {
         when(restTemplate.exchange(eq(STEP1_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
                 .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
 
-        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT))
+        assertThatThrownBy(() -> service.validate(ORG_NAME, PAT, REPO))
                 .isInstanceOf(ExternalToolValidationException.class);
     }
 
@@ -168,8 +173,10 @@ class GitHubValidationServiceTest {
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
         when(restTemplate.exchange(eq(STEP2_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+        when(restTemplate.exchange(eq(STEP3_URL), eq(HttpMethod.GET), any(HttpEntity.class), eq(Void.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
-        service.validate(ORG_NAME, PAT);
+        service.validate(ORG_NAME, PAT, REPO);
 
         ArgumentCaptor<HttpEntity<Void>> captor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate).exchange(eq(STEP1_URL), eq(HttpMethod.GET), captor.capture(), eq(Void.class));
