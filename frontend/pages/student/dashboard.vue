@@ -82,7 +82,7 @@
         </div>
 
         <NuxtLink
-          to="/student/deliverables"
+          to="/student/group/deliverables"
           class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600"
         >
           <FileCheck class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
