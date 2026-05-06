@@ -17,12 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.senior.spm.controller.response.ErrorMessage;
 import com.senior.spm.controller.response.FinalGradeResponse;
 import com.senior.spm.controller.response.StudentSearchResponse;
-import com.senior.spm.entity.GroupMembership;
-import com.senior.spm.entity.Student;
 import com.senior.spm.exception.NotFoundException;
-import com.senior.spm.repository.GroupMembershipRepository;
-import com.senior.spm.repository.StudentRepository;
 import com.senior.spm.service.FinalGradeCalculationService;
+import com.senior.spm.service.GroupService;
 import com.senior.spm.service.StudentService;
 import com.senior.spm.util.SecurityUtils;
 
@@ -38,8 +35,7 @@ public class StudentController {
 
     private final StudentService studentService;
     private final FinalGradeCalculationService finalGradeCalculationService;
-    private final StudentRepository studentRepository;
-    private final GroupMembershipRepository groupMembershipRepository;
+    private final GroupService groupService;
 
     /**
      * Search for students not currently in any group.
@@ -89,20 +85,17 @@ public class StudentController {
         }
 
         // Resolve the target student for auth checks
-        Student targetStudent;
+        com.senior.spm.entity.Student targetStudent;
         try {
-            targetStudent = studentRepository.findByStudentId(studentId)
-                    .orElseThrow(() -> new NotFoundException("Student not found"));
+            targetStudent = studentService.getStudentByStudentId(studentId);
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         }
 
         if (isProfessor) {
             // Professor — allowed only if caller is the advisor of the student's group
-            GroupMembership membership = groupMembershipRepository.findByStudentId(targetStudent.getId())
-                    .orElse(null);
-            if (membership == null || membership.getGroup().getAdvisor() == null
-                    || !membership.getGroup().getAdvisor().getId().equals(callerUUID)) {
+            UUID advisorId = groupService.getAdvisorIdForStudent(targetStudent.getId());
+            if (advisorId == null || !advisorId.equals(callerUUID)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(new ErrorMessage("Caller is unauthorized to view this grade"));
             }
