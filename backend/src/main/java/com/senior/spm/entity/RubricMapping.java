@@ -20,10 +20,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Represents a link between a section of a deliverable submission
- * and a specific rubric criterion.
- * Enables the committee to associate evaluation criteria with
- * specific sections of the submitted markdown document.
+ * Represents a link between a section of a deliverable submission and a
+ * specific rubric criterion. Enables the committee to associate evaluation
+ * criteria with specific sections of the submitted markdown document.
  */
 @Entity
 @Table(name = "rubric_mapping", uniqueConstraints = {
@@ -73,10 +72,10 @@ public class RubricMapping {
         }
         if (!submissionDeliverableId.equals(criterionDeliverableId)) {
             throw new IllegalStateException(
-                "RubricMapping criterion deliverable ("
-                + criterionDeliverableId
-                + ") does not match submission deliverable ("
-                + submissionDeliverableId + ")");
+                    "RubricMapping criterion deliverable ("
+                    + criterionDeliverableId
+                    + ") does not match submission deliverable ("
+                    + submissionDeliverableId + ")");
         }
     }
 }
