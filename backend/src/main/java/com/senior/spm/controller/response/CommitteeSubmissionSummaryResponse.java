@@ -15,8 +15,10 @@ public class CommitteeSubmissionSummaryResponse {
     private UUID groupId;
     private String groupName;
     private UUID deliverableId;
+    private String deliverableName;
     private LocalDateTime submittedAt;
     private LocalDateTime updatedAt;
     private int revisionNumber;
     private boolean isRevision;
+    private long commentCount;
 }

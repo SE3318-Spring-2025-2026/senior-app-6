@@ -28,8 +28,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "deliverable_submission",
     uniqueConstraints = @UniqueConstraint(
-        name = "uk_ds_group_deliverable_revision",
-        columnNames = {"group_id", "deliverable_id", "revisionNumber"}))
+        name = "uk_ds_group_deliverable",
+        columnNames = {"group_id", "deliverable_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -48,7 +48,7 @@ public class DeliverableSubmission {
     private Deliverable deliverable;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String markdownContent;
 
     @Column(nullable = false)

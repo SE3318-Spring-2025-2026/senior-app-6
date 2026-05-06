@@ -10,6 +10,4 @@ public class CreateSubmissionCommentRequest {
 
     @NotBlank(message = "commentText is required")
     private String commentText;
-
-    private String sectionReference;
 }
