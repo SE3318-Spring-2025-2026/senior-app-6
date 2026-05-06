@@ -1,6 +1,7 @@
 <script setup lang="ts">
 	import {
 		AlertCircle,
+		ArrowLeft,
 		CheckCircle2,
 		Settings,
 		Upload,
@@ -24,6 +25,10 @@
 	const configError = ref<string | null>(null);
 	const configSuccess = ref(false);
 
+	watch([activeTermId, maxTeamSize], () => {
+		configSuccess.value = false;
+	});
+
 	// ─── Student Upload state ─────────────────────────────────────────
 	const csvFile = ref<File | null>(null);
 	const parsedStudentIds = ref<string[]>([]);
@@ -42,8 +47,8 @@
 			configError.value = "Active Term ID is required.";
 			return;
 		}
-		if (maxTeamSize.value === null || maxTeamSize.value < 1) {
-			configError.value = "Max Team Size must be a positive number.";
+		if (maxTeamSize.value === null || maxTeamSize.value < 1 || maxTeamSize.value > 20) {
+			configError.value = "Max Team Size must be between 1 and 20.";
 			return;
 		}
 
@@ -127,7 +132,7 @@
 
 			if (invalidLines.length > 0) {
 				const sample = invalidLines.slice(0, 3).map((v) => `'${v}'`).join(", ");
-				const more = invalidLines.length > 3 ? ` ve ${invalidLines.length - 3} tane daha` : "";
+				const more = invalidLines.length > 3 ? ` and ${invalidLines.length - 3} more` : "";
 				parseError.value = `Note: ${invalidLines.length} invalid entry was skipped because it is not an 11-digit ID (e.g. ${sample}${more}).`;
 			}
 
@@ -188,7 +193,7 @@
     <div class="mx-auto w-full max-w-4xl space-y-6">
       <!-- Page Header -->
       <header
-        class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg"
+        class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg sm:flex-row sm:items-center sm:justify-between"
       >
         <div class="flex items-center gap-3">
           <Settings class="h-7 w-7 text-slate-600 dark:text-slate-400" />
@@ -203,6 +208,14 @@
             </p>
           </div>
         </div>
+
+        <NuxtLink
+          to="/coordinator/dashboard"
+          class="inline-flex items-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:self-auto"
+        >
+          <ArrowLeft class="h-4 w-4" />
+          Back to Dashboard
+        </NuxtLink>
       </header>
 
       <!-- ═══════════════════════════════════════════════════════════════ -->
