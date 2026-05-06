@@ -2,6 +2,7 @@ package com.senior.spm.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -43,19 +44,26 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(
                         auth -> auth
-                                .requestMatchers("/api/auth/**").permitAll()
-                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .requestMatchers(HttpMethod.GET, "/api/coordinator/deliverables/*/rubric").hasAnyRole("STUDENT", "PROFESSOR")
+                                .requestMatchers(HttpMethod.GET, "/api/submissions/*/rubric-mappings").hasAnyRole("STUDENT", "PROFESSOR")
+                                .requestMatchers("/api/deliverables/*/submissions").hasRole("STUDENT")
+                                .requestMatchers("/api/committees/*/submissions").hasRole("PROFESSOR")
+                                .requestMatchers("/api/advisor").hasRole("STUDENT")
+                                .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")
+                                .requestMatchers(HttpMethod.GET, "/api/deliverables/*/rubric").hasRole("STUDENT")
+                                .requestMatchers("/api/deliverables").hasRole("STUDENT")
                                 .requestMatchers("/api/coordinator/deliverables/**").hasAnyRole("COORDINATOR", "PROFESSOR")
                                 .requestMatchers("/api/coordinator/**").hasRole("COORDINATOR")
                                 .requestMatchers("/api/professor/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/professors/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/committees/**").hasRole("COORDINATOR")
-                                .requestMatchers("/api/advisor").hasRole("STUDENT")
                                 .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
-                                .requestMatchers("/api/groups/*/advisor-request").hasRole("STUDENT")
-                                .requestMatchers("/api/groups/*/sprints/**").hasRole("STUDENT")
-                                .requestMatchers("/api/sprints/**").hasRole("STUDENT")
+                                .requestMatchers(HttpMethod.POST, "/api/submissions/*/comments").hasRole("PROFESSOR")
+                                .requestMatchers(HttpMethod.GET, "/api/submissions/*/comments").hasAnyRole("STUDENT", "PROFESSOR")
+                                .requestMatchers("/api/submissions/**").hasAnyRole("STUDENT", "PROFESSOR")
+                                .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated())
                 .exceptionHandling(
                         ex -> ex.accessDeniedHandler(
@@ -66,11 +74,13 @@ public class SecurityConfig {
                                             .getContext()
                                             .getAuthentication()
                                             .getAuthorities()
-                                            .iterator().next();
-                                    var message = "Role: " + authority.getAuthority() + " does not have permission to access this resource.";
+                                            .iterator()
+                                            .next();
+                                    var message = "Role: " + authority.getAuthority()
+                                    + " does not have permission to access this resource.";
                                     response.getWriter().write(
                                             objectMapper.writeValueAsString(
-                                                    new ErrorMessage(message + "Exception: " + exception.getMessage())
+                                                    new ErrorMessage(message + " Exception: " + exception.getMessage())
                                             ));
                                 }).authenticationEntryPoint((request, response, exception) -> {
                                     response.setStatus(401);

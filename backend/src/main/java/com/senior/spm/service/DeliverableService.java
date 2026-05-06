@@ -70,7 +70,7 @@ public class DeliverableService {
 
         var criteria = rubricCriterionRepository.findAllByDeliverableId(deliverableId);
         return criteria.stream()
-                .map(c -> new CriterionResponse(c.getCriterionName(), c.getGradingType(), c.getWeight()))
+                .map(c -> new CriterionResponse(c.getId(), c.getCriterionName(), c.getGradingType(), c.getWeight()))
                 .toList();
     }
 

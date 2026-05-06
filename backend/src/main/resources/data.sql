@@ -66,7 +66,7 @@ VALUES (
     UUID_TO_BIN('00000000-0000-0000-0000-000000000004'),
     'TEST_RESET_TOKEN_123',
     NOW(),
-    DATE_ADD(NOW(), INTERVAL 1 DAY)
+    '2099-12-31 23:59:59'
 );
 
 INSERT IGNORE INTO password_reset_token (
@@ -96,7 +96,7 @@ VALUES (
     UUID_TO_BIN('00000000-0000-0000-0000-000000000004'),
     'USED_TOKEN_123',
     NOW(),
-    DATE_ADD(NOW(), INTERVAL 1 DAY)
+    '2099-12-31 23:59:59'
 );
 
 -- Issue 55: Red Team system_config seed data
@@ -149,3 +149,131 @@ VALUES (
     5
 );
 
+-- ============================================================
+-- BLUE TEAM QA SEED DATA
+-- Issues: #203, #204
+-- ============================================================
+
+-- Deliverable: valid deadline + committee assignment exists
+INSERT IGNORE INTO deliverable (
+    id, name, type, submission_deadline, review_deadline, weight
+)
+VALUES (
+    UUID_TO_BIN('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
+    'QA Valid Proposal',
+    'Proposal',
+    '2099-12-31 23:59:59',
+    '2099-12-31 23:59:59',
+    20.00
+);
+
+-- Deliverable: expired deadline + committee assignment exists
+INSERT IGNORE INTO deliverable (
+    id, name, type, submission_deadline, review_deadline, weight
+)
+VALUES (
+    UUID_TO_BIN('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaab'),
+    'QA Expired Proposal',
+    'Proposal',
+    '2000-01-01 00:00:00',
+    '2099-12-31 23:59:59',
+    20.00
+);
+
+-- Deliverable: valid deadline but NO committee assignment
+INSERT IGNORE INTO deliverable (
+    id, name, type, submission_deadline, review_deadline, weight
+)
+VALUES (
+    UUID_TO_BIN('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaac'),
+    'QA No Committee Proposal',
+    'Proposal',
+    '2099-12-31 23:59:59',
+    '2099-12-31 23:59:59',
+    20.00
+);
+
+-- QA group
+INSERT IGNORE INTO project_group (
+    id, group_name, status, term_id, created_at, version
+)
+VALUES (
+    UUID_TO_BIN('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'),
+    'QA Test Group',
+    'TOOLS_BOUND',
+    '2026-SPRING',
+    NOW(),
+    0
+);
+
+-- Team Leader
+INSERT IGNORE INTO group_membership (
+    id, group_id, student_id, role, joined_at
+)
+VALUES (
+    UUID_TO_BIN('cccccccc-cccc-cccc-cccc-cccccccccccc'),
+    UUID_TO_BIN('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'),
+    UUID_TO_BIN('00000000-0000-0000-0000-000000000002'),
+    'TEAM_LEADER',
+    NOW()
+);
+
+-- Standard Member
+INSERT IGNORE INTO group_membership (
+    id, group_id, student_id, role, joined_at
+)
+VALUES (
+    UUID_TO_BIN('dddddddd-dddd-dddd-dddd-dddddddddddd'),
+    UUID_TO_BIN('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'),
+    UUID_TO_BIN('00000000-0000-0000-0000-000000000010'),
+    'MEMBER',
+    NOW()
+);
+
+-- Committee for valid deliverable
+INSERT IGNORE INTO committee (
+    id, committee_name, term_id, deliverable_id, assignment_notification_sent_at
+)
+VALUES (
+    UUID_TO_BIN('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'),
+    'QA Committee A',
+    '2026-SPRING',
+    UUID_TO_BIN('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
+    NULL
+);
+
+INSERT IGNORE INTO committee_group (
+    committee_id, group_id
+)
+VALUES (
+    UUID_TO_BIN('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'),
+    UUID_TO_BIN('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
+);
+
+INSERT IGNORE INTO committee_professor (
+    committee_id, professor_id
+)
+VALUES (
+    UUID_TO_BIN('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'),
+    UUID_TO_BIN('00000000-0000-0000-0000-000000000004')
+);
+
+-- Committee for expired deliverable
+INSERT IGNORE INTO committee (
+    id, committee_name, term_id, deliverable_id, assignment_notification_sent_at
+)
+VALUES (
+    UUID_TO_BIN('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeef'),
+    'QA Committee Expired',
+    '2026-SPRING',
+    UUID_TO_BIN('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaab'),
+    NULL
+);
+
+INSERT IGNORE INTO committee_group (
+    committee_id, group_id
+)
+VALUES (
+    UUID_TO_BIN('eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeef'),
+    UUID_TO_BIN('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')
+);
