@@ -13,9 +13,9 @@ import lombok.Setter;
 @NoArgsConstructor
 public class RubricMappingRequest {
 
-    @NotBlank(message = "sectionKey is required")
-    private String sectionKey;
-
     @NotNull(message = "criterionId is required")
     private UUID criterionId;
+
+    @NotBlank(message = "sectionKey is required")
+    private String sectionKey;
 }
