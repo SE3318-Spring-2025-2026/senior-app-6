@@ -1,5 +1,7 @@
 package com.senior.spm.service;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,6 +69,9 @@ public class SubmissionService {
             mapping.setSubmission(submission);
             mapping.setSectionKey(request.getSectionKey());
             mapping.setRubricCriterion(criteriaById.get(request.getCriterionId()));
+            mapping.setMappedAt(LocalDateTime.now(ZoneId.of("UTC")));
+            mapping.setSectionStart(0);
+            mapping.setSectionEnd(0);
             return mapping;
         }).collect(Collectors.toList());
 

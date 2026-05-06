@@ -93,7 +93,7 @@ function handleLink(criterion: RubricCriterionResponse) {
 
   // Prevent duplicate: same criterion + same text
   const alreadyExists = localMappings.value.some(
-    (m) => m.criterionName === criterion.criterionName && m.sectionReference === text
+    (m) => m.criterionName === criterion.criterionName && m.sectionKey === text
   );
   if (alreadyExists) return;
 
@@ -101,7 +101,7 @@ function handleLink(criterion: RubricCriterionResponse) {
     localId: crypto.randomUUID(),
     criterionId: criterion.id ?? criterion.criterionName,
     criterionName: criterion.criterionName,
-    sectionReference: text,
+    sectionKey: text,
   });
 }
 
@@ -129,19 +129,21 @@ async function handleSubmit() {
     submittedId.value = result.submissionId;
 
     // 2. POST rubric mappings if any
-    if (localMappings.value.length > 0) {
+		if (localMappings.value.length > 0)
+		{
+
       try {
         await saveRubricMappings(
           result.submissionId,
-          {
-            mappings: localMappings.value.map((m) => ({
-              criterionId: m.criterionId,
-              sectionReference: m.sectionReference,
-            })),
-          },
+					localMappings.value.map((m) => ({
+						criterionId: m.criterionId,
+						sectionKey: m.sectionKey,
+					})),
           token
         );
-      } catch {
+			} catch (err: unknown)
+			{
+				console.error(err);
         // Mappings failed but submission succeeded — show warning, not error
         submitError.value = "Submission saved but section mappings could not be saved.";
       }

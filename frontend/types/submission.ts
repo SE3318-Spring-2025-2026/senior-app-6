@@ -32,7 +32,7 @@ export interface SubmissionResponse {
 
 export interface RubricMappingEntry {
   criterionId: string;
-  sectionReference: string;
+  sectionKey: string;
 }
 
 export interface SaveRubricMappingsRequest {
@@ -49,7 +49,7 @@ export interface LocalMappingEntry {
   localId: string;
   criterionId: string;
   criterionName: string;
-  sectionReference: string;
+  sectionKey: string;
 }
 
 export interface RubricMappingsResponse {
