@@ -157,14 +157,15 @@ public class FinalGradeCalculationService {
 
         // Step 4 — C_i: Individual Completion Ratio
         // Filter group's SprintTrackingLog: assigneeGithubUsername == student.githubUsername AND prMerged == true
-        List<SprintTrackingLog> groupLogs = sprintTrackingLogRepository.findByGroupId(group.getId());
-
         String studentGithubUsername = student.getGithubUsername();
+        List<SprintTrackingLog> studentCompletedLogs = new ArrayList<>();
+        
+        if (studentGithubUsername != null) {
+            studentCompletedLogs = sprintTrackingLogRepository
+                    .findByGroupIdAndAssigneeGithubUsernameAndPrMergedTrue(group.getId(), studentGithubUsername);
+        }
 
-        int completedStoryPoints = groupLogs.stream()
-                .filter(log -> Boolean.TRUE.equals(log.getPrMerged()))
-                .filter(log -> studentGithubUsername != null
-                        && studentGithubUsername.equals(log.getAssigneeGithubUsername()))
+        int completedStoryPoints = studentCompletedLogs.stream()
                 .mapToInt(log -> log.getStoryPoints() != null ? log.getStoryPoints() : 0)
                 .sum();
 
