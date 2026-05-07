@@ -36,6 +36,9 @@ import com.senior.spm.repository.ScrumGradeRepository;
 import com.senior.spm.repository.SprintRepository;
 import com.senior.spm.repository.SprintTrackingLogRepository;
 
+import com.senior.spm.entity.AuditLog.Outcome;
+import com.senior.spm.entity.AuditLog.UserType;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,6 +53,7 @@ public class ScrumGradingService {
     private final SprintTrackingLogRepository sprintTrackingLogRepository;
     private final GroupMembershipRepository groupMembershipRepository;
     private final TermConfigService termConfigService;
+    private final AuditLogService auditLogService;
 
     // -------------------------------------------------------------------------
     // Active Sprint
@@ -103,6 +107,7 @@ public class ScrumGradingService {
         }
         log.trace("[EVENT] userId={} action={} entityId={} detail={}",
                 advisorId, "SCRUM_GRADE_SUBMITTED", groupId, sprintId);
+        auditLogService.record(advisorId, UserType.STAFF, "SCRUM_GRADE_SUBMITTED", Outcome.SUCCESS, null);
         return grade;
     }
 
