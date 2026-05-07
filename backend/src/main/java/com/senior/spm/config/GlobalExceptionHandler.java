@@ -23,7 +23,6 @@ import com.senior.spm.exception.DuplicateRequestException;
 import com.senior.spm.exception.ExternalToolValidationException;
 import com.senior.spm.exception.ForbiddenException;
 import com.senior.spm.exception.GroupNotFoundException;
-import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.exception.InvitationNotFoundException;
 import com.senior.spm.exception.InvitationNotPendingException;
 import com.senior.spm.exception.NotFoundException;
@@ -149,11 +148,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvitationNotPendingException.class)
     public ResponseEntity<ErrorMessage> handleInvitationNotPending(InvitationNotPendingException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(ex.getMessage()));
-    }
-
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorMessage> handleNotFound(NotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
     }
 
     @ExceptionHandler(UnsupportedOperationException.class)
