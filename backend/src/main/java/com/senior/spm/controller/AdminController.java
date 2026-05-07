@@ -39,7 +39,7 @@ public class AdminController {
         var mail = request.getMail();
 
         try {
-            var token = staffUserService.registerProfessor(mail);
+            var token = staffUserService.registerProfessor(mail,request.getCapacity());
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("resetToken", token));
         } catch (AlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)

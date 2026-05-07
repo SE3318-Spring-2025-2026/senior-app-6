@@ -32,7 +32,7 @@ public class StaffUserService {
     }
 
     @Transactional
-    public String registerProfessor(String mail)
+    public String registerProfessor(String mail, Integer capacity)
             throws RepositoryException, AlreadyExistsException {
         if (staffUserRepository.findByMail(mail).isPresent()) {
             throw new AlreadyExistsException("A user with the provided email already exists.");
@@ -49,6 +49,7 @@ public class StaffUserService {
         resetToken.setExpiresAt(LocalDateTime.now().plusDays(1));
 
         var staffUser = new StaffUser();
+        staffUser.setAdvisorCapacity(capacity != null ? capacity : 5);
         staffUser.setFirstLogin(true);
         staffUser.setMail(mail);
         staffUser.setPasswordHash(passwordEncoder.encode(randomPassword));

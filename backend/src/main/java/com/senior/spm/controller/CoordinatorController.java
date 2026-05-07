@@ -31,6 +31,7 @@ import com.senior.spm.controller.request.RubricRequest;
 import com.senior.spm.controller.request.SanitizationTriggerRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
+import com.senior.spm.controller.request.UpdateAdvisorCapacityRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
 import com.senior.spm.controller.request.UpdateSystemConfigRequest;
 import com.senior.spm.controller.request.UpdateDeliverableWeightRequest;
@@ -535,6 +536,16 @@ public class CoordinatorController {
     private int countAi(List<SprintTrackingLog> logs, AiValidationResult result) {
         return (int) logs.stream().filter(l -> result == l.getAiPrResult()).count()
              + (int) logs.stream().filter(l -> result == l.getAiDiffResult()).count();
+    }
+
+    /**
+     * Updates the advisor capacity for a professor.
+     * Returns 404 if not found, 400 if the user is not a Professor.
+     */
+    @PatchMapping("/advisors/{advisorId}/capacity")
+    public ResponseEntity<AdvisorCapacityResponse> updateAdvisorCapacity(@PathVariable UUID advisorId,
+            @Valid @RequestBody UpdateAdvisorCapacityRequest request) {
+        return ResponseEntity.ok(advisorService.updateCapacity(advisorId, request.getCapacity()));
     }
 
     @PatchMapping("/system-config")
