@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.senior.spm.controller.request.AdvisorOverrideRequest;
 import com.senior.spm.controller.request.CoordinatorMemberRequest;
+import com.senior.spm.controller.request.ScheduleWindowRequest;
+import com.senior.spm.controller.response.ScheduleWindowResponse;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.MapDeliverablesRequest;
 import com.senior.spm.controller.request.RubricRequest;
@@ -56,6 +59,7 @@ import com.senior.spm.service.AdvisorService;
 import com.senior.spm.service.DeliverableService;
 import com.senior.spm.service.GroupService;
 import com.senior.spm.service.SanitizationService;
+import com.senior.spm.service.ScheduleWindowService;
 import com.senior.spm.service.SystemConfigService;
 import com.senior.spm.service.SprintService;
 import com.senior.spm.service.SprintTrackingOrchestrator;
@@ -83,6 +87,7 @@ public class CoordinatorController {
     private final ProjectGroupRepository projectGroupRepository;
     private final TermConfigService termConfigService;
     private final SanitizationService sanitizationService;
+    private final ScheduleWindowService scheduleWindowService;
     private final SystemConfigService systemConfigService;
 
     public CoordinatorController(SprintService sprintService,
@@ -98,6 +103,7 @@ public class CoordinatorController {
             ProjectGroupRepository projectGroupRepository,
             TermConfigService termConfigService,
             SanitizationService sanitizationService,
+            ScheduleWindowService scheduleWindowService,
             SystemConfigService systemConfigService) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
@@ -112,6 +118,7 @@ public class CoordinatorController {
         this.projectGroupRepository = projectGroupRepository;
         this.termConfigService = termConfigService;
         this.sanitizationService = sanitizationService;
+        this.scheduleWindowService = scheduleWindowService;
         this.systemConfigService = systemConfigService;
     }
 
@@ -503,6 +510,25 @@ public class CoordinatorController {
         boolean force = (body != null) && body.isForce();
         SanitizationReport report = sanitizationService.triggerManually(force);
         return ResponseEntity.ok(report);
+    }
+
+    // ========== S4-05 SCHEDULE WINDOW CRUD ENDPOINTS ==========
+
+    @GetMapping("/schedule-windows")
+    public ResponseEntity<List<ScheduleWindowResponse>> getScheduleWindows() {
+        return ResponseEntity.ok(scheduleWindowService.getAll());
+    }
+
+    @PostMapping("/schedule-windows")
+    public ResponseEntity<Void> upsertScheduleWindow(@Valid @RequestBody ScheduleWindowRequest request) {
+        boolean isNew = scheduleWindowService.upsert(request);
+        return ResponseEntity.status(isNew ? HttpStatus.CREATED : HttpStatus.OK).build();
+    }
+
+    @DeleteMapping("/schedule-windows/{id}")
+    public ResponseEntity<Void> deleteScheduleWindow(@PathVariable UUID id) {
+        scheduleWindowService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     /** Counts across both aiPrResult and aiDiffResult columns independently — no double-count. */
