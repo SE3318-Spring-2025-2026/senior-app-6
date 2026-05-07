@@ -41,7 +41,7 @@ import type {
   SprintRefreshResult,
   SprintOverviewResult,
 } from '~/types/sprint';
-import type { GradingCriterion, RubricCriterionResponse } from '~/types/rubric';
+import type { GradingCriterion, RubricCriterionResponse, SubmitGradeEntry, RubricGradeSubmitResponse } from '~/types/rubric';
 import type {
   GroupInvitation,
   SentGroupInvitation,
@@ -776,6 +776,19 @@ async function createSubmissionComment(
   );
 }
 
+async function submitRubricGrade(
+  submissionId: string,
+  grades: SubmitGradeEntry[],
+  token?: string
+): Promise<RubricGradeSubmitResponse> {
+  return apiCall<RubricGradeSubmitResponse>(
+    `/submissions/${encodeURIComponent(submissionId)}/grade`,
+    "POST",
+    { grades },
+    token
+  );
+}
+
   return {
     getAuthToken,
     loginFaculty,
@@ -850,6 +863,7 @@ async function createSubmissionComment(
     fetchRubricMappings,
     fetchSubmissionComments,
     createSubmissionComment,
+    submitRubricGrade,
     fetchLlmConfig,
     updateLlmKey,
   };

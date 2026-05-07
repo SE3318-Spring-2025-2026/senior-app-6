@@ -364,21 +364,31 @@ interface DeadlineInfo
                     <td class="px-4 py-3 text-slate-600 dark:text-slate-400">
                       {{ group.status }}
                     </td>
-                    <td class="px-4 py-3 text-right">
-                      <NuxtLink
-                        v-if="group.submissionId"
-                        :to="`/professor/submission-review/${group.submissionId}`"
-                        class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
-                      >
-                        <Eye class="h-3.5 w-3.5" />
-                        Review Submission
-                      </NuxtLink>
+                    <td class="px-4 py-3">
+                      <div class="flex items-center justify-end gap-2">
+                      <template v-if="group.submissionId">
+                        <NuxtLink
+                          :to="`/professor/submission-review/${group.submissionId}`"
+                          class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                        >
+                          <Eye class="h-3.5 w-3.5" />
+                          Review
+                        </NuxtLink>
+                        <NuxtLink
+                          :to="`/committee/submissions/${group.submissionId}/grade`"
+                          class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                        >
+                          <ClipboardList class="h-3.5 w-3.5" />
+                          Grade
+                        </NuxtLink>
+                      </template>
                       <span
                         v-else
                         class="text-xs text-slate-400 dark:text-slate-500 italic"
                       >
                         No submission
                       </span>
+                      </div>
                     </td>
                   </tr>
                 </tbody>

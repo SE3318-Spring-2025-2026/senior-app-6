@@ -17,3 +17,12 @@ export interface RubricCriterionResponse {
   gradingType: GradingType;
   weight: number;
 }
+
+export interface SubmitGradeEntry {
+  criterionId: string;
+  selectedGrade: string;
+}
+
+export interface RubricGradeSubmitResponse {
+  baseDeliverableGrade: number;
+}
