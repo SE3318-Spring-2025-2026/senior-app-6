@@ -34,6 +34,7 @@ import com.senior.spm.controller.request.SanitizationTriggerRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
+import com.senior.spm.controller.request.UpdateSystemConfigRequest;
 import com.senior.spm.controller.request.UpdateDeliverableWeightRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.controller.response.AdvisorCapacityResponse;
@@ -61,6 +62,7 @@ import com.senior.spm.service.AdvisorService;
 import com.senior.spm.service.DeliverableService;
 import com.senior.spm.service.GroupService;
 import com.senior.spm.service.SanitizationService;
+import com.senior.spm.service.SystemConfigService;
 import com.senior.spm.service.SprintService;
 import com.senior.spm.service.SprintTrackingOrchestrator;
 import com.senior.spm.service.StudentService;
@@ -88,6 +90,7 @@ public class CoordinatorController {
     private final TermConfigService termConfigService;
     private final SanitizationService sanitizationService;
     private final ScheduleWindowRepository scheduleWindowRepository;
+    private final SystemConfigService systemConfigService;
 
     public CoordinatorController(SprintService sprintService,
             DeliverableService deliverableService,
@@ -102,7 +105,8 @@ public class CoordinatorController {
             ProjectGroupRepository projectGroupRepository,
             TermConfigService termConfigService,
             SanitizationService sanitizationService,
-            ScheduleWindowRepository scheduleWindowRepository) {
+            ScheduleWindowRepository scheduleWindowRepository,
+            SystemConfigService systemConfigService) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
         this.studentService = studentService;
@@ -117,6 +121,7 @@ public class CoordinatorController {
         this.termConfigService = termConfigService;
         this.sanitizationService = sanitizationService;
         this.scheduleWindowRepository = scheduleWindowRepository;
+        this.systemConfigService = systemConfigService;
     }
 
     @PostMapping("/sprints")
@@ -605,5 +610,11 @@ public class CoordinatorController {
     private int countAi(List<SprintTrackingLog> logs, AiValidationResult result) {
         return (int) logs.stream().filter(l -> result == l.getAiPrResult()).count()
              + (int) logs.stream().filter(l -> result == l.getAiDiffResult()).count();
+    }
+
+    @PatchMapping("/system-config")
+    public ResponseEntity<Void> updateSystemConfig(@Valid @RequestBody UpdateSystemConfigRequest request) {
+        systemConfigService.updateConfig(request.getActiveTermId(), request.getMaxTeamSize());
+        return ResponseEntity.ok().build();
     }
 }

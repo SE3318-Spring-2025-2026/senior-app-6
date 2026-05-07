@@ -16,7 +16,6 @@ import type { StudentUser } from "~/types/user";
 			const code = route.query.code as string | undefined;
 			const state = route.query.state as string | undefined;
 			const error = route.query.error as string | undefined;
-			console.log("GitHub callback received with query params:", route.query);
 
 			// Check for OAuth error from GitHub
 			if (error) {
@@ -51,8 +50,6 @@ import type { StudentUser } from "~/types/user";
 			// Clean up session storage
 			sessionStorage.removeItem("github_oauth_state");
 			sessionStorage.removeItem("github_student_id");
-
-			console.log("Received GitHub callback with code:", code, "and studentId:", studentId);
 
 			// Send code + studentId to backend; backend exchanges code for token
 			const response = await completeGithubLogin(code, studentId);

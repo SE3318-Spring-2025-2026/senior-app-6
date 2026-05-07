@@ -2,10 +2,12 @@ package com.senior.spm.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -221,9 +223,17 @@ public class DeliverableSubmissionService {
         GroupMembership membership = groupMembershipRepository.findByStudentId(requesterUUID)
                 .orElse(null);
 
-        Set<UUID> submittedDeliverableIds = membership == null
-                ? java.util.Collections.emptySet()
-                : submissionRepository.findDeliverableIdsByGroupId(membership.getGroup().getId());
+        Map<UUID, UUID> submissionIdByDeliverable = membership == null
+                ? java.util.Collections.emptyMap()
+                : submissionRepository.findByGroup(membership.getGroup()).stream()
+                        .sorted(Comparator.comparing(
+                                DeliverableSubmission::getSubmittedAt,
+                                Comparator.nullsFirst(Comparator.naturalOrder()))
+                                .reversed())
+                        .collect(Collectors.toMap(
+                                s -> s.getDeliverable().getId(),
+                                DeliverableSubmission::getId,
+                                (latest, older) -> latest));
 
         List<Deliverable> deliverables = deliverableRepository.findAll();
         return deliverables.stream().map(d -> {
@@ -234,9 +244,11 @@ public class DeliverableSubmissionService {
             dto.setSubmissionDeadline(d.getSubmissionDeadline());
             dto.setReviewDeadline(d.getReviewDeadline());
             dto.setWeight(d.getWeight());
-            dto.setSubmissionStatus(submittedDeliverableIds.contains(d.getId())
+            UUID submissionId = submissionIdByDeliverable.get(d.getId());
+            dto.setSubmissionStatus(submissionId != null
                     ? SubmissionStatus.SUBMITTED
                     : SubmissionStatus.NOT_SUBMITTED);
+            dto.setSubmissionId(submissionId);
             return dto;
         }).toList();
     }

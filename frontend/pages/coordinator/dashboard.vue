@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { AlertTriangle, LogOut, Play, FileText, ClipboardCheck, Send, ShieldX, Users, X, Building } from "lucide-vue-next";
+	import { AlertTriangle, LogOut, Play, FileText, ClipboardCheck, Send, ShieldX, Users, X, Building, Activity, Calculator, Settings as SettingsIcon } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
 import type { SanitizationReport } from "~/types/sanitization";
 
@@ -151,6 +151,32 @@ import type { SanitizationReport } from "~/types/sanitization";
         </NuxtLink>
 
         <NuxtLink
+          to="/coordinator/sprint-monitor"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-violet-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-violet-600"
+        >
+          <Activity class="h-8 w-8 text-violet-600 dark:text-violet-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400">
+            Sprint Monitoring
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Refresh sprint pipeline and review group-level tracking overview.
+          </p>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/coordinator/grades"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-fuchsia-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-fuchsia-600"
+        >
+          <Calculator class="h-8 w-8 text-fuchsia-600 dark:text-fuchsia-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400">
+            Final Grades
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Calculate per-student weighted total, completion ratio, and final grade.
+          </p>
+        </NuxtLink>
+
+        <NuxtLink
           to="/coordinator/groups"
           class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600"
         >
@@ -198,6 +224,18 @@ import type { SanitizationReport } from "~/types/sanitization";
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Assign student groups to committees.
+          </p>
+        </NuxtLink>
+        <NuxtLink
+          to="/coordinator/settings"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-teal-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-600"
+        >
+          <SettingsIcon class="h-8 w-8 text-teal-600 dark:text-teal-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400">
+            Settings
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            System config and student CSV upload.
           </p>
         </NuxtLink>
         <button

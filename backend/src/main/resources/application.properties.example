@@ -1,5 +1,5 @@
 spring.application.name=spm
-spring.datasource.url=jdbc:mysql://localhost:3306/spm
+spring.datasource.url=jdbc:mysql://localhost:3306/spm?zeroDateTimeBehavior=convertToNull
 spring.datasource.username=
 spring.datasource.password=
 spring.jpa.hibernate.ddl-auto=update
@@ -24,3 +24,6 @@ llm.api.timeout-seconds=15
 
 # The actual API key is NOT stored here — it is stored encrypted in the
 # system_config table under the key 'llm_api_key', use admin ui .
+
+# Dev-only: activate trace event logging (do not set in production)
+logging.level.com.senior.spm=TRACE

@@ -24,4 +24,5 @@ public class DeliverableWithStatusResponse {
     private LocalDateTime reviewDeadline;
     private BigDecimal weight;
     private SubmissionStatus submissionStatus;
+    private UUID submissionId;
 }
