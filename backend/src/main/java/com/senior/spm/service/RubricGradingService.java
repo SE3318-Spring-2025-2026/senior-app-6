@@ -1,6 +1,9 @@
 package com.senior.spm.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,17 +35,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RubricGradingService {
 
+    private static final int SCALE = 6;
+    private static final RoundingMode RM = RoundingMode.HALF_UP;
+
     private final DeliverableSubmissionRepository submissionRepository;
     private final CommitteeRepository committeeRepository;
     private final RubricCriterionRepository criterionRepository;
     private final RubricGradeRepository rubricGradeRepository;
     private final StaffUserRepository staffUserRepository;
 
-    /**
-     * Submits or updates rubric grades for a submission.
-     * Returns a result containing the base deliverable grade and whether this
-     * is the reviewer's first grade (used by the controller for 201 vs 200).
-     */
     @Transactional
     public RubricGradingResult submitGrades(
             UUID submissionId,
@@ -111,6 +112,7 @@ public class RubricGradingService {
                 .orElseThrow(() -> new NotFoundException("Reviewer not found"));
 
         // Step 7: Upsert one RubricGrade row per criterion
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
         for (SubmitGradesRequest.GradeEntry entry : grades) {
             RubricCriterion criterion = criterionMap.get(entry.getCriterionId());
 
@@ -121,7 +123,7 @@ public class RubricGradingService {
             if (existing.isPresent()) {
                 RubricGrade grade = existing.get();
                 grade.setSelectedGrade(entry.getSelectedGrade());
-                grade.setGradedAt(LocalDateTime.now());
+                grade.setGradedAt(now);
                 rubricGradeRepository.save(grade);
             } else {
                 RubricGrade grade = new RubricGrade();
@@ -129,48 +131,41 @@ public class RubricGradingService {
                 grade.setCriterion(criterion);
                 grade.setReviewer(reviewer);
                 grade.setSelectedGrade(entry.getSelectedGrade());
-                grade.setGradedAt(LocalDateTime.now());
+                grade.setGradedAt(now);
                 rubricGradeRepository.save(grade);
             }
         }
 
-        // Step 8: Compute base deliverable grade across all reviewers
-        //   B = AVG_reviewers( SUM_criteria(numericGrade × weight) / SUM(weight) )
+        // Step 8: Compute B = AVG_reviewers( SUM_criteria(numericGrade × weight) / SUM(weight) )
         List<RubricGrade> allGradesAfterUpsert = rubricGradeRepository.findBySubmissionId(submissionId);
-        double baseDeliverableGrade = computeBaseDeliverableGrade(allGradesAfterUpsert);
+        BigDecimal baseDeliverableGrade = computeBaseDeliverableGrade(allGradesAfterUpsert);
 
-        return new RubricGradingResult(submissionId, reviewerStaffUserId, baseDeliverableGrade, isFirstGrade);
+        return new RubricGradingResult(baseDeliverableGrade, isFirstGrade);
     }
 
-    private double computeBaseDeliverableGrade(List<RubricGrade> allGrades) {
+    private BigDecimal computeBaseDeliverableGrade(List<RubricGrade> allGrades) {
         if (allGrades.isEmpty()) {
-            return 0.0;
+            return BigDecimal.ZERO;
         }
 
         Map<UUID, List<RubricGrade>> byReviewer = allGrades.stream()
                 .collect(Collectors.groupingBy(g -> g.getReviewer().getId()));
 
-        return byReviewer.values().stream()
-                .mapToDouble(reviewerGrades -> {
-                    double weightedSum = reviewerGrades.stream()
-                            .mapToDouble(g -> GradeValueMapper.toNumeric(
-                                    g.getCriterion().getGradingType(),
-                                    g.getSelectedGrade())
-                                    * g.getCriterion().getWeight().doubleValue())
-                            .sum();
-                    double totalWeight = reviewerGrades.stream()
-                            .mapToDouble(g -> g.getCriterion().getWeight().doubleValue())
-                            .sum();
-                    return totalWeight == 0 ? 0.0 : weightedSum / totalWeight;
-                })
-                .average()
-                .orElse(0.0);
+        BigDecimal reviewerSum = BigDecimal.ZERO;
+        for (List<RubricGrade> reviewerGrades : byReviewer.values()) {
+            BigDecimal numerator = BigDecimal.ZERO;
+            BigDecimal denominator = BigDecimal.ZERO;
+            for (RubricGrade g : reviewerGrades) {
+                int numeric = GradeValueMapper.toNumeric(g.getCriterion().getGradingType(), g.getSelectedGrade());
+                numerator = numerator.add(BigDecimal.valueOf(numeric).multiply(g.getCriterion().getWeight()));
+                denominator = denominator.add(g.getCriterion().getWeight());
+            }
+            if (denominator.compareTo(BigDecimal.ZERO) == 0) continue;
+            reviewerSum = reviewerSum.add(numerator.divide(denominator, SCALE, RM));
+        }
+
+        return reviewerSum.divide(BigDecimal.valueOf(byReviewer.size()), SCALE, RM);
     }
 
-    public record RubricGradingResult(
-            UUID submissionId,
-            UUID reviewerId,
-            double baseDeliverableGrade,
-            boolean isFirstGrade) {
-    }
+    public record RubricGradingResult(BigDecimal baseDeliverableGrade, boolean isFirstGrade) {}
 }

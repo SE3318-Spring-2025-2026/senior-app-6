@@ -1,6 +1,6 @@
 package com.senior.spm.controller.response;
 
-import java.util.UUID;
+import java.math.BigDecimal;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +9,5 @@ import lombok.Getter;
 @AllArgsConstructor
 public class RubricGradeSubmitResponse {
 
-    private UUID submissionId;
-    private UUID reviewerId;
-    private double baseDeliverableGrade;
+    private BigDecimal baseDeliverableGrade;
 }
