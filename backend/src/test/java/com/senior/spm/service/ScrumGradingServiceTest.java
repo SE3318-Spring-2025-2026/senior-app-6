@@ -45,6 +45,7 @@ class ScrumGradingServiceTest {
     @Mock SprintTrackingLogRepository sprintTrackingLogRepository;
     @Mock GroupMembershipRepository groupMembershipRepository;
     @Mock TermConfigService termConfigService;
+    @Mock AuditLogService auditLogService;
 
     @InjectMocks
     ScrumGradingService service;

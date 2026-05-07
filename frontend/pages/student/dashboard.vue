@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { LogOut, GitBranch, FileCheck, Users, Send, Clock, CheckCircle2, AlertCircle } from "lucide-vue-next";
+	import { LogOut, GitBranch, FileCheck, Users, Send, Clock, CheckCircle2, AlertCircle, Calculator } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
 	import type { ActiveSprintResponse } from "~/types/sprint";
 	import type { StudentDeliverable } from "~/types/submission";
@@ -162,6 +162,17 @@
           <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Group Hub</h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Open your group page to create a team, review members, and check your current group state.
+          </p>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/student/group/grade"
+          class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-fuchsia-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-fuchsia-600"
+        >
+          <Calculator class="h-8 w-8 text-fuchsia-600 dark:text-fuchsia-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Final Grade</h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            View your final grade and deliverable breakdown.
           </p>
         </NuxtLink>
       </div>

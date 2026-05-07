@@ -35,7 +35,12 @@ import type {
   CreateDeliverableRequest,
   UpdateDeliverableRequest,
 } from '~/types/deliverable';
-import type { Sprint, CreateSprintRequest } from '~/types/sprint';
+import type {
+  Sprint,
+  CreateSprintRequest,
+  SprintRefreshResult,
+  SprintOverviewResult,
+} from '~/types/sprint';
 import type { GradingCriterion, RubricCriterionResponse } from '~/types/rubric';
 import type {
   GroupInvitation,
@@ -54,6 +59,7 @@ import type {
   SubmissionComment,
   CreateSubmissionCommentRequest,
 } from '~/types/submission';
+import type { FinalGradeResponse } from '~/types/grade';
 
 async function apiCall<T>(
   endpoint: string,
@@ -213,6 +219,32 @@ export function useApiClient() {
 
   async function fetchSprints(token?: string): Promise<Sprint[]> {
     return apiCall<Sprint[]>("/coordinator/sprints", "GET", undefined, token);
+  }
+
+  async function triggerSprintRefresh(
+    sprintId: string,
+    force = true,
+    token?: string
+  ): Promise<SprintRefreshResult> {
+    const query = `?force=${force ? "true" : "false"}`;
+    return apiCall<SprintRefreshResult>(
+      `/coordinator/sprints/${encodeURIComponent(sprintId)}/refresh${query}`,
+      "POST",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchSprintOverview(
+    sprintId: string,
+    token?: string
+  ): Promise<SprintOverviewResult> {
+    return apiCall<SprintOverviewResult>(
+      `/coordinator/sprints/${encodeURIComponent(sprintId)}/overview`,
+      "GET",
+      undefined,
+      token
+    );
   }
 
   async function fetchActiveSprint(token?: string): Promise<ActiveSprintResponse> {
@@ -527,6 +559,30 @@ export function useApiClient() {
     return apiCall<StudentSearchResult[]>(`/students/search?q=${encodeURIComponent(q)}`, "GET", undefined, token);
   }
 
+  async function calculateStudentGrade(
+    studentId11Digit: string,
+    token?: string
+  ): Promise<FinalGradeResponse> {
+    return apiCall<FinalGradeResponse>(
+      `/students/${encodeURIComponent(studentId11Digit)}/grade/calculate`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchStudentGrade(
+    studentId11Digit: string,
+    token?: string
+  ): Promise<FinalGradeResponse | null> {
+    return apiCall<FinalGradeResponse | null>(
+      `/students/${encodeURIComponent(studentId11Digit)}/grade`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   async function sendGroupInvitation(
     groupId: string,
     targetStudentId: string,
@@ -736,6 +792,8 @@ async function createSubmissionComment(
     resetPassword,
     fetchDeliverables,
     fetchSprints,
+    triggerSprintRefresh,
+    fetchSprintOverview,
     fetchRubric,
     updateRubric,
     createSprintDeliverableMapping,
@@ -778,6 +836,8 @@ async function createSubmissionComment(
     fetchAdvisorRequestDetail,
     respondToAdvisorRequest,
     searchStudents,
+    calculateStudentGrade,
+    fetchStudentGrade,
     sendGroupInvitation,
     fetchGroupInvitations,
     cancelGroupInvitation,
