@@ -21,5 +21,5 @@ public class ScheduleWindowResponse {
     private String termId;
     private LocalDateTime opensAt;
     private LocalDateTime closesAt;
-    private boolean isActive;
+    private Boolean isActive;
 }
