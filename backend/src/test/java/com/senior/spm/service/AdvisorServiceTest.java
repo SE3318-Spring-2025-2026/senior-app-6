@@ -47,6 +47,7 @@ class AdvisorServiceTest {
     @Mock private ProjectGroupRepository projectGroupRepository;
     @Mock private GroupMembershipRepository groupMembershipRepository;
     @Mock private TermConfigService termConfigService;
+    @Mock private AuditLogService auditLogService;
 
     @InjectMocks
     private AdvisorService advisorService;

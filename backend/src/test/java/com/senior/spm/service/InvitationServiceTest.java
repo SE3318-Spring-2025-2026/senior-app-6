@@ -52,6 +52,7 @@ class InvitationServiceTest {
     @Mock private StudentRepository studentRepository;
     @Mock private TermConfigService termConfigService;
     @Mock private GroupService groupService;
+    @Mock private AuditLogService auditLogService;
 
     @InjectMocks
     private InvitationService invitationService;

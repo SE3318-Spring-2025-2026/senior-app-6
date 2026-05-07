@@ -65,6 +65,7 @@ class GroupServiceTest {
     @Mock private JiraValidationService jiraValidationService;
     @Mock private GitHubValidationService gitHubValidationService;
     @Mock private EncryptionService encryptionService;
+    @Mock private AuditLogService auditLogService;
 
     @InjectMocks
     private GroupService groupService;

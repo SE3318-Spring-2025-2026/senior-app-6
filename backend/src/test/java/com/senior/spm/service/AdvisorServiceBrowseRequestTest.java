@@ -65,6 +65,7 @@ class AdvisorServiceBrowseRequestTest {
     @Mock private StaffUserRepository         staffUserRepository;
     @Mock private ScheduleWindowRepository    scheduleWindowRepository;
     @Mock private TermConfigService           termConfigService;
+    @Mock private AuditLogService             auditLogService;
 
     @InjectMocks
     private AdvisorService advisorService;
