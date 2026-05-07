@@ -10,7 +10,7 @@ public class RegisterProfessorRequest {
     @NotBlank
     private String mail;
 
-@Min(1)
-@Max(20)
-private Integer capacity; 
+    @Min(1)
+    @Max(20)
+    private Integer capacity;
 }

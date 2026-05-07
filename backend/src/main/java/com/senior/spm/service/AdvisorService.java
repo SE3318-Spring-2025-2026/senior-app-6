@@ -465,6 +465,36 @@ public class AdvisorService {
     }
 
     // =========================================================================
+    // COORDINATOR — Advisor Capacity (P3-API-06)
+    // =========================================================================
+
+    @Transactional
+    public AdvisorCapacityResponse updateCapacity(UUID advisorId, int capacity) {
+        StaffUser advisor = staffUserRepository.findById(advisorId)
+                .orElseThrow(() -> new AdvisorNotFoundException("Advisor not found"));
+
+        if (advisor.getRole() != StaffUser.Role.Professor) {
+            throw new BusinessRuleException("Target user is not a Professor");
+        }
+
+        advisor.setAdvisorCapacity(capacity);
+        staffUserRepository.save(advisor);
+
+        String termId = termConfigService.getActiveTermId();
+        long currentGroupCount = projectGroupRepository.countByAdvisorIdAndTermIdAndStatusNot(
+                advisorId, termId, ProjectGroup.GroupStatus.DISBANDED);
+
+        return AdvisorCapacityResponse.builder()
+                .advisorId(advisor.getId())
+                .name(advisor.getMail())
+                .mail(advisor.getMail())
+                .currentGroupCount((int) currentGroupCount)
+                .capacity(advisor.getAdvisorCapacity())
+                .atCapacity(currentGroupCount >= advisor.getAdvisorCapacity())
+                .build();
+    }
+
+    // =========================================================================
     // COORDINATOR — Advisor Override (P3-API-05, DFD 3.5)
     // =========================================================================
 
