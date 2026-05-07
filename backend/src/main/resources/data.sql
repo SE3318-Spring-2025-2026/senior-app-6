@@ -66,7 +66,7 @@ VALUES (
     UUID_TO_BIN('00000000-0000-0000-0000-000000000004'),
     'TEST_RESET_TOKEN_123',
     NOW(),
-    '2099-12-31 23:59:59'
+    DATE_ADD(NOW(), INTERVAL 1 DAY)
 );
 
 INSERT IGNORE INTO password_reset_token (
@@ -96,7 +96,7 @@ VALUES (
     UUID_TO_BIN('00000000-0000-0000-0000-000000000004'),
     'USED_TOKEN_123',
     NOW(),
-    '2099-12-31 23:59:59'
+    DATE_ADD(NOW(), INTERVAL 1 DAY)
 );
 
 -- Issue 55: Red Team system_config seed data
