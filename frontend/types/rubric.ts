@@ -12,6 +12,7 @@ export interface CreateRubricRequest {
 }
 
 export interface RubricCriterionResponse {
+  id?: string;
   criterionName: string;
   gradingType: GradingType;
   weight: number;

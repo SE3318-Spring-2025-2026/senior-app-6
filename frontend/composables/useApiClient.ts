@@ -28,6 +28,7 @@ import type {
   AddGroupsToCommitteeRequest,
   ProfessorCommittee,
 	CommitteeProfessorAssignment,
+  CommitteeSubmission,
 } from '~/types/committee';
 import type {
   Deliverable,
@@ -44,6 +45,15 @@ import type {
 import type { StudentSearchResult } from '~/types/student';
 import type { BindJiraRequest, BindGithubRequest, BindToolResponse } from '~/types/tools';
 import type { SanitizationReport } from '~/types/sanitization';
+import type {
+  StudentDeliverable,
+  SubmissionCreateResponse,
+  SubmissionResponse,
+  RubricMappingsResponse,
+  RubricMappingEntry,
+  SubmissionComment,
+  CreateSubmissionCommentRequest,
+} from '~/types/submission';
 
 async function apiCall<T>(
   endpoint: string,
@@ -541,6 +551,62 @@ export function useApiClient() {
     );
   }
 
+  async function fetchStudentDeliverables(token?: string): Promise<StudentDeliverable[]> {
+    return apiCall<StudentDeliverable[]>("/deliverables", "GET", undefined, token);
+  }
+
+  async function submitDeliverable(
+    deliverableId: string,
+    markdownContent: string,
+    token?: string
+  ): Promise<SubmissionCreateResponse> {
+    return apiCall<SubmissionCreateResponse>(
+      `/deliverables/${encodeURIComponent(deliverableId)}/submissions`,
+      "POST",
+      { markdownContent },
+      token
+    );
+  }
+
+  async function reviseSubmission(
+    submissionId: string,
+    markdownContent: string,
+    token?: string
+  ): Promise<SubmissionResponse> {
+    return apiCall<SubmissionResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}`,
+      "PUT",
+      { markdownContent },
+      token
+    );
+  }
+
+  async function saveRubricMappings(
+    submissionId: string,
+    mappings: RubricMappingEntry[],
+    token?: string
+  ): Promise<void> {
+    return apiCall<void>(
+      `/submissions/${encodeURIComponent(submissionId)}/rubric-mappings`,
+      "POST",
+      mappings,
+      token
+    );
+  }
+
+  async function fetchStudentRubric(
+    deliverableId: string,
+    token?: string
+  ): Promise<RubricCriterionResponse[]> {
+    // Student-facing rubric endpoint — uses coordinator path; handle 403 gracefully
+    return apiCall<RubricCriterionResponse[]>(
+      `/coordinator/deliverables/${encodeURIComponent(deliverableId)}/rubric`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   async function createCommittee(
     payload: CreateCommitteeRequest,
     token?: string
@@ -590,10 +656,62 @@ export function useApiClient() {
       token
     );
   }
+  
+async function fetchProfessorCommittees(token?: string): Promise<ProfessorCommittee[]> {
+  return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
+}
 
-  async function fetchProfessorCommittees(token?: string): Promise<ProfessorCommittee[]> {
-    return apiCall<ProfessorCommittee[]>("/professors/me/committees", "GET", undefined, token);
-  }
+async function fetchCommitteeSubmissions(
+  committeeId: string,
+  token?: string
+): Promise<CommitteeSubmission[]> {
+  return apiCall<CommitteeSubmission[]>(
+    `/committees/${encodeURIComponent(committeeId)}/submissions`,
+    "GET",
+    undefined,
+    token
+  );
+}
+
+async function fetchSubmission(submissionId: string, token?: string): Promise<SubmissionResponse> {
+  return apiCall<SubmissionResponse>(
+    `/submissions/${encodeURIComponent(submissionId)}`,
+    "GET",
+    undefined,
+    token
+  );
+}
+
+async function fetchRubricMappings(submissionId: string, token?: string): Promise<RubricMappingsResponse> {
+    return apiCall<RubricMappingsResponse>(
+    `/submissions/${encodeURIComponent(submissionId)}/rubric-mappings`,
+    "GET",
+    undefined,
+    token
+  );
+}
+
+async function fetchSubmissionComments(submissionId: string, token?: string): Promise<SubmissionComment[]> {
+  return apiCall<SubmissionComment[]>(
+    `/submissions/${encodeURIComponent(submissionId)}/comments`,
+    "GET",
+    undefined,
+    token
+  );
+}
+
+async function createSubmissionComment(
+  submissionId: string,
+  payload: CreateSubmissionCommentRequest,
+  token?: string
+): Promise<SubmissionComment> {
+  return apiCall<SubmissionComment>(
+    `/submissions/${encodeURIComponent(submissionId)}/comments`,
+    "POST",
+    payload,
+    token
+  );
+}
 
   return {
     getAuthToken,
@@ -622,6 +740,7 @@ export function useApiClient() {
     addCommitteeProfessors,
     addCommitteeGroups,
     fetchProfessorCommittees,
+    fetchCommitteeSubmissions,
     createGroup,
     fetchMyGroup,
     fetchAvailableAdvisors,
@@ -654,6 +773,15 @@ export function useApiClient() {
     sendGroupInvitation,
     fetchGroupInvitations,
     cancelGroupInvitation,
+    fetchStudentDeliverables,
+    submitDeliverable,
+    reviseSubmission,
+    saveRubricMappings,
+    fetchStudentRubric,
+    fetchSubmission,
+    fetchRubricMappings,
+    fetchSubmissionComments,
+    createSubmissionComment,
     fetchLlmConfig,
     updateLlmKey,
   };

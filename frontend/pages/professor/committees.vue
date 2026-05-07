@@ -6,10 +6,12 @@
 		ChevronDown,
 		ChevronUp,
 		Clock,
+		Eye,
 		Loader2,
 		Scale,
 		Users,
 		UserCheck,
+		ClipboardList,
 	} from "lucide-vue-next";
 import type { ProfessorCommittee, ProfessorCommitteeRubricCriterion } from "~/types/committee";
 import type { Deliverable } from "~/types/deliverable";
@@ -176,13 +178,22 @@ interface DeadlineInfo
               View your committee assignments, student groups, and upcoming deadlines.
             </p>
           </div>
-          <NuxtLink
-            to="/professor/dashboard"
-            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-          >
-            <ArrowLeft class="mr-2 inline h-4 w-4" />
-            Back
-          </NuxtLink>
+          <div class="flex items-center gap-2">
+            <NuxtLink
+              to="/professor/pending-reviews"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500 bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-700 shadow-sm"
+            >
+              <ClipboardList class="h-4 w-4" />
+              Pending Reviews
+            </NuxtLink>
+            <NuxtLink
+              to="/professor/dashboard"
+              class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+            >
+              <ArrowLeft class="mr-2 inline h-4 w-4" />
+              Back
+            </NuxtLink>
+          </div>
         </div>
       </header>
 
@@ -334,10 +345,10 @@ interface DeadlineInfo
                       Group Name
                     </th>
                     <th class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Members
+                      Status
                     </th>
-                    <th class="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      Advisor
+                    <th class="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      Actions
                     </th>
                   </tr>
                 </thead>
@@ -352,6 +363,22 @@ interface DeadlineInfo
                     </td>
                     <td class="px-4 py-3 text-slate-600 dark:text-slate-400">
                       {{ group.status }}
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <NuxtLink
+                        v-if="group.submissionId"
+                        :to="`/professor/submission-review/${group.submissionId}`"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                      >
+                        <Eye class="h-3.5 w-3.5" />
+                        Review Submission
+                      </NuxtLink>
+                      <span
+                        v-else
+                        class="text-xs text-slate-400 dark:text-slate-500 italic"
+                      >
+                        No submission
+                      </span>
                     </td>
                   </tr>
                 </tbody>

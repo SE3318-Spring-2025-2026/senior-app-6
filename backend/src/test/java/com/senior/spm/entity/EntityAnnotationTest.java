@@ -184,6 +184,66 @@ class EntityAnnotationTest {
                         CommitteeProfessor.ProfessorRole.JURY);
     }
 
+    // ── DeliverableSubmission foreign keys ─────────────────────────────────────
+
+    @Test
+    void deliverableSubmission_group_joinColumn_isCorrect() throws Exception {
+        Field f = DeliverableSubmission.class.getDeclaredField("group");
+        JoinColumn jc = f.getAnnotation(JoinColumn.class);
+        assertThat(jc.name()).isEqualTo("group_id");
+        assertThat(jc.nullable()).isFalse();
+    }
+
+    @Test
+    void deliverableSubmission_deliverable_joinColumn_isCorrect() throws Exception {
+        Field f = DeliverableSubmission.class.getDeclaredField("deliverable");
+        JoinColumn jc = f.getAnnotation(JoinColumn.class);
+        assertThat(jc.name()).isEqualTo("deliverable_id");
+        assertThat(jc.nullable()).isFalse();
+    }
+
+    @Test
+    void deliverableSubmission_revisionNumber_hasDefaultValue() throws Exception {
+        Field f = DeliverableSubmission.class.getDeclaredField("revisionNumber");
+        assertThat(f.getType()).isEqualTo(int.class);
+    }
+
+    // ── RubricMapping foreign keys ──────────────────────────────────────────────
+
+    @Test
+    void rubricMapping_submission_joinColumn_isCorrect() throws Exception {
+        Field f = RubricMapping.class.getDeclaredField("submission");
+        JoinColumn jc = f.getAnnotation(JoinColumn.class);
+        assertThat(jc.name()).isEqualTo("submission_id");
+        assertThat(jc.nullable()).isFalse();
+    }
+
+    @Test
+    void rubricMapping_rubricCriterion_joinColumn_isCorrect() throws Exception {
+        Field f = RubricMapping.class.getDeclaredField("rubricCriterion");
+        JoinColumn jc = f.getAnnotation(JoinColumn.class);
+        assertThat(jc.name()).isEqualTo("rubric_criterion_id");
+        assertThat(jc.nullable()).isFalse();
+    }
+
+    // ── SubmissionComment foreign keys ──────────────────────────────────────────
+
+    @Test
+    void submissionComment_submission_joinColumn_isCorrect() throws Exception {
+        Field f = SubmissionComment.class.getDeclaredField("submission");
+        JoinColumn jc = f.getAnnotation(JoinColumn.class);
+        assertThat(jc.name()).isEqualTo("submission_id");
+        assertThat(jc.nullable()).isFalse();
+    }
+
+    @Test
+    void submissionComment_commenter_joinColumn_isCorrect() throws Exception {
+        Field f = SubmissionComment.class.getDeclaredField("commenter");
+        JoinColumn jc = f.getAnnotation(JoinColumn.class);
+        assertThat(jc.name()).isEqualTo("commenter_id");
+        assertThat(jc.nullable()).isFalse();
+    }
+
     // ── Helper ────────────────────────────────────────────────────────────────
 
     private UniqueConstraint findConstraint(Class<?> entityClass, String name) {

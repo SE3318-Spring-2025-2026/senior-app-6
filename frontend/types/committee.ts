@@ -58,6 +58,7 @@ export interface ProfessorCommitteeGroup {
   groupId: string;
   groupName: string;
   status: GroupStatus;
+  submissionId?: string | null;
 }
 
 export interface ProfessorCommitteeRubricCriterion {
@@ -79,4 +80,14 @@ export interface ProfessorCommittee {
   deliverableWeight?: number;
   groups: ProfessorCommitteeGroup[];
   rubrics?: ProfessorCommitteeRubricCriterion[];
+}
+
+export interface CommitteeSubmission {
+  submissionId: string;
+  deliverableId: string;
+  groupId: string;
+  groupName: string;
+  deliverableName: string;
+  submittedAt: string;
+  commentCount: number;
 }
