@@ -135,7 +135,7 @@ public class GroupService {
         return groupMembershipRepository.findByStudentId(studentUUID)
             .map(GroupMembership::getGroup)
             .map(ProjectGroup::getAdvisor)
-            .map(com.senior.spm.entity.Professor::getId)
+            .map(com.senior.spm.entity.StaffUser::getId)
             .orElse(null);
     }
 
