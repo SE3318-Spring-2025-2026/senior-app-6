@@ -50,8 +50,9 @@ import type {
   SubmissionCreateResponse,
   SubmissionResponse,
   RubricMappingsResponse,
-  SaveRubricMappingsRequest,
-  SaveRubricMappingsResponse,
+  RubricMappingEntry,
+  SubmissionComment,
+  CreateSubmissionCommentRequest,
 } from '~/types/submission';
 
 async function apiCall<T>(
@@ -589,13 +590,13 @@ export function useApiClient() {
 
   async function saveRubricMappings(
     submissionId: string,
-    payload: SaveRubricMappingsRequest,
+    mappings: RubricMappingEntry[],
     token?: string
-  ): Promise<SaveRubricMappingsResponse> {
-    return apiCall<SaveRubricMappingsResponse>(
+  ): Promise<void> {
+    return apiCall<void>(
       `/submissions/${encodeURIComponent(submissionId)}/rubric-mappings`,
       "POST",
-      payload,
+      mappings,
       token
     );
   }
@@ -697,6 +698,28 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
   );
 }
 
+async function fetchSubmissionComments(submissionId: string, token?: string): Promise<SubmissionComment[]> {
+  return apiCall<SubmissionComment[]>(
+    `/submissions/${encodeURIComponent(submissionId)}/comments`,
+    "GET",
+    undefined,
+    token
+  );
+}
+
+async function createSubmissionComment(
+  submissionId: string,
+  payload: CreateSubmissionCommentRequest,
+  token?: string
+): Promise<SubmissionComment> {
+  return apiCall<SubmissionComment>(
+    `/submissions/${encodeURIComponent(submissionId)}/comments`,
+    "POST",
+    payload,
+    token
+  );
+}
+
   return {
     getAuthToken,
     loginFaculty,
@@ -708,6 +731,7 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     createSprint,
     updateSprintTarget,
     uploadStudents,
+    updateSystemConfig,
     validateResetToken,
     resetPassword,
     fetchDeliverables,
@@ -757,8 +781,6 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     sendGroupInvitation,
     fetchGroupInvitations,
     cancelGroupInvitation,
-    fetchLlmConfig,
-    updateLlmKey,
     fetchStudentDeliverables,
     submitDeliverable,
     reviseSubmission,
@@ -766,6 +788,9 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     fetchStudentRubric,
     fetchSubmission,
     fetchRubricMappings,
-    updateSystemConfig,
+    fetchSubmissionComments,
+    createSubmissionComment,
+    fetchLlmConfig,
+    updateLlmKey,
   };
 }
