@@ -40,7 +40,7 @@ public class StaffUser {
     @Column(nullable = false)
     private boolean firstLogin = true;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "INT NOT NULL DEFAULT 5")
     private int advisorCapacity = 5;
 
     @OneToMany(mappedBy = "advisor")
