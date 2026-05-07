@@ -58,28 +58,7 @@ import type {
   SaveRubricMappingsRequest,
   SaveRubricMappingsResponse,
 } from '~/types/submission';
-
-export interface DeliverableBreakdown {
-  deliverableId: string;
-  deliverableName: string;
-  baseGrade: number | null;
-  scrumScalar: number | null;
-  reviewScalar: number | null;
-  deliverableScalar: number | null;
-  scaledGrade: number | null;
-  weight: number | null;
-  weightedContribution: number | null;
-}
-
-export interface FinalGradeResponse {
-  studentId: string;
-  groupId: string;
-  deliverableBreakdown: DeliverableBreakdown[];
-  weightedTotal: number | null;
-  completionRatio: number | null;
-  finalGrade: number | null;
-  calculatedAt: string | null;
-}
+import type { FinalGradeResponse } from '~/types/grade';
 
 async function apiCall<T>(
   endpoint: string,
@@ -591,6 +570,18 @@ export function useApiClient() {
     );
   }
 
+  async function fetchStudentGrade(
+    studentId11Digit: string,
+    token?: string
+  ): Promise<FinalGradeResponse | null> {
+    return apiCall<FinalGradeResponse | null>(
+      `/students/${encodeURIComponent(studentId11Digit)}/grade`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   async function sendGroupInvitation(
     groupId: string,
     targetStudentId: string,
@@ -822,6 +813,7 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     respondToAdvisorRequest,
     searchStudents,
     calculateStudentGrade,
+    fetchStudentGrade,
     sendGroupInvitation,
     fetchGroupInvitations,
     cancelGroupInvitation,

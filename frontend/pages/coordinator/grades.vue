@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { AlertCircle, ArrowLeft, Loader2 } from "lucide-vue-next";
-import type { FinalGradeResponse } from "~/composables/useApiClient";
+import type { FinalGradeResponse } from "~/types/grade";
 import type { GroupDetailResponse, GroupSummaryResponse } from "~/types/group";
 
 definePageMeta({
@@ -20,11 +20,12 @@ interface StudentGradeRow {
 type SortKey = "studentId" | "groupName" | "weightedTotal" | "completionRatio" | "finalGrade";
 type SortDirection = "asc" | "desc";
 
-const { getAuthToken, fetchCoordinatorGroups, fetchCoordinatorGroupDetail, calculateStudentGrade } = useApiClient();
+const { getAuthToken, fetchCoordinatorGroups, fetchCoordinatorGroupDetail, fetchStudentGrade, calculateStudentGrade } = useApiClient();
 
 const rows = ref<StudentGradeRow[]>([]);
 const isPageLoading = ref(true);
 const pageError = ref<string | null>(null);
+const isBulkLoading = ref(false);
 const selectedGroupId = ref("ALL");
 const sortKey = ref<SortKey>("groupName");
 const sortDirection = ref<SortDirection>("asc");
@@ -85,6 +86,13 @@ function formatDecimal(value: number | null | undefined, digits = 4): string {
   return value.toFixed(digits);
 }
 
+function formatDateTime(value: string | null | undefined): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("en-US", { dateStyle: "short", timeStyle: "short" });
+}
+
 function toStudentRows(groupSummaries: GroupSummaryResponse[], details: GroupDetailResponse[]): StudentGradeRow[] {
   const nameById = new Map(groupSummaries.map((group) => [group.id, group.groupName]));
   return details.flatMap((detail) =>
@@ -116,6 +124,30 @@ async function loadPageData() {
 
     const details = await Promise.all(groups.map((group) => fetchCoordinatorGroupDetail(group.id, token)));
     rows.value = toStudentRows(groups, details);
+
+    // Hydrate table with already stored grades without triggering recalculation.
+    await Promise.all(
+      rows.value.map(async (row) => {
+        try {
+          row.grade = await fetchStudentGrade(row.studentId, token);
+        } catch (err: unknown) {
+          if (
+            err &&
+            typeof err === "object" &&
+            "status" in err &&
+            [401, 403, 404].includes(Number(err.status))
+          ) {
+            row.grade = null;
+            return;
+          }
+          // Keep row visible even if a single grade fetch fails.
+          row.error =
+            err && typeof err === "object" && "message" in err
+              ? String(err.message)
+              : "Failed to load stored grade.";
+        }
+      })
+    );
   } catch (err: unknown) {
     pageError.value =
       err && typeof err === "object" && "message" in err
@@ -144,6 +176,17 @@ async function handleCalculate(row: StudentGradeRow) {
         : "Calculation failed.";
   } finally {
     row.loading = false;
+  }
+}
+
+async function handleCalculateAll() {
+  if (isBulkLoading.value) return;
+
+  isBulkLoading.value = true;
+  try {
+    await Promise.all(sortedRows.value.map((row) => handleCalculate(row)));
+  } finally {
+    isBulkLoading.value = false;
   }
 }
 
@@ -201,7 +244,7 @@ onMounted(loadPageData);
         v-else
         class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-800"
       >
-        <div class="border-b border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40">
+        <div class="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 bg-slate-50/80 pl-4 pr-0 py-3 dark:border-slate-700 dark:bg-slate-900/40">
           <label class="block max-w-xs space-y-1.5">
             <span class="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
               Group Filter
@@ -216,51 +259,63 @@ onMounted(loadPageData);
               </option>
             </select>
           </label>
+          <div class="flex w-28 justify-center">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+              :class="isBulkLoading ? 'opacity-80' : ''"
+              @click="handleCalculateAll"
+            >
+              Calculate All
+            </button>
+          </div>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full table-fixed text-sm">
+        <div>
+          <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/50">
-                <th class="w-36 px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <button type="button" class="inline-flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-200" @click="toggleSort('studentId')">
                     Student ID <span class="inline-block w-3 text-center text-[10px]">{{ sortIndicator("studentId") }}</span>
                   </button>
                 </th>
-                <th class="w-40 px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <button type="button" class="inline-flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-200" @click="toggleSort('groupName')">
                     Group <span class="inline-block w-3 text-center text-[10px]">{{ sortIndicator("groupName") }}</span>
                   </button>
                 </th>
-                <th class="w-44 px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <button type="button" class="inline-flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-200" @click="toggleSort('weightedTotal')">
                     Weighted Total <span class="inline-block w-3 text-center text-[10px]">{{ sortIndicator("weightedTotal") }}</span>
                   </button>
                 </th>
-                <th class="w-44 px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <button type="button" class="inline-flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-200" @click="toggleSort('completionRatio')">
                     Completion Ratio <span class="inline-block w-3 text-center text-[10px]">{{ sortIndicator("completionRatio") }}</span>
                   </button>
                 </th>
-                <th class="w-44 px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <button type="button" class="inline-flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-200" @click="toggleSort('finalGrade')">
                     Final Grade <span class="inline-block w-3 text-center text-[10px]">{{ sortIndicator("finalGrade") }}</span>
                   </button>
                 </th>
-                <th class="w-32 px-3 py-2 text-right text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Action</th>
+                <th class="px-2 py-2 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Last Calculated</th>
+                <th class="w-28 px-2 py-2 text-center text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">Action</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
               <template v-for="row in sortedRows" :key="row.studentId">
                 <tr class="hover:bg-slate-50 dark:hover:bg-slate-700">
-                  <td class="px-3 py-2 font-medium text-slate-900 dark:text-white">{{ row.studentId }}</td>
-                  <td class="px-3 py-2 text-slate-700 dark:text-slate-300">{{ row.groupName }}</td>
-                  <td class="px-3 py-2 text-slate-700 dark:text-slate-300">{{ formatDecimal(row.grade?.weightedTotal) }}</td>
-                  <td class="px-3 py-2 text-slate-700 dark:text-slate-300">{{ formatDecimal(row.grade?.completionRatio) }}</td>
-                  <td class="px-3 py-2 text-slate-700 dark:text-slate-300">{{ formatDecimal(row.grade?.finalGrade) }}</td>
-                  <td class="px-3 py-2 text-right">
+                  <td class="px-2 py-2 font-medium text-slate-900 dark:text-white">{{ row.studentId }}</td>
+                  <td class="px-2 py-2 text-slate-700 dark:text-slate-300">{{ row.groupName }}</td>
+                  <td class="px-2 py-2 text-slate-700 dark:text-slate-300">{{ formatDecimal(row.grade?.weightedTotal) }}</td>
+                  <td class="px-2 py-2 text-slate-700 dark:text-slate-300">{{ formatDecimal(row.grade?.completionRatio) }}</td>
+                  <td class="px-2 py-2 text-slate-700 dark:text-slate-300">{{ formatDecimal(row.grade?.finalGrade) }}</td>
+                  <td class="px-2 py-2 text-slate-700 dark:text-slate-300">{{ formatDateTime(row.grade?.calculatedAt) }}</td>
+                  <td class="px-2 py-2 text-center">
                     <button
                       type="button"
-                      class="inline-flex w-24 items-center justify-center rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
+                      class="inline-flex min-w-20 items-center justify-center rounded-lg bg-blue-600 px-2 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
                       :class="row.loading ? 'opacity-80' : ''"
                       @click="handleCalculate(row)"
                     >
@@ -269,7 +324,7 @@ onMounted(loadPageData);
                   </td>
                 </tr>
                 <tr v-if="row.error">
-                  <td colspan="6" class="px-3 pb-3 pt-1">
+                  <td colspan="8" class="px-3 pb-3 pt-1">
                     <p class="text-xs text-red-600 dark:text-red-400">{{ row.error }}</p>
                   </td>
                 </tr>
