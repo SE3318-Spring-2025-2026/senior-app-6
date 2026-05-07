@@ -16,6 +16,10 @@ public interface SprintTrackingLogRepository extends JpaRepository<SprintTrackin
 
     List<SprintTrackingLog> findByGroupIdAndSprintId(UUID groupId, UUID sprintId);
 
+    List<SprintTrackingLog> findByGroupId(UUID groupId);
+
+    List<SprintTrackingLog> findByGroupIdAndAssigneeGithubUsernameAndPrMergedTrue(UUID groupId, String assigneeGithubUsername);
+
     List<SprintTrackingLog> findBySprintId(UUID sprintId);
 
     @Modifying

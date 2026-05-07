@@ -35,8 +35,14 @@ import com.senior.spm.service.dto.AdvisorRequestDetail;
 import com.senior.spm.service.dto.AdvisorRequestSummary;
 import com.senior.spm.service.dto.AdvisorRespondResponse;
 
-import lombok.RequiredArgsConstructor;
+import com.senior.spm.entity.AuditLog.Outcome;
+import com.senior.spm.entity.AuditLog.UserType;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdvisorService {
@@ -47,6 +53,7 @@ public class AdvisorService {
     private final StaffUserRepository staffUserRepository;
     private final ScheduleWindowRepository scheduleWindowRepository;
     private final TermConfigService termConfigService;
+    private final AuditLogService auditLogService;
 
     // =========================================================================
     // STUDENT — Browse & Request Flow (P3-API-01)
@@ -174,7 +181,10 @@ public class AdvisorService {
         request.setStatus(AdvisorRequest.RequestStatus.PENDING);
         request.setSentAt(now);
         AdvisorRequest saved = advisorRequestRepository.save(request);
+        auditLogService.record(requesterUUID, UserType.STUDENT, "ADVISOR_REQUEST_SENT", Outcome.SUCCESS, null);
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                requesterUUID, "ADVISOR_REQUEST_SENT", advisorId, groupId);
         return AdvisorRequestResponse.builder()
                 .requestId(saved.getId())
                 .groupId(group.getId())
@@ -279,6 +289,7 @@ public class AdvisorService {
         // 5. Cancel and persist
         request.setStatus(AdvisorRequest.RequestStatus.CANCELLED);
         advisorRequestRepository.save(request);
+        auditLogService.record(requesterUUID, UserType.STUDENT, "ADVISOR_REQUEST_CANCELLED", Outcome.SUCCESS, null);
 
         return AdvisorRequestResponse.builder()
                 .requestId(request.getId())
@@ -419,7 +430,10 @@ public class AdvisorService {
             request.setStatus(AdvisorRequest.RequestStatus.REJECTED);
             request.setRespondedAt(now);
             advisorRequestRepository.save(request);
+            auditLogService.record(professorId, UserType.STAFF, "ADVISOR_REQUEST_RESPONDED", Outcome.SUCCESS, null);
 
+            log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                    professorId, "ADVISOR_REQUEST_RESPONDED", request.getGroup().getId(), "REJECTED");
             return AdvisorRespondResponse.builder()
                 .requestId(request.getId())
                 .status(AdvisorRequest.RequestStatus.REJECTED)
@@ -455,7 +469,10 @@ public class AdvisorService {
 
         // Auto-reject all other PENDING requests for this group (same group, different advisors)
         advisorRequestRepository.bulkUpdateStatusForGroup(AdvisorRequest.RequestStatus.AUTO_REJECTED, group.getId(), request.getId());
+        auditLogService.record(professorId, UserType.STAFF, "ADVISOR_REQUEST_RESPONDED", Outcome.SUCCESS, null);
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                professorId, "ADVISOR_REQUEST_RESPONDED", group.getId(), "ACCEPTED");
         return AdvisorRespondResponse.builder()
             .requestId(request.getId())
             .status(AdvisorRequest.RequestStatus.ACCEPTED)
@@ -570,6 +587,7 @@ public class AdvisorService {
 
         advisorRequestRepository.bulkUpdateStatusByGroupId(AdvisorRequest.RequestStatus.AUTO_REJECTED, groupId);
 
+        auditLogService.record(currentUserId(), UserType.STAFF, "ADVISOR_ASSIGNED", Outcome.SUCCESS, null);
         return AdvisorOverrideResponse.builder()
                 .groupId(group.getId())
                 .status(ProjectGroup.GroupStatus.ADVISOR_ASSIGNED)
@@ -613,10 +631,16 @@ public class AdvisorService {
         group.setStatus(ProjectGroup.GroupStatus.TOOLS_BOUND);
         projectGroupRepository.save(group);
 
+        auditLogService.record(currentUserId(), UserType.STAFF, "ADVISOR_REMOVED", Outcome.SUCCESS, null);
         return AdvisorOverrideResponse.builder()
                 .groupId(group.getId())
                 .status(ProjectGroup.GroupStatus.TOOLS_BOUND)
                 .advisorId(null)
                 .build();
+    }
+
+    private UUID currentUserId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return UUID.fromString((String) principal);
     }
 }

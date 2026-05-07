@@ -3,7 +3,6 @@ package com.senior.spm.controller;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,10 +22,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.senior.spm.controller.request.AdvisorOverrideRequest;
+import com.senior.spm.controller.request.CoordinatorMemberRequest;
 import com.senior.spm.controller.request.ScheduleWindowRequest;
 import com.senior.spm.controller.response.ScheduleWindowResponse;
-import com.senior.spm.entity.ScheduleWindow;
-import com.senior.spm.controller.request.CoordinatorMemberRequest;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.MapDeliverablesRequest;
 import com.senior.spm.controller.request.RubricRequest;
@@ -34,6 +32,7 @@ import com.senior.spm.controller.request.SanitizationTriggerRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
+import com.senior.spm.controller.request.UpdateSystemConfigRequest;
 import com.senior.spm.controller.request.UpdateDeliverableWeightRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.controller.response.AdvisorCapacityResponse;
@@ -53,7 +52,6 @@ import com.senior.spm.entity.SprintTrackingLog.AiValidationResult;
 import com.senior.spm.exception.AlreadyExistsException;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.repository.ProjectGroupRepository;
-import com.senior.spm.repository.ScheduleWindowRepository;
 import com.senior.spm.repository.ScrumGradeRepository;
 import com.senior.spm.repository.SprintRepository;
 import com.senior.spm.repository.SprintTrackingLogRepository;
@@ -61,6 +59,8 @@ import com.senior.spm.service.AdvisorService;
 import com.senior.spm.service.DeliverableService;
 import com.senior.spm.service.GroupService;
 import com.senior.spm.service.SanitizationService;
+import com.senior.spm.service.ScheduleWindowService;
+import com.senior.spm.service.SystemConfigService;
 import com.senior.spm.service.SprintService;
 import com.senior.spm.service.SprintTrackingOrchestrator;
 import com.senior.spm.service.StudentService;
@@ -87,7 +87,8 @@ public class CoordinatorController {
     private final ProjectGroupRepository projectGroupRepository;
     private final TermConfigService termConfigService;
     private final SanitizationService sanitizationService;
-    private final ScheduleWindowRepository scheduleWindowRepository;
+    private final ScheduleWindowService scheduleWindowService;
+    private final SystemConfigService systemConfigService;
 
     public CoordinatorController(SprintService sprintService,
             DeliverableService deliverableService,
@@ -102,7 +103,8 @@ public class CoordinatorController {
             ProjectGroupRepository projectGroupRepository,
             TermConfigService termConfigService,
             SanitizationService sanitizationService,
-            ScheduleWindowRepository scheduleWindowRepository) {
+            ScheduleWindowService scheduleWindowService,
+            SystemConfigService systemConfigService) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
         this.studentService = studentService;
@@ -116,7 +118,8 @@ public class CoordinatorController {
         this.projectGroupRepository = projectGroupRepository;
         this.termConfigService = termConfigService;
         this.sanitizationService = sanitizationService;
-        this.scheduleWindowRepository = scheduleWindowRepository;
+        this.scheduleWindowService = scheduleWindowService;
+        this.systemConfigService = systemConfigService;
     }
 
     @PostMapping("/sprints")
@@ -511,93 +514,20 @@ public class CoordinatorController {
 
     // ========== S4-05 SCHEDULE WINDOW CRUD ENDPOINTS ==========
 
-    /**
-     * Returns exactly 2 entries — one per WindowType — regardless of DB state.
-     * Missing types are returned as placeholder rows: null id/dates, isActive=false.
-     */
     @GetMapping("/schedule-windows")
     public ResponseEntity<List<ScheduleWindowResponse>> getScheduleWindows() {
-        String termId = termConfigService.getActiveTermId();
-        LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
-
-        List<ScheduleWindowResponse> result = Arrays.stream(ScheduleWindow.WindowType.values())
-                .map(type -> scheduleWindowRepository.findByTermIdAndType(termId, type)
-                        .map(w -> ScheduleWindowResponse.builder()
-                                .id(w.getId())
-                                .type(w.getType())
-                                .termId(w.getTermId())
-                                .opensAt(w.getOpensAt())
-                                .closesAt(w.getClosesAt())
-                                .isActive(!now.isBefore(w.getOpensAt()) && !now.isAfter(w.getClosesAt()))
-                                .build())
-                        .orElse(ScheduleWindowResponse.builder()
-                                .id(null)
-                                .type(type)
-                                .termId(termId)
-                                .opensAt(null)
-                                .closesAt(null)
-                                .isActive(false)
-                                .build()))
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(scheduleWindowService.getAll());
     }
 
-    /**
-     * Upserts a schedule window for the active term.
-     * Same termId+type → update existing row (no duplicate error).
-     * closesAt <= opensAt → 400.
-     */
     @PostMapping("/schedule-windows")
-    public ResponseEntity<?> upsertScheduleWindow(@Valid @RequestBody ScheduleWindowRequest request) {
-        if (!request.getClosesAt().isAfter(request.getOpensAt())) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ErrorMessage("closesAt must be after opensAt"));
-        }
-
-        String termId = termConfigService.getActiveTermId();
-        LocalDateTime now = LocalDateTime.now(ZoneId.of("UTC"));
-
-        var existing = scheduleWindowRepository.findByTermIdAndType(termId, request.getType());
-        ScheduleWindow window;
-        boolean isNew;
-        if (existing.isPresent()) {
-            window = existing.get();
-            isNew = false;
-        } else {
-            window = new ScheduleWindow();
-            window.setTermId(termId);
-            window.setType(request.getType());
-            isNew = true;
-        }
-
-        window.setOpensAt(request.getOpensAt());
-        window.setClosesAt(request.getClosesAt());
-        scheduleWindowRepository.save(window);
-
-        ScheduleWindowResponse response = ScheduleWindowResponse.builder()
-                .id(window.getId())
-                .type(window.getType())
-                .termId(window.getTermId())
-                .opensAt(window.getOpensAt())
-                .closesAt(window.getClosesAt())
-                .isActive(!now.isBefore(window.getOpensAt()) && !now.isAfter(window.getClosesAt()))
-                .build();
-
-        return ResponseEntity.status(isNew ? HttpStatus.CREATED : HttpStatus.OK).body(response);
+    public ResponseEntity<Void> upsertScheduleWindow(@Valid @RequestBody ScheduleWindowRequest request) {
+        boolean isNew = scheduleWindowService.upsert(request);
+        return ResponseEntity.status(isNew ? HttpStatus.CREATED : HttpStatus.OK).build();
     }
 
-    /**
-     * Deletes a schedule window by id.
-     * After deletion, student actions on that window type will get ScheduleWindowClosedException.
-     */
     @DeleteMapping("/schedule-windows/{id}")
-    public ResponseEntity<?> deleteScheduleWindow(@PathVariable UUID id) {
-        if (!scheduleWindowRepository.existsById(id)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ErrorMessage("Schedule window not found"));
-        }
-        scheduleWindowRepository.deleteById(id);
+    public ResponseEntity<Void> deleteScheduleWindow(@PathVariable UUID id) {
+        scheduleWindowService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
@@ -605,5 +535,11 @@ public class CoordinatorController {
     private int countAi(List<SprintTrackingLog> logs, AiValidationResult result) {
         return (int) logs.stream().filter(l -> result == l.getAiPrResult()).count()
              + (int) logs.stream().filter(l -> result == l.getAiDiffResult()).count();
+    }
+
+    @PatchMapping("/system-config")
+    public ResponseEntity<Void> updateSystemConfig(@Valid @RequestBody UpdateSystemConfigRequest request) {
+        systemConfigService.updateConfig(request.getActiveTermId(), request.getMaxTeamSize());
+        return ResponseEntity.ok().build();
     }
 }

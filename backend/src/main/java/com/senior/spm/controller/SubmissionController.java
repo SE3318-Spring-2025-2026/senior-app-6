@@ -20,6 +20,7 @@ import com.senior.spm.controller.request.RubricMappingRequest;
 import com.senior.spm.controller.request.UpdateDeliverableSubmissionRequest;
 import com.senior.spm.controller.response.DeliverableSubmissionDetailResponse;
 import com.senior.spm.controller.response.DeliverableSubmissionResponse;
+import com.senior.spm.controller.response.RubricMappingResponse;
 import com.senior.spm.service.DeliverableSubmissionService;
 import com.senior.spm.service.SubmissionService;
 
@@ -65,6 +66,14 @@ public class SubmissionController {
         UUID requesterUUID = extractPrincipalUUID();
         submissionService.saveRubricMappings(submissionId, requesterUUID, mappings);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{submissionId}/rubric-mappings")
+    public ResponseEntity<RubricMappingResponse> getRubricMappings(
+            @PathVariable UUID submissionId
+    ) {
+        UUID requesterUUID = extractPrincipalUUID();
+        return ResponseEntity.ok(submissionService.getRubricMappings(submissionId, requesterUUID));
     }
 
     private UUID extractPrincipalUUID() {
