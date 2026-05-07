@@ -45,6 +45,7 @@ import type {
 import type { StudentSearchResult } from '~/types/student';
 import type { BindJiraRequest, BindGithubRequest, BindToolResponse } from '~/types/tools';
 import type { SanitizationReport } from '~/types/sanitization';
+import type { ScheduleWindowItem, ScheduleWindowPayload } from '~/types/scheduleWindow';
 import type {
   StudentDeliverable,
   SubmissionCreateResponse,
@@ -697,6 +698,18 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
   );
 }
 
+  async function fetchScheduleWindows(token?: string): Promise<ScheduleWindowItem[]> {
+    return apiCall<ScheduleWindowItem[]>("/coordinator/schedule-windows", "GET", undefined, token);
+  }
+
+  async function upsertScheduleWindow(payload: ScheduleWindowPayload, token?: string): Promise<ScheduleWindowItem> {
+    return apiCall<ScheduleWindowItem>("/coordinator/schedule-windows", "POST", payload, token);
+  }
+
+  async function deleteScheduleWindow(id: string, token?: string): Promise<void> {
+    return apiCall<void>(`/coordinator/schedule-windows/${encodeURIComponent(id)}`, "DELETE", undefined, token);
+  }
+
   return {
     getAuthToken,
     loginFaculty,
@@ -767,5 +780,8 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     fetchSubmission,
     fetchRubricMappings,
     updateSystemConfig,
+    fetchScheduleWindows,
+    upsertScheduleWindow,
+    deleteScheduleWindow,
   };
 }
