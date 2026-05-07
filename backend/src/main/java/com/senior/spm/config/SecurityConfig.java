@@ -59,6 +59,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/professors/**").hasRole("PROFESSOR")
                                 .requestMatchers("/api/committees/**").hasRole("COORDINATOR")
                                 .requestMatchers("/api/advisor/**").hasRole("PROFESSOR")
+                                .requestMatchers(HttpMethod.POST, "/api/submissions/*/grade").hasRole("PROFESSOR")
                                 .requestMatchers(HttpMethod.POST, "/api/submissions/*/comments").hasRole("PROFESSOR")
                                 .requestMatchers(HttpMethod.GET, "/api/submissions/*/comments").hasAnyRole("STUDENT", "PROFESSOR")
                                 .requestMatchers("/api/submissions/**").hasAnyRole("STUDENT", "PROFESSOR")
