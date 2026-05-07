@@ -40,6 +40,7 @@ import com.senior.spm.entity.AuditLog.UserType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
 @Service
@@ -586,7 +587,7 @@ public class AdvisorService {
 
         advisorRequestRepository.bulkUpdateStatusByGroupId(AdvisorRequest.RequestStatus.AUTO_REJECTED, groupId);
 
-        auditLogService.record(null, UserType.STAFF, "ADVISOR_ASSIGNED", Outcome.SUCCESS, null);
+        auditLogService.record(currentUserId(), UserType.STAFF, "ADVISOR_ASSIGNED", Outcome.SUCCESS, null);
         return AdvisorOverrideResponse.builder()
                 .groupId(group.getId())
                 .status(ProjectGroup.GroupStatus.ADVISOR_ASSIGNED)
@@ -630,11 +631,16 @@ public class AdvisorService {
         group.setStatus(ProjectGroup.GroupStatus.TOOLS_BOUND);
         projectGroupRepository.save(group);
 
-        auditLogService.record(null, UserType.STAFF, "ADVISOR_REMOVED", Outcome.SUCCESS, null);
+        auditLogService.record(currentUserId(), UserType.STAFF, "ADVISOR_REMOVED", Outcome.SUCCESS, null);
         return AdvisorOverrideResponse.builder()
                 .groupId(group.getId())
                 .status(ProjectGroup.GroupStatus.TOOLS_BOUND)
                 .advisorId(null)
                 .build();
+    }
+
+    private UUID currentUserId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return UUID.fromString((String) principal);
     }
 }

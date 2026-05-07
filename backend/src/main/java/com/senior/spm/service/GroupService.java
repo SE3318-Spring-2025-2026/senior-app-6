@@ -39,6 +39,7 @@ import com.senior.spm.entity.AuditLog.UserType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Slf4j
 @Service
@@ -504,7 +505,7 @@ public class GroupService {
         // 6. Auto-deny all PENDING invitations for this student
         groupInvitationRepository.autoDenyAllPendingByInviteeId(student.getId());
 
-        auditLogService.record(null, UserType.STAFF, "MEMBER_ADDED", Outcome.SUCCESS, null);
+        auditLogService.record(currentUserId(), UserType.STAFF, "MEMBER_ADDED", Outcome.SUCCESS, null);
         return toGroupDetailResponse(group, null);
     }
 
@@ -554,7 +555,7 @@ public class GroupService {
         // 5. Delete membership
         groupMembershipRepository.delete(membership);
 
-        auditLogService.record(null, UserType.STAFF, "MEMBER_REMOVED", Outcome.SUCCESS, null);
+        auditLogService.record(currentUserId(), UserType.STAFF, "MEMBER_REMOVED", Outcome.SUCCESS, null);
         return toGroupDetailResponse(group, null);
     }
 
@@ -613,7 +614,12 @@ public class GroupService {
             groupId
         );
 
-        auditLogService.record(null, UserType.STAFF, "GROUP_DISBANDED", Outcome.SUCCESS, null);
+        auditLogService.record(currentUserId(), UserType.STAFF, "GROUP_DISBANDED", Outcome.SUCCESS, null);
         return toGroupDetailResponse(group, null);
+    }
+
+    private UUID currentUserId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return UUID.fromString((String) principal);
     }
 }

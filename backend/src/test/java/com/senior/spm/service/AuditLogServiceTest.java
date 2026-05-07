@@ -1,9 +1,11 @@
 package com.senior.spm.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doThrow;
 
 import java.util.UUID;
 
@@ -70,6 +72,16 @@ class AuditLogServiceTest {
             assertThat(saved.getUserId()).isNull();
             assertThat(saved.getIpAddress()).isNull();
             assertThat(saved.getOutcome()).isEqualTo(Outcome.FAILURE);
+        }
+
+        @Test
+        void record_doesNotPropagateException_whenAuditWriteFails() {
+            doThrow(new RuntimeException("DB unavailable"))
+                .when(auditLogRepository).save(org.mockito.ArgumentMatchers.any());
+
+            assertThatCode(() ->
+                auditLogService.record(UUID.randomUUID(), UserType.STAFF, "STAFF_LOGIN", Outcome.SUCCESS, null)
+            ).doesNotThrowAnyException();
         }
     }
 

@@ -14,10 +14,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -89,6 +92,9 @@ class AdvisorServiceBrowseRequestTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(UUID.randomUUID().toString(), null, List.of()));
+
         professor = new StaffUser();
         professor.setId(ADVISOR_ID);
         professor.setMail("advisor@university.edu");
@@ -113,6 +119,11 @@ class AdvisorServiceBrowseRequestTest {
         leader.setId(STUDENT_UUID);
         leader.setStudentId("22070006001");
         leaderMembership.setStudent(leader);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     // ══════════════════════════════════════════════════════════════════════════
