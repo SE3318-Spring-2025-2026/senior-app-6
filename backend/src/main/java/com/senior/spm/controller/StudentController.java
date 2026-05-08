@@ -24,14 +24,17 @@ import com.senior.spm.service.StudentService;
 import com.senior.spm.util.SecurityUtils;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/api/students")
 @RequiredArgsConstructor
 @Validated
+@Slf4j
 public class StudentController {
 
     private static final Pattern STUDENT_ID_PATTERN = Pattern.compile("^[0-9]{11}$");
+    private static final String UNAUTHORIZED_GRADE_MSG = "Caller is unauthorized to view this grade";
 
     private final StudentService studentService;
     private final FinalGradeCalculationService finalGradeCalculationService;
@@ -49,6 +52,21 @@ public class StudentController {
     }
 
     /**
+     * Returns the stored final grade for the student without recalculating.
+     * 204 No Content if no grade has been calculated yet for this student in the active term.
+     */
+    @GetMapping("/{studentId}/grade")
+    public ResponseEntity<?> getStoredGrade(@PathVariable String studentId, Authentication auth) {
+        if (!STUDENT_ID_PATTERN.matcher(studentId).matches()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorMessage("studentId must be an 11-digit number"));
+        }
+        ResponseEntity<?> accessError = checkGradeAccess(studentId, auth);
+        if (accessError != null) return accessError;
+        return doGetStored(studentId);
+    }
+
+    /**
      * Calculates (and upserts) the final grade for the student with the given 11-digit student number.
      *
      * @param studentId 11-digit student number — resolved via {@code StudentRepository.findByStudentId()}
@@ -62,15 +80,37 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ErrorMessage("studentId must be an 11-digit number"));
         }
+        ResponseEntity<?> accessError = checkGradeAccess(studentId, auth);
+        if (accessError != null) return accessError;
+        return doCalculate(studentId);
+    }
 
+    /**
+     * Validates grade-read authorization for the given studentId.
+     * Returns null if the caller is permitted, or an error ResponseEntity otherwise.
+     * Coordinator: always allowed. Professor: only the student's advisor. Student: own grade only.
+     */
+    private ResponseEntity<?> checkGradeAccess(String studentId, Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ErrorMessage("Unauthorized"));
         }
 
+        // Resolve the target student up-front for ALL roles. Without this, a Coordinator
+        // hitting an unknown studentId would skip the lookup and the downstream "no grade"
+        // path would map it to 204 — masking the real 404.
+        com.senior.spm.entity.Student targetStudent;
+        try {
+            targetStudent = studentService.getStudentByStudentId(studentId);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
+        }
+
         // Caller's role comes from the JWT filter: "ROLE_COORDINATOR", "ROLE_PROFESSOR", "ROLE_STUDENT"
         boolean isCoordinator = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_COORDINATOR"));
+        if (isCoordinator) return null;
+
         boolean isProfessor = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_PROFESSOR"));
         boolean isStudent = auth.getAuthorities().stream()
@@ -79,40 +119,41 @@ public class StudentController {
         // Caller UUID is stored as principal (set by JwtAuthenticationFilter)
         UUID callerUUID = SecurityUtils.extractPrincipalUUID(auth);
 
-        // Coordinator — always allowed
-        if (isCoordinator) {
-            return doCalculate(studentId);
-        }
-
-        // Resolve the target student for auth checks
-        com.senior.spm.entity.Student targetStudent;
-        try {
-            targetStudent = studentService.getStudentByStudentId(studentId);
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
-        }
-
         if (isProfessor) {
             // Professor — allowed only if caller is the advisor of the student's group
             UUID advisorId = groupService.getAdvisorIdForStudent(targetStudent.getId());
             if (advisorId == null || !advisorId.equals(callerUUID)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(new ErrorMessage("Caller is unauthorized to view this grade"));
+                        .body(new ErrorMessage(UNAUTHORIZED_GRADE_MSG));
             }
-            return doCalculate(studentId);
+            return null;
         }
 
         if (isStudent) {
             // Student — allowed only if caller's UUID matches the target student's UUID
             if (!callerUUID.equals(targetStudent.getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(new ErrorMessage("Caller is unauthorized to view this grade"));
+                        .body(new ErrorMessage(UNAUTHORIZED_GRADE_MSG));
             }
-            return doCalculate(studentId);
+            return null;
         }
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new ErrorMessage("Caller is unauthorized to view this grade"));
+                .body(new ErrorMessage(UNAUTHORIZED_GRADE_MSG));
+    }
+
+    private ResponseEntity<?> doGetStored(String studentId) {
+        try {
+            FinalGradeResponse response = finalGradeCalculationService.getStoredFinalGrade(studentId);
+            return ResponseEntity.ok(response);
+        } catch (NotFoundException e) {
+            // Per issue #286: 204 No Content when grade has not yet been calculated.
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            log.error("Unexpected error reading stored grade for studentId={}", studentId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ErrorMessage("An unexpected error occurred."));
+        }
     }
 
     private ResponseEntity<?> doCalculate(String studentId) {
@@ -122,8 +163,9 @@ public class StudentController {
         } catch (NotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(e.getMessage()));
         } catch (Exception e) {
+            log.error("Unexpected error calculating grade for studentId={}", studentId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ErrorMessage("An unexpected error occurred: " + e.getMessage()));
+                    .body(new ErrorMessage("An unexpected error occurred."));
         }
     }
 }

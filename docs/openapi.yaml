@@ -21,6 +21,22 @@ components:
         message:
           type: string
 
+    RubricGradeSubmitResponse:
+      type: object
+      properties:
+        submissionId:
+          type: string
+          format: uuid
+        reviewerId:
+          type: string
+          format: uuid
+        baseDeliverableGrade:
+          type: number
+          format: double
+          description: |
+            B = AVG_reviewers( SUM_criteria(numericGrade × weight) / SUM(weight) )
+            Computed across all reviewers who have graded this submission so far.
+
     StaffUserInfo:
       type: object
       properties:
@@ -3063,6 +3079,77 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
 
+  /submissions/{submissionId}/grade:
+    post:
+      tags: [Professor]
+      summary: Submit or update rubric grades for a submission (Committee members only)
+      description: |
+        Upserts one RubricGrade row per criterion. Committee membership is
+        deliverable-scoped — a professor on the Proposal committee is NOT
+        authorized to grade the SoW submission.
+        Returns 201 on the reviewer's first grade submission, 200 on update.
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [grades]
+              properties:
+                grades:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [criterionId, selectedGrade]
+                    properties:
+                      criterionId:
+                        type: string
+                        format: uuid
+                      selectedGrade:
+                        type: string
+                        description: |
+                          Binary criteria: "S" or "F".
+                          Soft criteria: "A", "B", "C", "D", or "F".
+      responses:
+        '201':
+          description: Grades submitted for the first time by this reviewer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RubricGradeSubmitResponse'
+        '200':
+          description: Reviewer's existing grades updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RubricGradeSubmitResponse'
+        '400':
+          description: Invalid grade value for criterion type, missing criterion, or unknown criterion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a committee member for this submission's deliverable + group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
   /submissions/{submissionId}/comments:
     post:
       tags: [Professor]
@@ -3229,6 +3316,67 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
 
   # ── P7 — Final Grade Calculation ─────────────────────────────────────────
+  /students/{studentId}/grade:
+    get:
+      tags: [Student, Professor, Coordinator]
+      summary: "Read the previously stored final grade (no recalculation)"
+      description: |
+        Returns the stored FinalGrade row for the student in the active term, if one exists.
+        Does NOT trigger recalculation — for that, use GET /students/{studentId}/grade/calculate.
+        The returned `deliverableBreakdown` is always an empty list `[]` because breakdowns
+        are computed on-the-fly and not persisted (see endpoints_p7.md D3).
+        Auth rules:
+        - COORDINATOR: always allowed.
+        - PROFESSOR: allowed only if caller is the advisor of the student's group.
+        - STUDENT: allowed only if calling for themselves.
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{11}$'
+          description: 11-digit student number (not a UUID)
+      responses:
+        '200':
+          description: Stored final grade returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinalGradeResponse'
+              example:
+                studentId: "01234567890"
+                groupId: "uuid"
+                deliverableBreakdown: []
+                weightedTotal: 0.0
+                completionRatio: 0.95
+                finalGrade: 0.0
+                calculatedAt: "2026-05-01T14:30:00"
+        '204':
+          description: No final grade has been calculated yet for this student in the active term
+        '400':
+          description: studentId does not match pattern ^[0-9]{11}$
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is unauthorized to view this grade
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                message: "Caller is unauthorized to view this grade"
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                message: "Student not found"
+
   /students/{studentId}/grade/calculate:
     get:
       tags: [Student, Professor, Coordinator]

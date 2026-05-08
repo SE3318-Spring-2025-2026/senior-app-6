@@ -3,6 +3,7 @@ package com.senior.spm.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -17,10 +18,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.senior.spm.controller.request.RubricMappingRequest;
+import com.senior.spm.controller.request.SubmitGradesRequest;
 import com.senior.spm.controller.request.UpdateDeliverableSubmissionRequest;
 import com.senior.spm.controller.response.DeliverableSubmissionDetailResponse;
 import com.senior.spm.controller.response.DeliverableSubmissionResponse;
+import com.senior.spm.controller.response.RubricGradeSubmitResponse;
+import com.senior.spm.controller.response.RubricMappingResponse;
 import com.senior.spm.service.DeliverableSubmissionService;
+import com.senior.spm.service.RubricGradingService;
+import com.senior.spm.service.RubricGradingService.RubricGradingResult;
 import com.senior.spm.service.SubmissionService;
 
 import jakarta.validation.Valid;
@@ -34,6 +40,7 @@ public class SubmissionController {
 
     private final DeliverableSubmissionService deliverableSubmissionService;
     private final SubmissionService submissionService;
+    private final RubricGradingService rubricGradingService;
 
     @PutMapping("/{submissionId}")
     public ResponseEntity<DeliverableSubmissionResponse> updateSubmission(
@@ -65,6 +72,25 @@ public class SubmissionController {
         UUID requesterUUID = extractPrincipalUUID();
         submissionService.saveRubricMappings(submissionId, requesterUUID, mappings);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{submissionId}/rubric-mappings")
+    public ResponseEntity<RubricMappingResponse> getRubricMappings(
+            @PathVariable UUID submissionId
+    ) {
+        UUID requesterUUID = extractPrincipalUUID();
+        return ResponseEntity.ok(submissionService.getRubricMappings(submissionId, requesterUUID));
+    }
+
+    @PostMapping("/{submissionId}/grade")
+    public ResponseEntity<RubricGradeSubmitResponse> submitGrades(
+            @PathVariable UUID submissionId,
+            @Valid @RequestBody SubmitGradesRequest request) {
+        UUID reviewerId = extractPrincipalUUID();
+        RubricGradingResult result = rubricGradingService.submitGrades(
+                submissionId, reviewerId, request.getGrades());
+        HttpStatus status = result.isFirstGrade() ? HttpStatus.CREATED : HttpStatus.OK;
+        return ResponseEntity.status(status).body(new RubricGradeSubmitResponse(result.baseDeliverableGrade()));
     }
 
     private UUID extractPrincipalUUID() {

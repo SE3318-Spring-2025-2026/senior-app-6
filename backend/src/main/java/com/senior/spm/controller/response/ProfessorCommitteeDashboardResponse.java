@@ -37,6 +37,7 @@ public class ProfessorCommitteeDashboardResponse {
         private UUID groupId;
         private String groupName;
         private String status;
+        private UUID submissionId;
     }
 
     @Data

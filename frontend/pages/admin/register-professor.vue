@@ -14,8 +14,9 @@
 	});
 
 	const email = ref("");
+	const capacity = ref("");
 	const submitting = ref(false);
-	const errors = ref<{ mail?: string }>({});
+	const errors = ref<{ mail?: string; capacity?: string }>({});
 	const submitError = ref("");
 	const resetToken = ref("");
 	const resetLink = computed(() => {
@@ -38,10 +39,20 @@
 			return;
 		}
 
+		let capacityNum: number | undefined;
+		if (capacity.value !== "") {
+			const parsed = Number(capacity.value);
+			if (!Number.isInteger(parsed) || parsed < 1 || parsed > 20) {
+				errors.value = { ...errors.value, capacity: "Capacity must be a whole number between 1 and 20." };
+				return;
+			}
+			capacityNum = parsed;
+		}
+
 		submitting.value = true;
 		try {
 			const token = getAuthToken();
-			const response = await registerProfessor(result.data.mail, token ?? undefined);
+			const response = await registerProfessor(result.data.mail, token ?? undefined, capacityNum);
 			resetToken.value = response.resetToken;
 		} catch (error: unknown) {
 			const errorMsg =
@@ -66,6 +77,7 @@
 
 	function registerAnother() {
 		email.value = "";
+		capacity.value = "";
 		resetToken.value = "";
 		submitError.value = "";
 		errors.value = {};
@@ -161,6 +173,23 @@
             </div>
             <p v-if="errors.mail" class="text-xs text-red-600 dark:text-red-400">
               {{ errors.mail }}
+            </p>
+          </label>
+
+          <label class="block space-y-1.5">
+            <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Advisor Capacity (optional, default 5)
+            </span>
+            <input
+              v-model="capacity"
+              type="number"
+              min="1"
+              max="20"
+              placeholder="5"
+              class="w-full rounded-lg border border-slate-300 bg-white py-2 px-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20"
+            />
+            <p v-if="errors.capacity" class="text-xs text-red-600 dark:text-red-400">
+              {{ errors.capacity }}
             </p>
           </label>
 

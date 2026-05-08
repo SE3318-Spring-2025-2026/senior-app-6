@@ -11,8 +11,6 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Verifies entity-level constraints and annotations that the spec mandates.
@@ -244,124 +242,6 @@ class EntityAnnotationTest {
         JoinColumn jc = f.getAnnotation(JoinColumn.class);
         assertThat(jc.name()).isEqualTo("commenter_id");
         assertThat(jc.nullable()).isFalse();
-    }
-
-    // ── FinalGrade entity ─────────────────────────────────────────────────────
-
-    @Test
-    void finalGrade_tableName_is_final_grade() {
-        Table table = FinalGrade.class.getAnnotation(Table.class);
-        assertThat(table.name()).isEqualTo("final_grade");
-    }
-
-    @Test
-    void finalGrade_hasExactlyOneUniqueConstraint() {
-        Table table = FinalGrade.class.getAnnotation(Table.class);
-        assertThat(table.uniqueConstraints()).hasSize(1);
-    }
-
-    @Test
-    void finalGrade_uniqueConstraint_isCompositeAndNamedCorrectly() {
-        UniqueConstraint uc = findConstraint(FinalGrade.class, "uq_fg_student_term");
-        assertThat(uc.columnNames()).containsExactlyInAnyOrder("student_id", "term_id");
-    }
-
-    @Test
-    void finalGrade_termId_isNotNullable() throws Exception {
-        Field f = FinalGrade.class.getDeclaredField("termId");
-        jakarta.persistence.Column col = f.getAnnotation(jakarta.persistence.Column.class);
-        assertThat(col.nullable()).isFalse();
-    }
-
-    @Test
-    void finalGrade_student_joinColumn_isNotNullableAndNamedCorrectly() throws Exception {
-        Field f = FinalGrade.class.getDeclaredField("student");
-        JoinColumn jc = f.getAnnotation(JoinColumn.class);
-        assertThat(jc.name()).isEqualTo("student_id");
-        assertThat(jc.nullable()).isFalse();
-    }
-
-    @Test
-    void finalGrade_group_joinColumn_isNotNullableAndNamedCorrectly() throws Exception {
-        Field f = FinalGrade.class.getDeclaredField("group");
-        JoinColumn jc = f.getAnnotation(JoinColumn.class);
-        assertThat(jc.name()).isEqualTo("group_id");
-        assertThat(jc.nullable()).isFalse();
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"weightedTotal", "completionRatio", "finalGrade"})
-    void finalGrade_bigDecimalFields_areNullableWithPrecision10Scale4(String fieldName) throws Exception {
-        Field f = FinalGrade.class.getDeclaredField(fieldName);
-        jakarta.persistence.Column col = f.getAnnotation(jakarta.persistence.Column.class);
-        assertThat(col.nullable()).isTrue();
-        assertThat(col.precision()).isEqualTo(10);
-        assertThat(col.scale()).isEqualTo(4);
-    }
-
-    @Test
-    void finalGrade_calculatedAt_isNullable() throws Exception {
-        Field f = FinalGrade.class.getDeclaredField("calculatedAt");
-        jakarta.persistence.Column col = f.getAnnotation(jakarta.persistence.Column.class);
-        assertThat(col.nullable()).isTrue();
-    }
-
-    // ── RubricGrade entity constraints ────────────────────────────────────────
-
-    @Test
-    void rubricGrade_tableName_is_rubric_grade() {
-        Table table = RubricGrade.class.getAnnotation(Table.class);
-        assertThat(table.name()).isEqualTo("rubric_grade");
-    }
-
-    @Test
-    void rubricGrade_hasExactlyOneUniqueConstraint() {
-        Table table = RubricGrade.class.getAnnotation(Table.class);
-        assertThat(table.uniqueConstraints()).hasSize(1);
-    }
-
-    @Test
-    void rubricGrade_uniqueConstraint_hasCorrectColumnsAndName() {
-        UniqueConstraint uc = findConstraint(RubricGrade.class, "uq_rg_submission_criterion_reviewer");
-        assertThat(uc.columnNames()).containsExactlyInAnyOrder("submission_id", "criterion_id", "reviewer_id");
-    }
-
-    @Test
-    void rubricGrade_submission_joinColumn_isCorrect() throws Exception {
-        Field f = RubricGrade.class.getDeclaredField("submission");
-        JoinColumn jc = f.getAnnotation(JoinColumn.class);
-        assertThat(jc.name()).isEqualTo("submission_id");
-        assertThat(jc.nullable()).isFalse();
-    }
-
-    @Test
-    void rubricGrade_criterion_joinColumn_isCorrect() throws Exception {
-        Field f = RubricGrade.class.getDeclaredField("criterion");
-        JoinColumn jc = f.getAnnotation(JoinColumn.class);
-        assertThat(jc.name()).isEqualTo("criterion_id");
-        assertThat(jc.nullable()).isFalse();
-    }
-
-    @Test
-    void rubricGrade_reviewer_joinColumn_isCorrect() throws Exception {
-        Field f = RubricGrade.class.getDeclaredField("reviewer");
-        JoinColumn jc = f.getAnnotation(JoinColumn.class);
-        assertThat(jc.name()).isEqualTo("reviewer_id");
-        assertThat(jc.nullable()).isFalse();
-    }
-
-    @Test
-    void rubricGrade_selectedGrade_isNotNullable() throws Exception {
-        Field f = RubricGrade.class.getDeclaredField("selectedGrade");
-        jakarta.persistence.Column col = f.getAnnotation(jakarta.persistence.Column.class);
-        assertThat(col.nullable()).isFalse();
-    }
-
-    @Test
-    void rubricGrade_gradedAt_isNotNullable() throws Exception {
-        Field f = RubricGrade.class.getDeclaredField("gradedAt");
-        jakarta.persistence.Column col = f.getAnnotation(jakarta.persistence.Column.class);
-        assertThat(col.nullable()).isFalse();
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

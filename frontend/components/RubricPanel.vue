@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { Scale, CheckSquare2, MousePointerClick } from "lucide-vue-next";
 import type { RubricCriterionResponse } from "~/types/rubric";
-import type { RubricMappingItem } from "~/types/submission";
+import type { RubricMappingEntry } from "~/types/submission";
 
 const props = defineProps<{
   criteria: RubricCriterionResponse[];
-  mappings: RubricMappingItem[];
+  mappings: RubricMappingEntry[];
   selectedCriterionName: string | null;
 }>();
 
@@ -14,11 +14,9 @@ const emit = defineEmits<{
   (e: "deselect"): void;
 }>();
 
-function getMappingForCriterion(criterionName: string): RubricMappingItem | undefined {
-  return props.mappings.find(
-    (m) => m.sectionReference?.toLowerCase().includes(criterionName.toLowerCase()) ||
-           criterionName.toLowerCase().includes(m.sectionReference?.toLowerCase() ?? "")
-  );
+function getMappingsForCriterion(criterion: RubricCriterionResponse): RubricMappingEntry[] {
+  if (!criterion.id) return [];
+  return props.mappings.filter((m) => m.criterionId === criterion.id);
 }
 
 function handleCriterionClick(criterion: RubricCriterionResponse) {
@@ -26,8 +24,8 @@ function handleCriterionClick(criterion: RubricCriterionResponse) {
     emit("deselect");
     return;
   }
-  const mapping = getMappingForCriterion(criterion.criterionName);
-  const sectionRef = mapping?.sectionReference ?? criterion.criterionName;
+  const mappings = getMappingsForCriterion(criterion);
+  const sectionRef = mappings[0]?.sectionKey ?? null;
   emit("select", criterion.criterionName, sectionRef);
 }
 
@@ -35,8 +33,8 @@ function isSelected(name: string): boolean {
   return props.selectedCriterionName === name;
 }
 
-function hasMappedSection(name: string): boolean {
-  return !!getMappingForCriterion(name);
+function hasMappedSection(criterion: RubricCriterionResponse): boolean {
+  return getMappingsForCriterion(criterion).length > 0;
 }
 
 const totalWeight = computed(() =>
@@ -129,7 +127,7 @@ const totalWeight = computed(() =>
               </span>
               <!-- Mapping indicator -->
               <span
-                v-if="hasMappedSection(criterion.criterionName)"
+                v-if="hasMappedSection(criterion)"
                 class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium"
               >
                 ✓ Section mapped

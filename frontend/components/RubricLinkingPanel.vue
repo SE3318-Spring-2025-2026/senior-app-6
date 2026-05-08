@@ -180,9 +180,9 @@ const totalWeight = computed(() =>
             <span
               class="flex-1 inline-block text-[11px] px-2 py-0.5 rounded border truncate"
               :class="criterionColor(idx)"
-              :title="mapping.sectionReference"
+              :title="mapping.sectionKey"
             >
-              "{{ truncate(mapping.sectionReference, 40) }}"
+              "{{ truncate(mapping.sectionKey, 40) }}"
             </span>
             <button
               type="button"
