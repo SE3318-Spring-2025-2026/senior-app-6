@@ -70,11 +70,12 @@ import type { GroupSummaryResponse } from "~/types/group";
     const details = await Promise.all(
       committees.map((c) => fetchCommittee(c.id, token).catch(() => null))
     )
+
     const assigned = new Set(
       details.flatMap((d) => d?.groups.map((g) => g.groupId) ?? [])
     )
     return allGroups.filter(
-      (g) => g.status === "ADVISOR_ASSIGNED" && !assigned.has(g.id)
+      (g) => true // g.status === "ADVISOR_ASSIGNED" && !assigned.has(g.id)
     )
   }
 

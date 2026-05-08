@@ -77,9 +77,7 @@ public class CommitteeService {
 
     @Transactional(readOnly = true)
     public List<CommitteeSummaryResponse> getCommittees(String termId) {
-        var committees = (termId != null)
-                ? committeeRepository.findByTermId(termId)
-                : committeeRepository.findAll();
+        var committees = committeeRepository.findAll();
 
         return committees.stream()
                 .map(c -> new CommitteeSummaryResponse(
