@@ -3,10 +3,13 @@ package com.senior.spm.service;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.senior.spm.controller.response.AuditLogResponse;
 import com.senior.spm.entity.AuditLog;
 import com.senior.spm.entity.AuditLog.Category;
 import com.senior.spm.entity.AuditLog.Outcome;
@@ -44,5 +47,22 @@ public class AuditLogService {
         } catch (Exception e) {
             log.error("Audit write failed — action={} userId={} outcome={}", action, userId, outcome, e);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<AuditLogResponse> query(
+            UserType userType, Category category, Outcome outcome, UUID userId,
+            LocalDateTime from, LocalDateTime to, Pageable pageable) {
+        return auditLogRepository
+                .search(userType, category, outcome, userId, from, to, pageable)
+                .map(entry -> new AuditLogResponse(
+                        entry.getId(),
+                        entry.getUserId(),
+                        entry.getUserType() != null ? entry.getUserType().name() : null,
+                        entry.getCategory().name(),
+                        entry.getAction(),
+                        entry.getOutcome().name(),
+                        entry.getIpAddress(),
+                        entry.getOccurredAt()));
     }
 }

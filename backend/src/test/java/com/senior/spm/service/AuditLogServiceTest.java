@@ -4,9 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentCaptor.forClass;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.doThrow;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Nested;
@@ -18,11 +21,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.senior.spm.controller.response.AuditLogResponse;
 import com.senior.spm.entity.AuditLog;
 import com.senior.spm.entity.AuditLog.Category;
 import com.senior.spm.entity.AuditLog.Outcome;
@@ -79,11 +86,80 @@ class AuditLogServiceTest {
         @Test
         void record_doesNotPropagateException_whenAuditWriteFails() {
             doThrow(new RuntimeException("DB unavailable"))
-                .when(auditLogRepository).save(org.mockito.ArgumentMatchers.any());
+                .when(auditLogRepository).save(any());
 
             assertThatCode(() ->
                 auditLogService.record(UUID.randomUUID(), UserType.STAFF, "STAFF_LOGIN", Category.AUTH, Outcome.SUCCESS, null)
             ).doesNotThrowAnyException();
+        }
+
+        // ---------------------------------------------------------------------
+        // Unit tests — verify query() maps entity → DTO correctly
+        // ---------------------------------------------------------------------
+
+        @Test
+        void query_mapsEnumsToNames_andCopiesScalarFields() {
+            UUID id = UUID.randomUUID();
+            UUID userId = UUID.randomUUID();
+            LocalDateTime occurredAt = LocalDateTime.now();
+
+            AuditLog row = new AuditLog();
+            row.setId(id);
+            row.setUserId(userId);
+            row.setUserType(UserType.STAFF);
+            row.setCategory(Category.AUTH);
+            row.setAction("STAFF_LOGIN");
+            row.setOutcome(Outcome.FAILURE);
+            row.setIpAddress("10.0.0.1");
+            row.setOccurredAt(occurredAt);
+
+            when(auditLogRepository.search(any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new PageImpl<>(List.of(row)));
+
+            Page<AuditLogResponse> result = auditLogService.query(
+                    null, null, null, null, null, null, PageRequest.of(0, 20));
+
+            assertThat(result.getTotalElements()).isEqualTo(1);
+            AuditLogResponse dto = result.getContent().get(0);
+            assertThat(dto.id()).isEqualTo(id);
+            assertThat(dto.userId()).isEqualTo(userId);
+            assertThat(dto.userType()).isEqualTo("STAFF");
+            assertThat(dto.category()).isEqualTo("AUTH");
+            assertThat(dto.action()).isEqualTo("STAFF_LOGIN");
+            assertThat(dto.outcome()).isEqualTo("FAILURE");
+            assertThat(dto.ipAddress()).isEqualTo("10.0.0.1");
+            assertThat(dto.occurredAt()).isEqualTo(occurredAt);
+        }
+
+        @Test
+        void query_mapsNullUserType_toNullString() {
+            AuditLog row = new AuditLog();
+            row.setId(UUID.randomUUID());
+            row.setUserType(null);
+            row.setCategory(Category.AUTH);
+            row.setAction("STAFF_LOGIN");
+            row.setOutcome(Outcome.FAILURE);
+            row.setOccurredAt(LocalDateTime.now());
+
+            when(auditLogRepository.search(any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new PageImpl<>(List.of(row)));
+
+            Page<AuditLogResponse> result = auditLogService.query(
+                    null, null, null, null, null, null, PageRequest.of(0, 20));
+
+            assertThat(result.getContent().get(0).userType()).isNull();
+        }
+
+        @Test
+        void query_returnsEmptyPage_whenRepositoryReturnsEmpty() {
+            when(auditLogRepository.search(any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new PageImpl<>(List.of()));
+
+            Page<AuditLogResponse> result = auditLogService.query(
+                    null, null, null, null, null, null, PageRequest.of(0, 20));
+
+            assertThat(result.getTotalElements()).isZero();
+            assertThat(result.getContent()).isEmpty();
         }
     }
 
