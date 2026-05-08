@@ -110,3 +110,24 @@ Run with Newman:
 ```
 newman run P5-SprintTracking_postman_collection.json -e SPM-Local.postman_environment.json
 ```
+
+---
+
+## Issue #306 — Audit Log Query API
+
+Collection: `audit-log-query.postman_collection.json`
+Environment template: `spm-test.env.json`
+
+18 test cases for `GET /api/admin/audit-logs` (TC-QUERY-01..13, TC-SEC-01..05).
+
+**Folders:**
+- `0. Setup — Get Tokens` — logs in as Coordinator / Admin / Professor and stores tokens into env vars
+- `1. Security (TC-SEC-01..05)` — auth matrix: Professor→403, Student→403, no token→401, malformed token→401, Coordinator→200
+- `2. Query (TC-QUERY-01..13)` — filter by outcome/userType/category, pagination (size cap at 100, page params), DESC sort, invalid UUID→400
+
+**Required env vars:** `baseUrl`, `coordinatorMail`, `coordinatorPassword`, `adminMail`, `adminPassword`, `professorMail`, `professorPassword`, `studentToken`
+
+Fill `spm-test.env.json` with your local credentials (never commit secrets), then run:
+```
+npx newman run audit-log-query.postman_collection.json --environment spm-test.env.json
+```
