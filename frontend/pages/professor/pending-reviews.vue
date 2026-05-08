@@ -133,6 +133,13 @@ onMounted(load);
     class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8"
   >
     <div class="mx-auto w-full max-w-6xl space-y-6">
+      <NuxtLink
+        to="/professor/dashboard"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+      >
+        <ArrowLeft class="h-4 w-4" />
+        Back to dashboard
+      </NuxtLink>
 
       <!-- Header -->
       <header
@@ -157,13 +164,6 @@ onMounted(load);
               <RefreshCw class="h-4 w-4" :class="loading ? 'animate-spin' : ''" />
               Refresh
             </button>
-            <NuxtLink
-              to="/professor/dashboard"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-            >
-              <ArrowLeft class="h-4 w-4" />
-              Back
-            </NuxtLink>
           </div>
         </div>
       </header>

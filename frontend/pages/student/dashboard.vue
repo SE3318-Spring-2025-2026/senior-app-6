@@ -232,6 +232,12 @@
                 >
                   {{ d.submissionStatus === 'SUBMITTED' ? 'Submitted' : 'Not Submitted' }}
                 </span>
+                <span
+                  v-if="d.weight != null"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+                >
+                  {{ d.weight }}%
+                </span>
               </div>
             </div>
 

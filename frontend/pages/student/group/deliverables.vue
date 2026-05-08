@@ -21,7 +21,6 @@
     roles: ["Student"],
   });
 
-  const router = useRouter();
   const authStore = useAuthStore();
   const { getAuthToken, fetchStudentDeliverables, fetchMyGroup } = useApiClient();
 
@@ -124,13 +123,13 @@
       <header class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90">
         <div class="flex items-center justify-between gap-4">
           <div class="flex items-center gap-3">
-            <button
-              type="button"
-              class="rounded-lg border border-slate-300 bg-white p-2 text-slate-600 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-              @click="router.push('/student/dashboard')"
+            <NuxtLink
+              to="/student/dashboard"
+              class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             >
               <ArrowLeft class="h-4 w-4" />
-            </button>
+              Back to dashboard
+            </NuxtLink>
             <div>
               <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
                 Deliverables

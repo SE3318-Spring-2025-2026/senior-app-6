@@ -2,6 +2,7 @@
 	import { z } from "zod";
 	import {
 		AlertCircle,
+		ArrowLeft,
 		CheckCircle2,
 		Calendar,
 		Loader as LoaderIcon,
@@ -255,6 +256,14 @@ import type { Deliverable } from "~/types/deliverable";
 <template>
   <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
     <div class="mx-auto w-full max-w-4xl space-y-6">
+      <NuxtLink
+        to="/coordinator/dashboard"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+      >
+        <ArrowLeft class="h-4 w-4" />
+        Back to dashboard
+      </NuxtLink>
+
       <!-- Page Header -->
       <header class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg">
         <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
