@@ -185,14 +185,56 @@ components:
           format: uuid
         committeeName:
           type: string
-        role:
+        termId:
+          type: string
+        professorRole:
           type: string
           enum: [ADVISOR, JURY]
-        groupIds:
+        deliverableId:
+          type: string
+          format: uuid
+        deliverableName:
+          type: string
+        deliverableType:
+          type: string
+          enum: [Proposal, SoW, Demonstration]
+        submissionDeadline:
+          type: string
+          format: date-time
+        reviewDeadline:
+          type: string
+          format: date-time
+        deliverableWeight:
+          type: number
+        groups:
           type: array
           items:
-            type: string
-            format: uuid
+            type: object
+            properties:
+              groupId:
+                type: string
+                format: uuid
+              groupName:
+                type: string
+              status:
+                type: string
+              submissionId:
+                type: string
+                format: uuid
+              gradedByMe:
+                type: boolean
+        rubrics:
+          type: array
+          items:
+            type: object
+            properties:
+              criterionName:
+                type: string
+              gradingType:
+                type: string
+                enum: [Binary, Soft]
+              weight:
+                type: number
 
     # ── P2 — Red Team ─────────────────────────────────────────────────────────
     GroupMember:
@@ -265,6 +307,27 @@ components:
         advisorId:
           type: string
           format: uuid
+          nullable: true
+        advisorMail:
+          type: string
+          nullable: true
+        jiraEmail:
+          type: string
+          nullable: true
+        jiraTokenValid:
+          type: boolean
+        jiraTokenExpiresAt:
+          type: string
+          format: date
+          nullable: true
+        githubRepoName:
+          type: string
+          nullable: true
+        githubTokenValid:
+          type: boolean
+        githubPatExpiresAt:
+          type: string
+          format: date-time
           nullable: true
         members:
           type: array
@@ -375,6 +438,8 @@ components:
         githubOrgName:
           type: string
         githubPat:
+          type: string
+        githubRepoName:
           type: string
 
     BindGithubResponse:
@@ -848,6 +913,145 @@ components:
           items:
             $ref: '#/components/schemas/PerStudentSummaryResponse'
 
+    # ── Schedule Windows ──────────────────────────────────────────────────────
+    ScheduleWindowRequest:
+      type: object
+      required: [type, opensAt, closesAt]
+      properties:
+        type:
+          type: string
+          enum: [GROUP_CREATION, ADVISOR_ASSOCIATION]
+        opensAt:
+          type: string
+          format: date-time
+        closesAt:
+          type: string
+          format: date-time
+
+    ScheduleWindowResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [GROUP_CREATION, ADVISOR_ASSOCIATION]
+        termId:
+          type: string
+        opensAt:
+          type: string
+          format: date-time
+        closesAt:
+          type: string
+          format: date-time
+        isActive:
+          type: boolean
+
+    # ── System Config ──────────────────────────────────────────────────────────
+    UpdateSystemConfigRequest:
+      type: object
+      properties:
+        activeTermId:
+          type: string
+        maxTeamSize:
+          type: integer
+          minimum: 1
+
+    UpdateAdvisorCapacityRequest:
+      type: object
+      required: [capacity]
+      properties:
+        capacity:
+          type: integer
+          minimum: 1
+          maximum: 20
+
+    # ── Sprint Deliverable Mapping ─────────────────────────────────────────────
+    SprintDeliverableMappingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        deliverableId:
+          type: string
+          format: uuid
+        deliverableName:
+          type: string
+        contributionPercentage:
+          type: number
+
+    # ── Submission Grade (existing grades) ────────────────────────────────────
+    ExistingGradesResponse:
+      type: object
+      properties:
+        grades:
+          type: array
+          items:
+            type: object
+            properties:
+              criterionId:
+                type: string
+                format: uuid
+              selectedGrade:
+                type: string
+
+    # ── Audit Logs ────────────────────────────────────────────────────────────
+    Pageable:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 0
+        size:
+          type: integer
+          minimum: 1
+        sort:
+          type: array
+          items:
+            type: string
+
+    AuditLogResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userType:
+          type: string
+        category:
+          type: string
+        action:
+          type: string
+        outcome:
+          type: string
+        ipAddress:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+
+    PagedAuditLogResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLogResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+
     # ── P7 — Final Grade Calculation ──────────────────────────────────────────
     DeliverableBreakdown:
       type: object
@@ -1056,6 +1260,11 @@ paths:
               properties:
                 mail:
                   type: string
+                capacity:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                  description: Max number of groups this professor can advise (default applies if omitted)
       responses:
         '201':
           description: Professor created
@@ -1080,6 +1289,75 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
         '500':
           description: Server error during professor creation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /admin/audit-logs:
+    get:
+      summary: Get paginated audit log entries with optional filters
+      tags: [Admin]
+      parameters:
+        - name: userType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [STAFF, STUDENT]
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [AUTH, GROUP, ADVISOR, GRADING]
+        - name: outcome
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [SUCCESS, FAILURE]
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 20
+      responses:
+        '200':
+          description: Audit log page returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedAuditLogResponse'
+        '403':
+          description: Caller is not an Admin
           content:
             application/json:
               schema:
@@ -1255,6 +1533,37 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
 
   /coordinator/sprints/{id}/deliverable-mapping:
+    get:
+      summary: Get deliverable mappings for a sprint
+      tags: [Coordinator]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deliverable mappings returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SprintDeliverableMappingResponse'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
     post:
       summary: Map a sprint to a deliverable with a contribution percentage
       tags: [Coordinator]
@@ -1337,6 +1646,11 @@ paths:
                 reviewDeadline:
                   type: string
                   format: date-time
+                weight:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                  description: Optional initial weight percentage for this deliverable
       responses:
         '201':
           description: Deliverable created
@@ -1423,9 +1737,9 @@ paths:
           application/json:
             schema:
               type: object
-              required: [weight]
+              required: [weightPercentage]
               properties:
-                weight:
+                weightPercentage:
                   type: number
                   minimum: 0
                   exclusiveMinimum: true
@@ -1552,6 +1866,140 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
         '403':
           description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/schedule-windows:
+    get:
+      summary: List schedule windows for the active term
+      tags: [Coordinator]
+      responses:
+        '200':
+          description: Schedule windows returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduleWindowResponse'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+    post:
+      summary: Upsert a schedule window
+      tags: [Coordinator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleWindowRequest'
+      responses:
+        '200':
+          description: Schedule window upserted
+        '400':
+          description: Invalid window dates or type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/schedule-windows/{id}:
+    delete:
+      summary: Delete a schedule window
+      tags: [Coordinator]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Schedule window deleted
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Schedule window not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/system-config:
+    patch:
+      summary: Update system config (active term ID and/or max team size)
+      tags: [Coordinator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSystemConfigRequest'
+      responses:
+        '200':
+          description: Config updated
+        '400':
+          description: Invalid config values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
+  /coordinator/advisors/{advisorId}/capacity:
+    patch:
+      summary: Update an advisor's maximum group capacity
+      tags: [Coordinator]
+      parameters:
+        - name: advisorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAdvisorCapacityRequest'
+      responses:
+        '200':
+          description: Capacity updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoordinatorAdvisorSummary'
+        '403':
+          description: Caller is not a Coordinator
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Advisor not found
           content:
             application/json:
               schema:
@@ -2369,6 +2817,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
 
+  /sprints/{id}/deliverable-mapping:
+    get:
+      tags: [Student]
+      summary: Get deliverable mappings for a sprint (student view)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Deliverable mappings returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SprintDeliverableMappingResponse'
+        '404':
+          description: Sprint not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+
   # ── P5 — Red Team (student & advisor sprint tracking) ───────────────────────
 
   /sprints/active:
@@ -2609,13 +3084,17 @@ paths:
           application/json:
             schema:
               type: object
-              required: [committeeName, termId]
+              required: [committeeName, termId, deliverableId]
               properties:
                 committeeName:
                   type: string
                 termId:
                   type: string
                   format: uuid
+                deliverableId:
+                  type: string
+                  format: uuid
+                  description: The deliverable this committee will review
       responses:
         '201':
           description: Committee created
@@ -2842,9 +3321,15 @@ paths:
                     reviewDeadline:
                       type: string
                       format: date-time
+                    weight:
+                      type: number
                     submissionStatus:
                       type: string
-                      enum: [Not Submitted, Submitted, Graded]
+                      enum: [NOT_SUBMITTED, SUBMITTED]
+                    submissionId:
+                      type: string
+                      format: uuid
+                      nullable: true
         '403':
           description: Caller is not authenticated
           content:
@@ -3023,6 +3508,47 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
 
   /submissions/{submissionId}/rubric-mappings:
+    get:
+      tags: [Student, Professor]
+      summary: Get rubric mappings for a submission
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rubric mappings returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  submissionId:
+                    type: string
+                    format: uuid
+                  mappings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        criterionId:
+                          type: string
+                          format: uuid
+                        sectionKey:
+                          type: string
+                        sectionStart:
+                          type: integer
+                        sectionEnd:
+                          type: integer
+        '404':
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
     post:
       tags: [Student]
       summary: Link submission sections to rubric criteria
@@ -3080,6 +3606,35 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
 
   /submissions/{submissionId}/grade:
+    get:
+      tags: [Professor]
+      summary: Get previously submitted grades for a submission (by the caller)
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Existing grades returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExistingGradesResponse'
+        '403':
+          description: Caller is not a committee member for this submission's deliverable + group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Submission not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
     post:
       tags: [Professor]
       summary: Submit or update rubric grades for a submission (Committee members only)

@@ -12,6 +12,7 @@ import com.senior.spm.controller.request.MapDeliverablesRequest;
 import com.senior.spm.controller.request.RubricRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
 import com.senior.spm.controller.response.CriterionResponse;
+import com.senior.spm.controller.response.SprintDeliverableMappingResponse;
 import com.senior.spm.entity.Deliverable;
 import com.senior.spm.entity.RubricCriterion;
 import com.senior.spm.entity.SprintDeliverableMapping;
@@ -165,5 +166,13 @@ public class DeliverableService {
 
     public List<Deliverable> getAllDeliverables() {
         return deliverableRepository.findAll();
+    }
+
+    public List<SprintDeliverableMappingResponse> getMappingsBySprint(UUID sprintId) {
+        return sprintDeliverableMappingRepository.findBySprintId(sprintId).stream()
+                .map(m -> new SprintDeliverableMappingResponse(
+                        m.getId(), m.getDeliverable().getId(),
+                        m.getDeliverable().getName(), m.getContributionPercentage()))
+                .toList();
     }
 }

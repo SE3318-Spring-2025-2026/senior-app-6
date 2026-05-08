@@ -1,137 +1,164 @@
 <script setup lang="ts">
-	import { ArrowRight, LayoutDashboard, GraduationCap, LogIn } from "lucide-vue-next";
+import {
+  LogIn,
+  Users,
+  GitBranch,
+  ClipboardList,
+  BarChart3,
+  Shield,
+  Sparkles,
+  LayoutDashboard,
+} from "lucide-vue-next";
 
-	definePageMeta({ middleware: 'guest' })
+definePageMeta({ middleware: "guest" });
 </script>
 
 <template>
-  <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950">
+  <main class="min-h-screen bg-gradient-to-b from-blue-50 via-white to-slate-100 dark:from-blue-950 dark:via-slate-900 dark:to-slate-950">
+
     <!-- Navigation -->
-    <nav class="border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80">
-      <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+    <nav class="border-b border-blue-100/80 bg-blue-50/70 backdrop-blur dark:border-blue-900/40 dark:bg-blue-950/70">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         <div class="flex items-center gap-2">
-          <LayoutDashboard class="h-6 w-6 text-blue-600 dark:text-blue-400" />
-          <span class="text-xl font-bold text-slate-900 dark:text-white">
-            SPM Dashboard
-          </span>
+          <LayoutDashboard class="h-5 w-5 text-blue-600 dark:text-blue-400" />
+          <span class="text-lg font-bold text-slate-900 dark:text-white">SPM</span>
         </div>
         <NuxtLink
           to="/auth/login"
           class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
         >
-          <LogIn class="h-4 w-4" aria-hidden="true" />
+          <LogIn class="h-4 w-4" />
           Sign In
         </NuxtLink>
       </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-8 text-center">
+    <!-- Hero -->
+    <section class="mx-auto max-w-6xl px-4 py-24 sm:px-6 text-center">
+      <div class="mx-auto max-w-2xl space-y-6">
         <h1 class="text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
-          Senior Project Management System
+          Senior Project Management
         </h1>
-        <p class="text-lg text-slate-600 dark:text-slate-300">
-          A comprehensive platform for managing university senior projects,
-          coordinating teams, and tracking deliverables with ease.
+        <p class="text-lg text-slate-600 dark:text-slate-400">
+          End-to-end platform for university capstone projects — group formation, sprint tracking,
+          deliverable review, and AI-assisted grading in one place.
         </p>
-
-        <!-- CTA Buttons -->
-        <div class="flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <div class="flex flex-col gap-3 sm:flex-row sm:justify-center pt-2">
           <NuxtLink
             to="/auth/login"
             class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
           >
-            <LogIn class="h-4 w-4" aria-hidden="true" />
+            <LogIn class="h-4 w-4" />
             Get Started
           </NuxtLink>
           <a
             href="#features"
-            class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+            class="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white/70 px-6 py-3 text-sm font-medium text-slate-700 transition hover:bg-white dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-800"
           >
-            Learn More
-            <ArrowRight class="h-4 w-4" aria-hidden="true" />
+            See Features
           </a>
         </div>
       </div>
     </section>
 
-    <!-- Features Section -->
-    <section id="features" class="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900">
-      <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <h2 class="mb-12 text-center text-3xl font-bold text-slate-900 dark:text-white">
-          Key Features
-        </h2>
+    <!-- Features -->
+    <section id="features" class="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+      <h2 class="mb-10 text-center text-2xl font-bold text-slate-900 dark:text-white">
+        What's inside
+      </h2>
 
-        <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          <!-- Feature 1 -->
-          <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-800">
-            <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
-              <LayoutDashboard class="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
-              Dashboard
-            </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400">
-              Centralized project management with real-time updates and notifications.
-            </p>
-          </div>
+      <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 
-          <!-- Feature 2 -->
-          <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-800">
-            <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900">
-              <GraduationCap class="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
-              Team Management
-            </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400">
-              Organize students and faculty, assign roles, and manage permissions seamlessly.
-            </p>
+        <div class="rounded-2xl border border-white/80 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/60">
+          <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-100 dark:bg-cyan-900/40">
+            <Users class="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
           </div>
-
-          <!-- Feature 3 -->
-          <div class="rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-800">
-            <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900">
-              <ArrowRight class="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            </div>
-            <h3 class="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
-              Workflow Management
-            </h3>
-            <p class="text-sm text-slate-600 dark:text-slate-400">
-              Define and track project phases, milestones, and deliverables.
-            </p>
-          </div>
+          <h3 class="mb-1.5 font-semibold text-slate-900 dark:text-white">Group Formation</h3>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Students form teams, send invitations, and get matched with an advisor. Coordinators can override assignments at any time.
+          </p>
         </div>
+
+        <div class="rounded-2xl border border-white/80 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/60">
+          <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/40">
+            <GitBranch class="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <h3 class="mb-1.5 font-semibold text-slate-900 dark:text-white">Sprint Tracking</h3>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            JIRA and GitHub integration to track story points, PR merges, and sprint velocity across all project groups.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-white/80 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/60">
+          <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
+            <ClipboardList class="h-5 w-5 text-amber-600 dark:text-amber-400" />
+          </div>
+          <h3 class="mb-1.5 font-semibold text-slate-900 dark:text-white">Deliverable Submission</h3>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Proposal, Statement of Work, and Demonstration submissions with deadlines, review cycles, and submission history.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-white/80 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/60">
+          <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/40">
+            <Shield class="h-5 w-5 text-violet-600 dark:text-violet-400" />
+          </div>
+          <h3 class="mb-1.5 font-semibold text-slate-900 dark:text-white">Committee Review</h3>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Jury committees are assigned per deliverable. Each professor grades independently using customizable rubrics.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-white/80 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/60">
+          <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-100 dark:bg-fuchsia-900/40">
+            <BarChart3 class="h-5 w-5 text-fuchsia-600 dark:text-fuchsia-400" />
+          </div>
+          <h3 class="mb-1.5 font-semibold text-slate-900 dark:text-white">Rubric Grading</h3>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            Weighted rubric criteria with scrum and code-review scalars. Final grades computed from individual completion ratios.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-white/80 bg-white/70 p-6 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/60">
+          <div class="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-900/40">
+            <Sparkles class="h-5 w-5 text-rose-600 dark:text-rose-400" />
+          </div>
+          <h3 class="mb-1.5 font-semibold text-slate-900 dark:text-white">AI Validation</h3>
+          <p class="text-sm text-slate-600 dark:text-slate-400">
+            LLM-powered PR review and diff-match analysis flags quality issues before human graders see submissions.
+          </p>
+        </div>
+
       </div>
     </section>
 
-    <!-- Call to Action Section -->
-    <section class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-      <div class="rounded-lg border border-slate-200 bg-blue-50 p-8 text-center dark:border-slate-800 dark:bg-blue-900/20">
-        <h2 class="mb-4 text-2xl font-bold text-slate-900 dark:text-white">
-          Ready to get started?
+    <!-- CTA -->
+    <section class="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+      <div class="rounded-2xl border border-white/80 bg-white/60 p-10 text-center shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-800/50">
+        <h2 class="mb-3 text-2xl font-bold text-slate-900 dark:text-white">
+          Ready to begin?
         </h2>
-        <p class="mb-6 text-slate-600 dark:text-slate-300">
-          Sign in with your university credentials or GitHub account.
+        <p class="mb-6 text-sm text-slate-600 dark:text-slate-400">
+          Staff log in with university credentials. Students authenticate via GitHub.
         </p>
         <NuxtLink
           to="/auth/login"
           class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
         >
-          <LogIn class="h-4 w-4" aria-hidden="true" />
-          Sign In Now
+          <LogIn class="h-4 w-4" />
+          Sign In
         </NuxtLink>
       </div>
     </section>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-      <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <p class="text-center text-sm text-slate-600 dark:text-slate-400">
-          &copy; 2026 Senior Project Management System. All rights reserved.
+    <footer class="border-t border-slate-200/60 dark:border-slate-800/60">
+      <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        <p class="text-center text-xs text-slate-400 dark:text-slate-500">
+          &copy; 2026 Senior Project Management System
         </p>
       </div>
     </footer>
+
   </main>
 </template>

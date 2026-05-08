@@ -31,6 +31,7 @@ import com.senior.spm.repository.DeliverableRepository;
 import com.senior.spm.repository.DeliverableSubmissionRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.RubricCriterionRepository;
+import com.senior.spm.repository.RubricGradeRepository;
 import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.service.dto.CommitteeAssignedGroupPayload;
 import com.senior.spm.service.dto.CommitteeAssignmentNotificationPayload;
@@ -49,6 +50,7 @@ public class CommitteeService {
     private final DeliverableRepository deliverableRepository;
     private final RubricCriterionRepository rubricCriterionRepository;
     private final DeliverableSubmissionRepository deliverableSubmissionRepository;
+    private final RubricGradeRepository rubricGradeRepository;
     private final CommitteeValidationService committeeValidationService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -225,11 +227,15 @@ public class CommitteeService {
                             .map(group -> {
                                 var sub = deliverableSubmissionRepository
                                         .findFirstByGroupAndDeliverableOrderBySubmittedAtDesc(group, deliverable);
+                                boolean gradedByMe = sub != null &&
+                                        rubricGradeRepository.existsBySubmissionAndReviewer(
+                                                sub.getId(), professorId);
                                 return new ProfessorCommitteeDashboardResponse.GroupItem(
                                         group.getId(),
                                         group.getGroupName(),
                                         group.getStatus().name(),
-                                        sub != null ? sub.getId() : null);
+                                        sub != null ? sub.getId() : null,
+                                        gradedByMe);
                             })
                             .sorted((left, right) -> left.getGroupName().compareToIgnoreCase(right.getGroupName()))
                             .toList();

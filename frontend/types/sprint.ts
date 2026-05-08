@@ -68,3 +68,10 @@ export interface SprintOverviewResult {
   sprintId: string;
   groups: SprintGroupOverview[];
 }
+
+export interface SprintDeliverableMappingItem {
+  id: string;
+  deliverableId: string;
+  deliverableName: string;
+  contributionPercentage: number;
+}

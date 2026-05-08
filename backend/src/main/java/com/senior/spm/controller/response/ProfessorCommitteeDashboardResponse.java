@@ -38,6 +38,7 @@ public class ProfessorCommitteeDashboardResponse {
         private String groupName;
         private String status;
         private UUID submissionId;
+        private boolean gradedByMe;
     }
 
     @Data
