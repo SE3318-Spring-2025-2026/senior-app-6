@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Calendar, Clock, Edit2, X, AlertTriangle, CheckCircle, XCircle } from 'lucide-vue-next';
+import { ArrowLeft, Calendar, CalendarClock, Clock, Edit2, X, AlertCircle, AlertTriangle, CheckCircle, XCircle } from 'lucide-vue-next';
 import type { ScheduleWindowItem, WindowType } from '~/types/scheduleWindow';
 
 definePageMeta({
@@ -179,56 +179,69 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
-    <!-- Header -->
-    <div class="mb-6 flex items-center gap-3">
+  <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
+    <div class="mx-auto w-full max-w-5xl space-y-6">
+      <!-- Back link -->
       <NuxtLink
         to="/coordinator/dashboard"
-        class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       >
-        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-        Dashboard
+        <ArrowLeft class="h-4 w-4" />
+        Back to dashboard
       </NuxtLink>
-      <div>
-        <h1 class="text-xl font-semibold text-slate-900 dark:text-white">Schedule Window Management</h1>
-        <p class="text-sm text-slate-500 dark:text-slate-400">Control when students can create groups and request advisors.</p>
-      </div>
-    </div>
 
-    <!-- Success message -->
-    <div
-      v-if="successMessage"
-      class="mb-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
-    >
-      <CheckCircle class="h-4 w-4 shrink-0" />
-      {{ successMessage }}
-    </div>
+      <!-- Header -->
+      <header class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg">
+        <div class="flex items-center gap-3">
+          <CalendarClock class="h-7 w-7 text-violet-600 dark:text-violet-400" />
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
+              Schedule Windows
+            </h1>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Control when students can create groups and request advisors.
+            </p>
+          </div>
+        </div>
+      </header>
 
-    <!-- Error message -->
-    <div
-      v-if="error"
-      class="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/30 dark:text-red-300"
-    >
-      <AlertTriangle class="h-4 w-4 shrink-0" />
-      {{ error }}
-    </div>
-
-    <!-- Loading skeleton -->
-    <div v-if="isLoading && windows.length === 0" class="space-y-4">
+      <!-- Success message -->
       <div
-        v-for="i in 2"
-        :key="i"
-        class="h-32 animate-pulse rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
-      />
-    </div>
-
-    <!-- Window cards -->
-    <div v-else class="space-y-4">
-      <div
-        v-for="w in windows"
-        :key="w.type"
-        class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+        v-if="successMessage"
+        class="flex items-center gap-3 rounded-lg border border-emerald-300 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/50"
       >
+        <CheckCircle class="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+        <p class="text-sm text-emerald-800 dark:text-emerald-300">{{ successMessage }}</p>
+      </div>
+
+      <!-- Error message -->
+      <div
+        v-if="error"
+        class="flex items-start gap-3 rounded-lg border border-red-300 bg-red-50 p-4 dark:border-red-800 dark:bg-red-950/50"
+      >
+        <AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-red-600 dark:text-red-400" />
+        <div>
+          <p class="font-medium text-red-900 dark:text-red-300">Error loading schedule windows</p>
+          <p class="text-sm text-red-700 dark:text-red-400">{{ error }}</p>
+        </div>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div v-if="isLoading && windows.length === 0" class="space-y-4">
+        <div
+          v-for="i in 2"
+          :key="i"
+          class="h-32 animate-pulse rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
+        />
+      </div>
+
+      <!-- Window cards -->
+      <div v-else class="space-y-4">
+        <div
+          v-for="w in windows"
+          :key="w.type"
+          class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-800 dark:shadow-lg"
+        >
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <!-- Left: info -->
           <div class="flex-1">
@@ -299,6 +312,7 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+    </div><!-- /max-w-5xl -->
 
     <!-- Window upsert modal -->
     <div
@@ -417,5 +431,5 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
-  </div>
+  </main>
 </template>
