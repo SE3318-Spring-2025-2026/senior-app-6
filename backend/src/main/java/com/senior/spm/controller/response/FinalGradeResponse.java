@@ -12,9 +12,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Response body for GET /api/students/{studentId}/grade/calculate.
- * Contains the upserted FinalGrade values plus per-deliverable breakdowns
- * computed on-the-fly (breakdowns are NOT persisted — see endpoints_p7.md D3).
+ * Response body for the final grade endpoints:
+ * <ul>
+ *   <li>{@code GET /api/students/{studentId}/grade} — returns the stored grade (deliverableBreakdown is empty {@code []}).</li>
+ *   <li>{@code GET /api/students/{studentId}/grade/calculate} — recalculates and upserts; returns full breakdown.</li>
+ * </ul>
+ * Per-deliverable breakdowns are computed on-the-fly and are NOT persisted — see endpoints_p7.md D3.
  */
 @Getter
 @Setter
