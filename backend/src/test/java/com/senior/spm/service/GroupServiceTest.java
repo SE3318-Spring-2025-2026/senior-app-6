@@ -544,6 +544,7 @@ class GroupServiceTest {
                     eq(coordinatorId),
                     eq(AuditLog.UserType.STAFF),
                     eq("MEMBER_ADDED"),
+                    eq(AuditLog.Category.GROUP),
                     eq(AuditLog.Outcome.SUCCESS),
                     isNull());
         }
@@ -672,6 +673,7 @@ class GroupServiceTest {
                     eq(coordinatorId),
                     eq(AuditLog.UserType.STAFF),
                     eq("MEMBER_REMOVED"),
+                    eq(AuditLog.Category.GROUP),
                     eq(AuditLog.Outcome.SUCCESS),
                     isNull());
         }
@@ -789,6 +791,7 @@ class GroupServiceTest {
                     eq(coordinatorId),
                     eq(AuditLog.UserType.STAFF),
                     eq("GROUP_DISBANDED"),
+                    eq(AuditLog.Category.GROUP),
                     eq(AuditLog.Outcome.SUCCESS),
                     isNull());
         }

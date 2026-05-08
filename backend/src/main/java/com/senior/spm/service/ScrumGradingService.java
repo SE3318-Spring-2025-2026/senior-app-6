@@ -36,6 +36,7 @@ import com.senior.spm.repository.ScrumGradeRepository;
 import com.senior.spm.repository.SprintRepository;
 import com.senior.spm.repository.SprintTrackingLogRepository;
 
+import com.senior.spm.entity.AuditLog.Category;
 import com.senior.spm.entity.AuditLog.Outcome;
 import com.senior.spm.entity.AuditLog.UserType;
 
@@ -107,7 +108,7 @@ public class ScrumGradingService {
         }
         log.trace("[EVENT] userId={} action={} entityId={} detail={}",
                 advisorId, "SCRUM_GRADE_SUBMITTED", groupId, sprintId);
-        auditLogService.record(advisorId, UserType.STAFF, "SCRUM_GRADE_SUBMITTED", Outcome.SUCCESS, null);
+        auditLogService.record(advisorId, UserType.STAFF, "SCRUM_GRADE_SUBMITTED", Category.GRADING, Outcome.SUCCESS, null);
         return grade;
     }
 
