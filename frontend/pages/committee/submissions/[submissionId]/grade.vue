@@ -211,8 +211,7 @@ onMounted(load);
       <!-- Left: Markdown document (read-only) -->
       <section
         v-show="leftPanelVisible"
-        class="flex flex-col overflow-hidden border-r border-slate-200 dark:border-slate-700 transition-all duration-200"
-        class="flex-1"
+        class="flex-1 flex flex-col overflow-hidden border-r border-slate-200 dark:border-slate-700 transition-all duration-200"
         aria-label="Submission document"
       >
         <div class="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 flex-shrink-0 flex items-center gap-2">
