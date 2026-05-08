@@ -10,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,7 +18,14 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name = "audit_log")
+@Table(
+    name = "audit_log",
+    indexes = {
+        @Index(name = "idx_al_user_id",     columnList = "userId"),
+        @Index(name = "idx_al_outcome",     columnList = "outcome"),
+        @Index(name = "idx_al_occurred_at", columnList = "occurredAt")
+    }
+)
 public class AuditLog {
 
     public enum UserType { STAFF, STUDENT }
@@ -27,11 +35,11 @@ public class AuditLog {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = true)
+    @Column
     private UUID userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20, nullable = true)
+    @Column(length = 20)
     private UserType userType;
 
     @Column(length = 100, nullable = false)
@@ -41,7 +49,7 @@ public class AuditLog {
     @Column(length = 20, nullable = false)
     private Outcome outcome;
 
-    @Column(length = 45, nullable = true)
+    @Column(length = 45)
     private String ipAddress;
 
     @Column(nullable = false)
