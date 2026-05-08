@@ -5,7 +5,7 @@ import type { AuditLogEntry, AuditLogQuery } from '~/types/audit-log';
 
 definePageMeta({
   middleware: 'auth',
-  roles: ['Coordinator'],
+  roles: ['Admin'],
 });
 
 const { fetchAuditLogs, getAuthToken } = useApiClient();
