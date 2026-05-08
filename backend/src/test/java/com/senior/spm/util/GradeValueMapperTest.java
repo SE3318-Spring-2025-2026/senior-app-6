@@ -115,4 +115,22 @@ class GradeValueMapperTest {
         assertThatThrownBy(() -> GradeValueMapper.toNumeric(GradingType.Soft, "S"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void toNumeric_soft_nullValue_throwsIllegalArgument() {
+        assertThatThrownBy(() -> GradeValueMapper.toNumeric(GradingType.Soft, null))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void toNumeric_soft_emptyString_throwsIllegalArgument() {
+        assertThatThrownBy(() -> GradeValueMapper.toNumeric(GradingType.Soft, ""))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void toNumeric_binary_emptyString_throwsIllegalArgument() {
+        assertThatThrownBy(() -> GradeValueMapper.toNumeric(GradingType.Binary, ""))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
 }
