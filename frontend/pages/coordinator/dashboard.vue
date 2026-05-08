@@ -111,6 +111,8 @@ import type { SanitizationReport } from "~/types/sanitization";
 
       <!-- Quick Actions -->
       <div class="grid gap-4 md:grid-cols-3">
+
+        <!-- Row 1: Setup (blue) -->
         <NuxtLink
           to="/coordinator/sprint-setup"
           class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-600"
@@ -126,10 +128,10 @@ import type { SanitizationReport } from "~/types/sanitization";
 
         <NuxtLink
           to="/coordinator/deliverables"
-          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-purple-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-purple-600"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-600"
         >
-          <FileText class="h-8 w-8 text-purple-600 dark:text-purple-400" />
-          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">
+          <FileText class="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
             Deliverables
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -139,10 +141,10 @@ import type { SanitizationReport } from "~/types/sanitization";
 
         <NuxtLink
           to="/coordinator/evaluation-setup"
-          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-blue-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-600"
         >
-          <ClipboardCheck class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
+          <ClipboardCheck class="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
             Evaluation Setup
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -150,12 +152,13 @@ import type { SanitizationReport } from "~/types/sanitization";
           </p>
         </NuxtLink>
 
+        <!-- Row 2: Monitoring (emerald) -->
         <NuxtLink
           to="/coordinator/sprint-monitor"
-          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-violet-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-violet-600"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600"
         >
-          <Activity class="h-8 w-8 text-violet-600 dark:text-violet-400" />
-          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400">
+          <Activity class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
             Sprint Monitoring
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -165,10 +168,10 @@ import type { SanitizationReport } from "~/types/sanitization";
 
         <NuxtLink
           to="/coordinator/grades"
-          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-fuchsia-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-fuchsia-600"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600"
         >
-          <Calculator class="h-8 w-8 text-fuchsia-600 dark:text-fuchsia-400" />
-          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400">
+          <Calculator class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
             Final Grades
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -178,10 +181,10 @@ import type { SanitizationReport } from "~/types/sanitization";
 
         <NuxtLink
           to="/coordinator/groups"
-          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-indigo-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600"
         >
-          <Users class="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
-          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+          <Users class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400">
             Groups
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -189,53 +192,30 @@ import type { SanitizationReport } from "~/types/sanitization";
           </p>
         </NuxtLink>
 
+        <!-- Row 3: Management (violet) -->
         <NuxtLink
           to="/coordinator/committees"
-          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-cyan-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-600"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-violet-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-violet-600"
         >
-          <Building class="h-8 w-8 text-cyan-600 dark:text-cyan-400" />
-          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400">
+          <Building class="h-8 w-8 text-violet-600 dark:text-violet-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400">
             Committees
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Manage committee groups for jury evaluations.
           </p>
         </NuxtLink>
-        <NuxtLink
-          to="/coordinator/publish-config"
-          class="group rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm transition-all hover:border-amber-400 hover:shadow-md dark:border-amber-800 dark:bg-amber-950/30 dark:hover:border-amber-500"
-        >
-          <Send class="h-8 w-8 text-amber-600 dark:text-amber-400" />
-          <h3 class="mt-3 font-semibold text-amber-900 dark:text-amber-200 group-hover:text-amber-700 dark:group-hover:text-amber-300">
-            Publish Configuration
-          </h3>
-          <p class="mt-1 text-sm text-amber-800 dark:text-amber-300">
-            Review and finalize all settings.
-          </p>
-        </NuxtLink>
 
         <NuxtLink
           to="/coordinator/committee-groups"
-          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-cyan-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-cyan-600"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-violet-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-violet-600"
         >
-          <Users class="h-8 w-8 text-cyan-600 dark:text-cyan-400" />
-          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-cyan-600 dark:group-hover:text-cyan-400">
+          <Users class="h-8 w-8 text-violet-600 dark:text-violet-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400">
             Committee Groups
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Assign student groups to committees.
-          </p>
-        </NuxtLink>
-        <NuxtLink
-          to="/coordinator/settings"
-          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-teal-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-600"
-        >
-          <SettingsIcon class="h-8 w-8 text-teal-600 dark:text-teal-400" />
-          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400">
-            Settings
-          </h3>
-          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            System config and student CSV upload.
           </p>
         </NuxtLink>
 
@@ -251,6 +231,34 @@ import type { SanitizationReport } from "~/types/sanitization";
             Set group creation and advisor association windows.
           </p>
         </NuxtLink>
+
+        <!-- Row 4: Admin / Danger (teal → amber → red) -->
+        <NuxtLink
+          to="/coordinator/settings"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-slate-400 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-slate-500"
+        >
+          <SettingsIcon class="h-8 w-8 text-slate-500 dark:text-slate-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-slate-700 dark:group-hover:text-slate-300">
+            Settings
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            System config and student CSV upload.
+          </p>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/coordinator/publish-config"
+          class="group rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm transition-all hover:border-amber-400 hover:shadow-md dark:border-amber-800 dark:bg-amber-950/30 dark:hover:border-amber-500"
+        >
+          <Send class="h-8 w-8 text-amber-600 dark:text-amber-400" />
+          <h3 class="mt-3 font-semibold text-amber-900 dark:text-amber-200 group-hover:text-amber-700 dark:group-hover:text-amber-300">
+            Publish Configuration
+          </h3>
+          <p class="mt-1 text-sm text-amber-800 dark:text-amber-300">
+            Review and finalize all settings.
+          </p>
+        </NuxtLink>
+
         <button
           type="button"
           class="group rounded-2xl border border-red-200 bg-red-50 p-6 text-left shadow-sm transition-all hover:border-red-400 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-70 dark:border-red-900 dark:bg-red-950/30 dark:hover:border-red-500"
@@ -265,6 +273,7 @@ import type { SanitizationReport } from "~/types/sanitization";
             Disband unadvised groups and auto-reject pending advisor requests.
           </p>
         </button>
+
       </div>
 
       <section
