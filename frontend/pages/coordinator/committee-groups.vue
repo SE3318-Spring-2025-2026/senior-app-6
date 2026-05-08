@@ -75,7 +75,7 @@ import type { GroupSummaryResponse } from "~/types/group";
       details.flatMap((d) => d?.groups.map((g) => g.groupId) ?? [])
     )
     return allGroups.filter(
-      (g) => true // g.status === "ADVISOR_ASSIGNED" && !assigned.has(g.id)
+      (g) => g.status === "ADVISOR_ASSIGNED" && !assigned.has(g.id)
     )
   }
 
