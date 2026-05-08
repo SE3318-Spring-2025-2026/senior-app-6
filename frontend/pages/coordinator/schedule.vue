@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Calendar, Clock, Edit2, X, AlertTriangle, CheckCircle, XCircle } from 'lucide-vue-next';
+import { Calendar, Clock, Edit2, X, AlertTriangle, CheckCircle, XCircle } from 'lucide-vue-next';
 import type { ScheduleWindowItem, WindowType } from '~/types/scheduleWindow';
 
 definePageMeta({
@@ -7,7 +7,6 @@ definePageMeta({
   roles: ['Coordinator'],
 });
 
-const router = useRouter();
 const { getAuthToken, fetchScheduleWindows, upsertScheduleWindow, deleteScheduleWindow } = useApiClient();
 
 const windows = ref<ScheduleWindowItem[]>([]);
@@ -30,7 +29,7 @@ const confirmTarget = ref<ScheduleWindowItem | null>(null);
 const confirmLoading = ref(false);
 const confirmError = ref('');
 
-let refreshInterval: ReturnType<typeof setInterval> | null = null;
+const refreshInterval = ref<ReturnType<typeof setInterval> | null>(null);
 
 const WINDOW_LABELS: Record<WindowType, string> = {
   GROUP_CREATION: 'Group Creation',
@@ -115,8 +114,8 @@ async function submitWindowModal() {
     await upsertScheduleWindow(
       {
         type: modalType.value,
-        opensAt: opensDate.toISOString(),
-        closesAt: closesDate.toISOString(),
+        opensAt: modalOpensAt.value + ':00',
+        closesAt: modalClosesAt.value + ':00',
       },
       token
     );
@@ -144,7 +143,7 @@ function closeConfirmDialog() {
   confirmError.value = '';
 }
 
-async function confirmDelete() {
+async function confirmCloseWindow() {
   if (!confirmTarget.value?.id) return;
   confirmLoading.value = true;
   confirmError.value = '';
@@ -165,12 +164,16 @@ async function confirmDelete() {
 
 onMounted(() => {
   loadWindows();
-  refreshInterval = setInterval(loadWindows, 60_000);
+  refreshInterval.value = setInterval(() => {
+    if (!showWindowModal.value && !showConfirmDialog.value) {
+      loadWindows();
+    }
+  }, 60_000);
 });
 
 onUnmounted(() => {
-  if (refreshInterval !== null) {
-    clearInterval(refreshInterval);
+  if (refreshInterval.value !== null) {
+    clearInterval(refreshInterval.value);
   }
 });
 </script>
@@ -179,13 +182,13 @@ onUnmounted(() => {
   <div class="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
     <!-- Header -->
     <div class="mb-6 flex items-center gap-3">
-      <button
+      <NuxtLink
+        to="/coordinator/dashboard"
         class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800"
-        @click="router.back()"
       >
-        <ArrowLeft class="h-4 w-4" />
-        Back
-      </button>
+        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        Dashboard
+      </NuxtLink>
       <div>
         <h1 class="text-xl font-semibold text-slate-900 dark:text-white">Schedule Window Management</h1>
         <p class="text-sm text-slate-500 dark:text-slate-400">Control when students can create groups and request advisors.</p>
@@ -226,7 +229,7 @@ onUnmounted(() => {
         :key="w.type"
         class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900"
       >
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <!-- Left: info -->
           <div class="flex-1">
             <div class="mb-1 flex items-center gap-3">
@@ -406,7 +409,7 @@ onUnmounted(() => {
           <button
             :disabled="confirmLoading"
             class="flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-            @click="confirmDelete"
+            @click="confirmCloseWindow"
           >
             <span v-if="confirmLoading" class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             Close Window

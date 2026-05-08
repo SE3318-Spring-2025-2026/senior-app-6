@@ -702,8 +702,8 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     return apiCall<ScheduleWindowItem[]>("/coordinator/schedule-windows", "GET", undefined, token);
   }
 
-  async function upsertScheduleWindow(payload: ScheduleWindowPayload, token?: string): Promise<ScheduleWindowItem> {
-    return apiCall<ScheduleWindowItem>("/coordinator/schedule-windows", "POST", payload, token);
+  async function upsertScheduleWindow(payload: ScheduleWindowPayload, token?: string): Promise<void> {
+    return apiCall<void>("/coordinator/schedule-windows", "POST", payload, token);
   }
 
   async function deleteScheduleWindow(id: string, token?: string): Promise<void> {
