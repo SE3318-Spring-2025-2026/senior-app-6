@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -265,6 +266,33 @@ public class FinalGradeCalculationService {
         }
 
         return reviewerSum.divide(BigDecimal.valueOf(byReviewer.size()), SCALE, RM);
+    }
+
+    /**
+     * Returns the previously stored final grade for the student identified by their
+     * 11-digit student number. Does NOT trigger recalculation.
+     *
+     * @param studentId11Digit 11-digit student number (pattern ^[0-9]{11}$)
+     * @return FinalGradeResponse with empty deliverableBreakdown (breakdowns are not persisted, see endpoints_p7.md D3)
+     * @throws NotFoundException if no stored grade exists for this student in the active term
+     */
+    @Transactional(readOnly = true)
+    public FinalGradeResponse getStoredFinalGrade(String studentId11Digit) {
+        String termId = termConfigService.getActiveTermId();
+        FinalGrade entity = finalGradeRepository
+                .findByStudent_StudentIdAndTermId(studentId11Digit, termId)
+                .orElseThrow(() -> new NotFoundException(
+                        "No stored final grade found for student " + studentId11Digit));
+
+        return FinalGradeResponse.builder()
+                .studentId(studentId11Digit)
+                .groupId(entity.getGroup().getId())
+                .deliverableBreakdown(Collections.emptyList())
+                .weightedTotal(entity.getWeightedTotal())
+                .completionRatio(entity.getCompletionRatio())
+                .finalGrade(entity.getFinalGrade())
+                .calculatedAt(entity.getCalculatedAt())
+                .build();
     }
 
     /**

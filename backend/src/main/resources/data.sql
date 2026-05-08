@@ -13,7 +13,7 @@ VALUES
 		'test@test.com',
 		'$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq',
 		'ADMIN',
-		0
+		5
 	);
 
 INSERT
@@ -37,7 +37,7 @@ VALUES
 		'coordinator@test.com',
 		'$2a$10$tj811p0KDPOD6Dd58xb0.uBNIT8.CXeJPKoSUSwPuJ0BI.RuC5yGq',
 		'COORDINATOR',
-		0
+		5
 	);
 
 INSERT

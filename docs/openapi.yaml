@@ -3316,6 +3316,67 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
 
   # ── P7 — Final Grade Calculation ─────────────────────────────────────────
+  /students/{studentId}/grade:
+    get:
+      tags: [Student, Professor, Coordinator]
+      summary: "Read the previously stored final grade (no recalculation)"
+      description: |
+        Returns the stored FinalGrade row for the student in the active term, if one exists.
+        Does NOT trigger recalculation — for that, use GET /students/{studentId}/grade/calculate.
+        The returned `deliverableBreakdown` is always an empty list `[]` because breakdowns
+        are computed on-the-fly and not persisted (see endpoints_p7.md D3).
+        Auth rules:
+        - COORDINATOR: always allowed.
+        - PROFESSOR: allowed only if caller is the advisor of the student's group.
+        - STUDENT: allowed only if calling for themselves.
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9]{11}$'
+          description: 11-digit student number (not a UUID)
+      responses:
+        '200':
+          description: Stored final grade returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FinalGradeResponse'
+              example:
+                studentId: "01234567890"
+                groupId: "uuid"
+                deliverableBreakdown: []
+                weightedTotal: 0.0
+                completionRatio: 0.95
+                finalGrade: 0.0
+                calculatedAt: "2026-05-01T14:30:00"
+        '204':
+          description: No final grade has been calculated yet for this student in the active term
+        '400':
+          description: studentId does not match pattern ^[0-9]{11}$
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Caller is unauthorized to view this grade
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                message: "Caller is unauthorized to view this grade"
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+              example:
+                message: "Student not found"
+
   /students/{studentId}/grade/calculate:
     get:
       tags: [Student, Professor, Coordinator]

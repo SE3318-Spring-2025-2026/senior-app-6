@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,13 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.senior.spm.controller.request.AdvisorOverrideRequest;
 import com.senior.spm.controller.request.CoordinatorMemberRequest;
+import com.senior.spm.controller.request.ScheduleWindowRequest;
+import com.senior.spm.controller.response.ScheduleWindowResponse;
 import com.senior.spm.controller.request.CreateDeliverableRequest;
 import com.senior.spm.controller.request.MapDeliverablesRequest;
 import com.senior.spm.controller.request.RubricRequest;
 import com.senior.spm.controller.request.SanitizationTriggerRequest;
 import com.senior.spm.controller.request.SprintRequest;
 import com.senior.spm.controller.request.StudentUploadRequest;
+import com.senior.spm.controller.request.UpdateAdvisorCapacityRequest;
 import com.senior.spm.controller.request.UpdateDeliverableRequest;
+import com.senior.spm.controller.request.UpdateSystemConfigRequest;
 import com.senior.spm.controller.request.UpdateDeliverableWeightRequest;
 import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.controller.response.AdvisorCapacityResponse;
@@ -55,6 +60,8 @@ import com.senior.spm.service.AdvisorService;
 import com.senior.spm.service.DeliverableService;
 import com.senior.spm.service.GroupService;
 import com.senior.spm.service.SanitizationService;
+import com.senior.spm.service.ScheduleWindowService;
+import com.senior.spm.service.SystemConfigService;
 import com.senior.spm.service.SprintService;
 import com.senior.spm.service.SprintTrackingOrchestrator;
 import com.senior.spm.service.StudentService;
@@ -81,6 +88,8 @@ public class CoordinatorController {
     private final ProjectGroupRepository projectGroupRepository;
     private final TermConfigService termConfigService;
     private final SanitizationService sanitizationService;
+    private final ScheduleWindowService scheduleWindowService;
+    private final SystemConfigService systemConfigService;
 
     public CoordinatorController(SprintService sprintService,
             DeliverableService deliverableService,
@@ -94,7 +103,9 @@ public class CoordinatorController {
             ScrumGradeRepository scrumGradeRepository,
             ProjectGroupRepository projectGroupRepository,
             TermConfigService termConfigService,
-            SanitizationService sanitizationService) {
+            SanitizationService sanitizationService,
+            ScheduleWindowService scheduleWindowService,
+            SystemConfigService systemConfigService) {
         this.sprintService = sprintService;
         this.deliverableService = deliverableService;
         this.studentService = studentService;
@@ -108,6 +119,8 @@ public class CoordinatorController {
         this.projectGroupRepository = projectGroupRepository;
         this.termConfigService = termConfigService;
         this.sanitizationService = sanitizationService;
+        this.scheduleWindowService = scheduleWindowService;
+        this.systemConfigService = systemConfigService;
     }
 
     @PostMapping("/sprints")
@@ -500,9 +513,44 @@ public class CoordinatorController {
         return ResponseEntity.ok(report);
     }
 
+    // ========== S4-05 SCHEDULE WINDOW CRUD ENDPOINTS ==========
+
+    @GetMapping("/schedule-windows")
+    public ResponseEntity<List<ScheduleWindowResponse>> getScheduleWindows() {
+        return ResponseEntity.ok(scheduleWindowService.getAll());
+    }
+
+    @PostMapping("/schedule-windows")
+    public ResponseEntity<Void> upsertScheduleWindow(@Valid @RequestBody ScheduleWindowRequest request) {
+        boolean isNew = scheduleWindowService.upsert(request);
+        return ResponseEntity.status(isNew ? HttpStatus.CREATED : HttpStatus.OK).build();
+    }
+
+    @DeleteMapping("/schedule-windows/{id}")
+    public ResponseEntity<Void> deleteScheduleWindow(@PathVariable UUID id) {
+        scheduleWindowService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
     /** Counts across both aiPrResult and aiDiffResult columns independently — no double-count. */
     private int countAi(List<SprintTrackingLog> logs, AiValidationResult result) {
         return (int) logs.stream().filter(l -> result == l.getAiPrResult()).count()
              + (int) logs.stream().filter(l -> result == l.getAiDiffResult()).count();
+    }
+
+    /**
+     * Updates the advisor capacity for a professor.
+     * Returns 404 if not found, 400 if the user is not a Professor.
+     */
+    @PatchMapping("/advisors/{advisorId}/capacity")
+    public ResponseEntity<AdvisorCapacityResponse> updateAdvisorCapacity(@PathVariable UUID advisorId,
+            @Valid @RequestBody UpdateAdvisorCapacityRequest request) {
+        return ResponseEntity.ok(advisorService.updateCapacity(advisorId, request.getCapacity()));
+    }
+
+    @PatchMapping("/system-config")
+    public ResponseEntity<Void> updateSystemConfig(@Valid @RequestBody UpdateSystemConfigRequest request) {
+        systemConfigService.updateConfig(request.getActiveTermId(), request.getMaxTeamSize());
+        return ResponseEntity.ok().build();
     }
 }
