@@ -1,0 +1,575 @@
+{
+  "info": {
+    "_postman_id": "c8f2e1a0-3b74-4d9e-8c56-f1a2b3c4d5e6",
+    "name": "Audit Log Query API — Issue #306",
+    "description": "18 test cases for GET /api/admin/audit-logs (TC-QUERY-01..13, TC-SEC-01..05).\n\nRun:\n  npx newman run audit-log-query.postman_collection.json --environment spm-test.env.json\n\nSetup folder must run first — it logs in and stores tokens into environment variables.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "0. Setup — Get Tokens",
+      "item": [
+        {
+          "name": "Login as Coordinator",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Coordinator login → 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"coordinatorToken\", body.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mail\": \"{{coordinatorMail}}\",\n  \"password\": \"{{coordinatorPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Admin login → 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"adminToken\", body.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mail\": \"{{adminMail}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Professor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Professor login → 200\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set(\"professorToken\", body.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mail\": \"{{professorMail}}\",\n  \"password\": \"{{professorPassword}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/auth/login"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "1. Security (TC-SEC-01..05)",
+      "item": [
+        {
+          "name": "TC-SEC-01 — Professor → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-SEC-01: Professor receives 403 Forbidden\", () => {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{professorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-02 — Student → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-SEC-02: Student receives 403 Forbidden\", () => {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-03 — No token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-SEC-03: Missing token receives 401 Unauthorized\", () => {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/admin/audit-logs"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-04 — Malformed token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-SEC-04: Malformed token receives 401 Unauthorized\", () => {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer not.a.valid.jwt.token" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-SEC-05 — Coordinator → 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-SEC-05: Coordinator receives 200 OK\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Query (TC-QUERY-01..13)",
+      "item": [
+        {
+          "name": "TC-QUERY-01 — No filters: response schema valid",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-01: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-01: response has required pagination fields\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body).to.have.property(\"content\").that.is.an(\"array\");",
+                  "    pm.expect(body).to.have.property(\"page\").that.is.a(\"number\");",
+                  "    pm.expect(body).to.have.property(\"size\").that.is.a(\"number\");",
+                  "    pm.expect(body).to.have.property(\"totalElements\").that.is.a(\"number\");",
+                  "    pm.expect(body).to.have.property(\"totalPages\").that.is.a(\"number\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-02 — ?outcome=FAILURE: every row outcome is FAILURE",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-02: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-02: every content[*].outcome equals FAILURE\", () => {",
+                  "    const rows = pm.response.json().content;",
+                  "    rows.forEach(row => pm.expect(row.outcome).to.eql(\"FAILURE\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?outcome=FAILURE"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-03 — ?outcome=SUCCESS: every row outcome is SUCCESS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-03: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-03: every content[*].outcome equals SUCCESS\", () => {",
+                  "    const rows = pm.response.json().content;",
+                  "    rows.forEach(row => pm.expect(row.outcome).to.eql(\"SUCCESS\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?outcome=SUCCESS"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-04 — ?userType=STAFF: every row userType is STAFF",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-04: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-04: every content[*].userType equals STAFF\", () => {",
+                  "    const rows = pm.response.json().content;",
+                  "    rows.forEach(row => pm.expect(row.userType).to.eql(\"STAFF\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?userType=STAFF"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-05 — ?userType=STUDENT: every row userType is STUDENT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-05: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-05: every content[*].userType equals STUDENT\", () => {",
+                  "    const rows = pm.response.json().content;",
+                  "    rows.forEach(row => pm.expect(row.userType).to.eql(\"STUDENT\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?userType=STUDENT"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-06 — ?category=AUTH: every row category is AUTH",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-06: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-06: every content[*].category equals AUTH\", () => {",
+                  "    const rows = pm.response.json().content;",
+                  "    rows.forEach(row => pm.expect(row.category).to.eql(\"AUTH\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?category=AUTH"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-07 — ?category=GROUP: every row category is GROUP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-07: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-07: every content[*].category equals GROUP\", () => {",
+                  "    const rows = pm.response.json().content;",
+                  "    rows.forEach(row => pm.expect(row.category).to.eql(\"GROUP\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?category=GROUP"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-08 — ?category=ADVISOR: every row category is ADVISOR",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-08: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-08: every content[*].category equals ADVISOR\", () => {",
+                  "    const rows = pm.response.json().content;",
+                  "    rows.forEach(row => pm.expect(row.category).to.eql(\"ADVISOR\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?category=ADVISOR"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-09 — ?category=GRADING: every row category is GRADING",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-09: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-09: every content[*].category equals GRADING\", () => {",
+                  "    const rows = pm.response.json().content;",
+                  "    rows.forEach(row => pm.expect(row.category).to.eql(\"GRADING\"));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?category=GRADING"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-10 — ?size=500: response size capped at 100",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-10: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-10: response.size <= 100 when size=500 requested\", () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.size).to.be.at.most(100);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?size=500"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-11 — ?page=0&size=5: pagination params respected",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-11: status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"TC-QUERY-11: response.page equals 0\", () => {",
+                  "    pm.expect(pm.response.json().page).to.eql(0);",
+                  "});",
+                  "pm.test(\"TC-QUERY-11: response.size <= 5\", () => {",
+                  "    pm.expect(pm.response.json().size).to.be.at.most(5);",
+                  "});",
+                  "pm.test(\"TC-QUERY-11: content length <= 5\", () => {",
+                  "    pm.expect(pm.response.json().content.length).to.be.at.most(5);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?page=0&size=5"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-12 — Default sort: content ordered DESC by occurredAt",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-12: status 200\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json().content;",
+                  "if (rows && rows.length >= 2) {",
+                  "    pm.test(\"TC-QUERY-12: content[0].occurredAt >= content[1].occurredAt (DESC)\", () => {",
+                  "        const t0 = new Date(rows[0].occurredAt).getTime();",
+                  "        const t1 = new Date(rows[1].occurredAt).getTime();",
+                  "        pm.expect(t0).to.be.at.least(t1);",
+                  "    });",
+                  "} else {",
+                  "    pm.test(\"TC-QUERY-12: DESC sort (skipped — fewer than 2 rows in DB)\", () => true);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs"
+          },
+          "response": []
+        },
+        {
+          "name": "TC-QUERY-13 — ?userId=not-a-uuid → 400",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"TC-QUERY-13: malformed UUID in userId param returns 400\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{coordinatorToken}}" }
+            ],
+            "url": "{{baseUrl}}/api/admin/audit-logs?userId=not-a-uuid"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
