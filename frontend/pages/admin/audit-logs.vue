@@ -5,7 +5,7 @@ import type { AuditLogEntry, AuditLogQuery } from '~/types/audit-log';
 
 definePageMeta({
   middleware: 'auth',
-  roles: ['Admin'],
+  roles: ['Coordinator'],
 });
 
 const { fetchAuditLogs, getAuthToken } = useApiClient();
@@ -145,7 +145,7 @@ onMounted(load);
         class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       >
         <ArrowLeft class="h-4 w-4" />
-        Back to Dashboard
+        Back to dashboard
       </NuxtLink>
 
       <!-- Header -->

@@ -105,7 +105,7 @@ onMounted(loadPage);
     <div class="mx-auto w-full max-w-5xl space-y-6">
       <NuxtLink
         to="/student/group"
-        class="inline-flex items-center gap-2 text-sm font-medium text-slate-700 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       >
         <ArrowLeft class="h-4 w-4" />
         Back to Group Hub

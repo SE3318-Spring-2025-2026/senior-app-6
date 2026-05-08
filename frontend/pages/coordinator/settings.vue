@@ -191,9 +191,17 @@
     class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8"
   >
     <div class="mx-auto w-full max-w-4xl space-y-6">
+      <NuxtLink
+        to="/coordinator/dashboard"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+      >
+        <ArrowLeft class="h-4 w-4" />
+        Back to dashboard
+      </NuxtLink>
+
       <!-- Page Header -->
       <header
-        class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg sm:flex-row sm:items-center sm:justify-between"
+        class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg"
       >
         <div class="flex items-center gap-3">
           <Settings class="h-7 w-7 text-slate-600 dark:text-slate-400" />
@@ -208,14 +216,6 @@
             </p>
           </div>
         </div>
-
-        <NuxtLink
-          to="/coordinator/dashboard"
-          class="inline-flex items-center gap-2 self-start rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:self-auto"
-        >
-          <ArrowLeft class="h-4 w-4" />
-          Back to Dashboard
-        </NuxtLink>
       </header>
 
       <!-- ═══════════════════════════════════════════════════════════════ -->

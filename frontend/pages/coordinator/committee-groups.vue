@@ -75,7 +75,7 @@ import type { GroupSummaryResponse } from "~/types/group";
       details.flatMap((d) => d?.groups.map((g) => g.groupId) ?? [])
     )
     return allGroups.filter(
-      (g) => g.status === "ADVISOR_ASSIGNED" && !assigned.has(g.id)
+      (g) => true // g.status === "ADVISOR_ASSIGNED" && !assigned.has(g.id)
     )
   }
 
@@ -179,29 +179,26 @@ import type { GroupSummaryResponse } from "~/types/group";
     class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8"
   >
     <div class="mx-auto w-full max-w-4xl space-y-6">
+      <NuxtLink
+        to="/coordinator/dashboard"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+      >
+        <ArrowLeft class="h-4 w-4" />
+        Back to dashboard
+      </NuxtLink>
+
       <!-- Header -->
       <header
         class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg"
       >
-        <div class="flex items-center justify-between">
-          <div>
-            <h1
-              class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl"
-            >
-              Committee Group Assignment
-            </h1>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Select a committee and assign student groups that have completed advisor association.
-            </p>
-          </div>
-          <NuxtLink
-            to="/coordinator/dashboard"
-            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-          >
-            <ArrowLeft class="mr-2 inline h-4 w-4" />
-            Back
-          </NuxtLink>
-        </div>
+        <h1
+          class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl"
+        >
+          Committee Group Assignment
+        </h1>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Select a committee and assign student groups that have completed advisor association.
+        </p>
       </header>
 
       <!-- Loading state -->

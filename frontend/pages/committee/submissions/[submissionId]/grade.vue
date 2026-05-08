@@ -17,7 +17,6 @@ definePageMeta({
 });
 
 const route = useRoute();
-const router = useRouter();
 const {
   getAuthToken,
   fetchSubmission,
@@ -102,7 +101,7 @@ async function handleSubmit() {
 
     // 403 → not a committee member for this submission; redirect away
     if (status === 403) {
-      router.back();
+      await navigateTo("/professor/committees");
       return;
     }
 
@@ -128,13 +127,13 @@ onMounted(load);
 
     <!-- Top bar -->
     <header class="flex items-center gap-3 px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex-shrink-0 shadow-sm">
-      <button
-        class="inline-flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
-        @click="router.back()"
+      <NuxtLink
+        to="/professor/committees"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
       >
-        <ArrowLeft class="w-4 h-4" />
-        Back
-      </button>
+        <ArrowLeft class="h-4 w-4" />
+        Back to committees
+      </NuxtLink>
 
       <div class="h-5 w-px bg-slate-200 dark:bg-slate-700" />
 
