@@ -269,6 +269,46 @@ class RubricGradingControllerTest {
                 .andExpect(jsonPath("$.message").isNotEmpty());
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    //  Soft criterion — invalid grade value → 400
+    // ═══════════════════════════════════════════════════════════════════
+
+    @Test
+    @DisplayName("Soft criterion receiving 'X' (not in A/B/C/D/F) returns 400")
+    void softCriterion_invalidGrade_returns400() throws Exception {
+        mockMvc.perform(post("/api/submissions/{id}/grade", submission.getId())
+                .with(authentication(profAuth(professor)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(gradesJson(
+                        entry(binaryCriterion.getId(), "S"),
+                        entry(softCriterion.getId(),   "X"))))  // invalid for Soft
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        org.hamcrest.Matchers.containsString(softCriterion.getId().toString())));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  Deliverable-scoped committee check:
+    //  Professor on Proposal committee cannot grade a SoW submission → 403
+    // ═══════════════════════════════════════════════════════════════════
+
+    @Test
+    @DisplayName("Professor assigned to Proposal committee grades SoW submission → 403")
+    void professorInProposalCommittee_grade_sowSubmission_returns403() throws Exception {
+        // Professor is already on the Proposal committee (set up in @BeforeEach).
+        // Create a SoW deliverable + submission for the same group.
+        Deliverable sowDeliverable = deliverableRepository.save(makeSoWDeliverable());
+        DeliverableSubmission sowSubmission = submissionRepository.save(makeSubmission(group, sowDeliverable));
+
+        // No committee exists for professor × group × sowDeliverable → 403
+        mockMvc.perform(post("/api/submissions/{id}/grade", sowSubmission.getId())
+                .with(authentication(profAuth(professor)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(gradesJson(entry(binaryCriterion.getId(), "S"))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
     // ── helpers ──────────────────────────────────────────────────────────
 
     private StaffUser makeProfessor(String mail) {
@@ -285,6 +325,16 @@ class RubricGradingControllerTest {
         d.setName(name);
         d.setType(Deliverable.DeliverableType.Proposal);
         d.setWeight(new BigDecimal(weight));
+        d.setSubmissionDeadline(LocalDateTime.now().plusDays(30));
+        d.setReviewDeadline(LocalDateTime.now().plusDays(37));
+        return d;
+    }
+
+    private Deliverable makeSoWDeliverable() {
+        Deliverable d = new Deliverable();
+        d.setName("SoW");
+        d.setType(Deliverable.DeliverableType.SoW);
+        d.setWeight(new BigDecimal("20"));
         d.setSubmissionDeadline(LocalDateTime.now().plusDays(30));
         d.setReviewDeadline(LocalDateTime.now().plusDays(37));
         return d;
