@@ -199,6 +199,14 @@ class StudentGradeControllerTest {
     }
 
     @Test
+    @DisplayName("Coordinator with unknown studentId: 404 (not 204) — student is resolved before role check")
+    void storedGrade_coordinatorUnknownStudent_returns404() throws Exception {
+        mockMvc.perform(get("/api/students/{studentId}/grade", UNKNOWN_STUDENT_ID)
+                        .with(authentication(coordinatorAuth(coordinator))))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     @DisplayName("studentId not 11 digits: 400")
     void storedGrade_invalidStudentIdFormat_returns400() throws Exception {
         mockMvc.perform(get("/api/students/{studentId}/grade", "abc")

@@ -3235,7 +3235,7 @@ paths:
       summary: "Read the previously stored final grade (no recalculation)"
       description: |
         Returns the stored FinalGrade row for the student in the active term, if one exists.
-        Does NOT trigger recalculation — for that, use POST /students/{studentId}/grade/calculate.
+        Does NOT trigger recalculation — for that, use GET /students/{studentId}/grade/calculate.
         The returned `deliverableBreakdown` is always an empty list `[]` because breakdowns
         are computed on-the-fly and not persisted (see endpoints_p7.md D3).
         Auth rules:
