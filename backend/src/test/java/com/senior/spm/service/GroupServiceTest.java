@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -30,6 +31,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.senior.spm.controller.response.BindToolResponse;
 import com.senior.spm.controller.response.GroupDetailResponse;
 import com.senior.spm.entity.AdvisorRequest.RequestStatus;
+import com.senior.spm.entity.AuditLog.Outcome;
+import com.senior.spm.entity.AuditLog.UserType;
 import com.senior.spm.entity.GroupInvitation.InvitationStatus;
 import com.senior.spm.entity.GroupMembership;
 import com.senior.spm.entity.GroupMembership.MemberRole;
@@ -77,6 +80,7 @@ class GroupServiceTest {
     private static final UUID STUDENT_ID = UUID.randomUUID();
     private static final UUID GROUP_ID = UUID.randomUUID();
     private static final String GROUP_NAME = "TeamAlpha";
+    private static final UUID COORDINATOR_ID = UUID.randomUUID();
 
     private ScheduleWindow openWindow;
     private Student student;
@@ -85,7 +89,7 @@ class GroupServiceTest {
     @BeforeEach
     void setUp() {
         SecurityContextHolder.getContext().setAuthentication(
-            new UsernamePasswordAuthenticationToken(UUID.randomUUID().toString(), null, List.of()));
+            new UsernamePasswordAuthenticationToken(COORDINATOR_ID.toString(), null, List.of()));
 
         openWindow = new ScheduleWindow();
         openWindow.setId(UUID.randomUUID());
@@ -421,6 +425,9 @@ class GroupServiceTest {
             assertThat(captor.getValue().getGroup()).isEqualTo(group);
 
             verify(groupInvitationRepository).autoDenyAllPendingByInviteeId(studentUUID);
+
+            verify(auditLogService).record(
+                    eq(COORDINATOR_ID), eq(UserType.STAFF), eq("MEMBER_ADDED"), eq(Outcome.SUCCESS), isNull());
         }
 
         @Test
@@ -565,6 +572,9 @@ class GroupServiceTest {
 
             verify(groupMembershipRepository).delete(membership);
             assertThat(result.getId()).isEqualTo(groupId);
+
+            verify(auditLogService).record(
+                    eq(COORDINATOR_ID), eq(UserType.STAFF), eq("MEMBER_REMOVED"), eq(Outcome.SUCCESS), isNull());
         }
 
         @Test
@@ -665,6 +675,9 @@ class GroupServiceTest {
                     eq(RequestStatus.AUTO_REJECTED), eq(groupId));
 
             assertThat(result.getStatus()).isEqualTo("DISBANDED");
+
+            verify(auditLogService).record(
+                    eq(COORDINATOR_ID), eq(UserType.STAFF), eq("GROUP_DISBANDED"), eq(Outcome.SUCCESS), isNull());
         }
 
         @Test

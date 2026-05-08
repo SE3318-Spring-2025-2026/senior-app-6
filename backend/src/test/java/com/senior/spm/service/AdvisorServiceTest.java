@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,16 +14,23 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import com.senior.spm.controller.response.AdvisorOverrideResponse;
 import com.senior.spm.entity.AdvisorRequest;
 import com.senior.spm.entity.AdvisorRequest.RequestStatus;
+import com.senior.spm.entity.AuditLog.Outcome;
+import com.senior.spm.entity.AuditLog.UserType;
 import com.senior.spm.entity.GroupMembership;
 import com.senior.spm.entity.GroupMembership.MemberRole;
 import com.senior.spm.entity.ProjectGroup;
@@ -30,12 +38,16 @@ import com.senior.spm.entity.ProjectGroup.GroupStatus;
 import com.senior.spm.entity.StaffUser;
 import com.senior.spm.entity.Student;
 import com.senior.spm.exception.AdvisorAtCapacityException;
+import com.senior.spm.exception.AdvisorNotFoundException;
+import com.senior.spm.exception.BusinessRuleException;
 import com.senior.spm.exception.ForbiddenException;
+import com.senior.spm.exception.GroupNotFoundException;
 import com.senior.spm.exception.RequestNotFoundException;
 import com.senior.spm.exception.RequestNotPendingException;
 import com.senior.spm.repository.AdvisorRequestRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
+import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.service.dto.AdvisorRequestDetail;
 import com.senior.spm.service.dto.AdvisorRequestSummary;
 import com.senior.spm.service.dto.AdvisorRespondResponse;
@@ -46,6 +58,7 @@ class AdvisorServiceTest {
     @Mock private AdvisorRequestRepository advisorRequestRepository;
     @Mock private ProjectGroupRepository projectGroupRepository;
     @Mock private GroupMembershipRepository groupMembershipRepository;
+    @Mock private StaffUserRepository staffUserRepository;
     @Mock private TermConfigService termConfigService;
     @Mock private AuditLogService auditLogService;
 
@@ -60,6 +73,7 @@ class AdvisorServiceTest {
     private static final UUID   OTHER_PROF_ID   = UUID.randomUUID();
     private static final UUID   REQUEST_ID      = UUID.randomUUID();
     private static final UUID   GROUP_ID        = UUID.randomUUID();
+    private static final UUID   COORDINATOR_ID  = UUID.randomUUID();
 
     // ── shared fixtures ────────────────────────────────────────────────────────
 
@@ -69,8 +83,12 @@ class AdvisorServiceTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(COORDINATOR_ID.toString(), null, List.of()));
+
         professor = new StaffUser();
         professor.setId(PROFESSOR_ID);
+        professor.setRole(StaffUser.Role.Professor);
         professor.setAdvisorCapacity(CAPACITY);
 
         group = new ProjectGroup();
@@ -88,6 +106,11 @@ class AdvisorServiceTest {
         pendingRequest.setGroup(group);
         pendingRequest.setStatus(RequestStatus.PENDING);
         pendingRequest.setSentAt(LocalDateTime.now().minusHours(2));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -523,5 +546,143 @@ class AdvisorServiceTest {
         s.setId(UUID.randomUUID());
         s.setStudentId(studentId);
         return s;
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  COORDINATOR — assignAdvisor (FIX-2: userId must be non-null)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    @Nested
+    class CoordinatorAssignAdvisor {
+
+        private final UUID advisorId = UUID.randomUUID();
+        private StaffUser newAdvisor;
+
+        @BeforeEach
+        void setUpAdvisor() {
+            newAdvisor = new StaffUser();
+            newAdvisor.setId(advisorId);
+            newAdvisor.setRole(StaffUser.Role.Professor);
+            newAdvisor.setAdvisorCapacity(5);
+        }
+
+        @Test
+        void happyPath_assignsAdvisorAndRecordsAuditWithCoordinatorId() {
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
+            when(staffUserRepository.findById(advisorId)).thenReturn(Optional.of(newAdvisor));
+            when(projectGroupRepository.save(any())).thenReturn(group);
+
+            AdvisorOverrideResponse response = advisorService.assignAdvisor(GROUP_ID, advisorId);
+
+            assertThat(response.getGroupId()).isEqualTo(GROUP_ID);
+            assertThat(response.getAdvisorId()).isEqualTo(advisorId);
+
+            ArgumentCaptor<UUID> userIdCaptor = ArgumentCaptor.forClass(UUID.class);
+            verify(auditLogService).record(
+                    userIdCaptor.capture(), eq(UserType.STAFF), eq("ADVISOR_ASSIGNED"), eq(Outcome.SUCCESS), isNull());
+            assertThat(userIdCaptor.getValue()).isEqualTo(COORDINATOR_ID);
+        }
+
+        @Test
+        void throwsGroupNotFoundWhenGroupMissing() {
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> advisorService.assignAdvisor(GROUP_ID, advisorId))
+                    .isInstanceOf(GroupNotFoundException.class);
+
+            verify(auditLogService, never()).record(any(), any(), any(), any(), any());
+        }
+
+        @Test
+        void throwsBusinessRuleExceptionWhenGroupIsDisbanded() {
+            group.setStatus(GroupStatus.DISBANDED);
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
+
+            assertThatThrownBy(() -> advisorService.assignAdvisor(GROUP_ID, advisorId))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("disbanded");
+        }
+
+        @Test
+        void throwsBusinessRuleExceptionWhenGroupStatusIsInvalid() {
+            group.setStatus(GroupStatus.FORMING);
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
+
+            assertThatThrownBy(() -> advisorService.assignAdvisor(GROUP_ID, advisorId))
+                    .isInstanceOf(BusinessRuleException.class);
+        }
+
+        @Test
+        void throwsAdvisorNotFoundWhenAdvisorMissing() {
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
+            when(staffUserRepository.findById(advisorId)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> advisorService.assignAdvisor(GROUP_ID, advisorId))
+                    .isInstanceOf(AdvisorNotFoundException.class);
+        }
+
+        @Test
+        void throwsBusinessRuleExceptionWhenAdvisorAlreadyAssigned() {
+            group.setStatus(GroupStatus.ADVISOR_ASSIGNED);
+            group.setAdvisor(newAdvisor);
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
+            when(staffUserRepository.findById(advisorId)).thenReturn(Optional.of(newAdvisor));
+
+            assertThatThrownBy(() -> advisorService.assignAdvisor(GROUP_ID, advisorId))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("already");
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    //  COORDINATOR — removeAdvisor (FIX-2: userId must be non-null)
+    // ══════════════════════════════════════════════════════════════════════════
+
+    @Nested
+    class CoordinatorRemoveAdvisor {
+
+        @BeforeEach
+        void setUpWithAdvisor() {
+            group.setStatus(GroupStatus.ADVISOR_ASSIGNED);
+            group.setAdvisor(professor);
+        }
+
+        @Test
+        void happyPath_removesAdvisorAndRecordsAuditWithCoordinatorId() {
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
+            when(projectGroupRepository.save(any())).thenReturn(group);
+
+            AdvisorOverrideResponse response = advisorService.removeAdvisor(GROUP_ID);
+
+            assertThat(response.getGroupId()).isEqualTo(GROUP_ID);
+            assertThat(response.getAdvisorId()).isNull();
+            assertThat(response.getStatus()).isEqualTo(GroupStatus.TOOLS_BOUND);
+
+            ArgumentCaptor<UUID> userIdCaptor = ArgumentCaptor.forClass(UUID.class);
+            verify(auditLogService).record(
+                    userIdCaptor.capture(), eq(UserType.STAFF), eq("ADVISOR_REMOVED"), eq(Outcome.SUCCESS), isNull());
+            assertThat(userIdCaptor.getValue()).isEqualTo(COORDINATOR_ID);
+        }
+
+        @Test
+        void throwsGroupNotFoundWhenGroupMissing() {
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> advisorService.removeAdvisor(GROUP_ID))
+                    .isInstanceOf(GroupNotFoundException.class);
+
+            verify(auditLogService, never()).record(any(), any(), any(), any(), any());
+        }
+
+        @Test
+        void throwsBusinessRuleExceptionWhenNoAdvisorAssigned() {
+            group.setAdvisor(null);
+            group.setStatus(GroupStatus.TOOLS_BOUND);
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
+
+            assertThatThrownBy(() -> advisorService.removeAdvisor(GROUP_ID))
+                    .isInstanceOf(BusinessRuleException.class)
+                    .hasMessageContaining("no advisor");
+        }
     }
 }
