@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -769,6 +770,25 @@ class AdvisorServiceBrowseRequestTest {
 
             verify(projectGroupRepository, never()).countByAdvisorIdAndTermIdAndStatusNot(any(), any(), any());
         }
+
+        @Test
+        void writesAuditLog_withCoordinatorUserIdFromSecurityContext() {
+            UUID coordinatorId = UUID.randomUUID();
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(coordinatorId.toString(), null, List.of()));
+
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
+            when(staffUserRepository.findById(ADVISOR_ID)).thenReturn(Optional.of(professor));
+
+            advisorService.assignAdvisor(GROUP_ID, ADVISOR_ID);
+
+            verify(auditLogService).record(
+                    eq(coordinatorId),
+                    eq(com.senior.spm.entity.AuditLog.UserType.STAFF),
+                    eq("ADVISOR_ASSIGNED"),
+                    eq(com.senior.spm.entity.AuditLog.Outcome.SUCCESS),
+                    isNull());
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -810,6 +830,26 @@ class AdvisorServiceBrowseRequestTest {
             assertThat(captor.getValue().getStatus()).isEqualTo(GroupStatus.TOOLS_BOUND);
             assertThat(response.getStatus()).isEqualTo(GroupStatus.TOOLS_BOUND);
             assertThat(response.getAdvisorId()).isNull();
+        }
+
+        @Test
+        void writesAuditLog_withCoordinatorUserIdFromSecurityContext() {
+            UUID coordinatorId = UUID.randomUUID();
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(coordinatorId.toString(), null, List.of()));
+
+            group.setStatus(GroupStatus.ADVISOR_ASSIGNED);
+            group.setAdvisor(professor);
+            when(projectGroupRepository.findById(GROUP_ID)).thenReturn(Optional.of(group));
+
+            advisorService.removeAdvisor(GROUP_ID);
+
+            verify(auditLogService).record(
+                    eq(coordinatorId),
+                    eq(com.senior.spm.entity.AuditLog.UserType.STAFF),
+                    eq("ADVISOR_REMOVED"),
+                    eq(com.senior.spm.entity.AuditLog.Outcome.SUCCESS),
+                    isNull());
         }
     }
 
