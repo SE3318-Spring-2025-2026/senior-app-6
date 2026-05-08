@@ -34,6 +34,7 @@ import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.ScheduleWindowRepository;
 import com.senior.spm.repository.StudentRepository;
 
+import com.senior.spm.entity.AuditLog.Category;
 import com.senior.spm.entity.AuditLog.Outcome;
 import com.senior.spm.entity.AuditLog.UserType;
 
@@ -118,7 +119,7 @@ public class GroupService {
                 studentUUID, "GROUP_CREATED", savedGroup.getId(), groupName);
         // 8. Return GroupDetailResponse
         GroupDetailResponse result = toGroupDetailResponse(savedGroup, studentUUID);
-        auditLogService.record(studentUUID, UserType.STUDENT, "GROUP_CREATED", Outcome.SUCCESS, null);
+        auditLogService.record(studentUUID, UserType.STUDENT, "GROUP_CREATED", Category.GROUP, Outcome.SUCCESS, null);
         return result;
     }
 
@@ -202,7 +203,7 @@ public class GroupService {
         try {
             jiraValidationService.validate(jiraSpaceUrl, jiraEmail, jiraProjectKey, jiraApiToken);
         } catch (RuntimeException e) {
-            auditLogService.record(requesterUUID, UserType.STUDENT, "JIRA_BOUND", Outcome.FAILURE, null);
+            auditLogService.record(requesterUUID, UserType.STUDENT, "JIRA_BOUND", Category.GROUP, Outcome.FAILURE, null);
             throw e;
         }
 
@@ -230,7 +231,7 @@ public class GroupService {
         group.setJiraTokenExpiresAt(jiraTokenExpiresAt);
         group.setStatus(newStatus);
         ProjectGroup savedGroup = projectGroupRepository.save(group);
-        auditLogService.record(requesterUUID, UserType.STUDENT, "JIRA_BOUND", Outcome.SUCCESS, null);
+        auditLogService.record(requesterUUID, UserType.STUDENT, "JIRA_BOUND", Category.GROUP, Outcome.SUCCESS, null);
 
         // 7. Build response — encrypted token is never included
         BindToolResponse response = new BindToolResponse();
@@ -299,7 +300,7 @@ public class GroupService {
         try {
             validationResult = gitHubValidationService.validate(githubOrgName, githubPat, githubRepoName);
         } catch (RuntimeException e) {
-            auditLogService.record(requesterUUID, UserType.STUDENT, "GITHUB_BOUND", Outcome.FAILURE, null);
+            auditLogService.record(requesterUUID, UserType.STUDENT, "GITHUB_BOUND", Category.GROUP, Outcome.FAILURE, null);
             throw e;
         }
 
@@ -325,7 +326,7 @@ public class GroupService {
         group.setGithubPatExpiresAt(validationResult.tokenExpiresAt());
         group.setStatus(newStatus);
         ProjectGroup savedGroup = projectGroupRepository.save(group);
-        auditLogService.record(requesterUUID, UserType.STUDENT, "GITHUB_BOUND", Outcome.SUCCESS, null);
+        auditLogService.record(requesterUUID, UserType.STUDENT, "GITHUB_BOUND", Category.GROUP, Outcome.SUCCESS, null);
 
         // 7. Build response — encrypted PAT is never included
         BindToolResponse response = new BindToolResponse();
@@ -505,7 +506,7 @@ public class GroupService {
         // 6. Auto-deny all PENDING invitations for this student
         groupInvitationRepository.autoDenyAllPendingByInviteeId(student.getId());
 
-        auditLogService.record(currentUserId(), UserType.STAFF, "MEMBER_ADDED", Outcome.SUCCESS, null);
+        auditLogService.record(currentUserId(), UserType.STAFF, "MEMBER_ADDED", Category.GROUP, Outcome.SUCCESS, null);
         return toGroupDetailResponse(group, null);
     }
 
@@ -555,7 +556,7 @@ public class GroupService {
         // 5. Delete membership
         groupMembershipRepository.delete(membership);
 
-        auditLogService.record(currentUserId(), UserType.STAFF, "MEMBER_REMOVED", Outcome.SUCCESS, null);
+        auditLogService.record(currentUserId(), UserType.STAFF, "MEMBER_REMOVED", Category.GROUP, Outcome.SUCCESS, null);
         return toGroupDetailResponse(group, null);
     }
 
@@ -614,7 +615,7 @@ public class GroupService {
             groupId
         );
 
-        auditLogService.record(currentUserId(), UserType.STAFF, "GROUP_DISBANDED", Outcome.SUCCESS, null);
+        auditLogService.record(currentUserId(), UserType.STAFF, "GROUP_DISBANDED", Category.GROUP, Outcome.SUCCESS, null);
         return toGroupDetailResponse(group, null);
     }
 

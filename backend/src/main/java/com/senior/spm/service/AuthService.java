@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.senior.spm.controller.response.GithubLoginResponse;
 import com.senior.spm.controller.response.LoginResponse;
+import com.senior.spm.entity.AuditLog.Category;
 import com.senior.spm.entity.AuditLog.Outcome;
 import com.senior.spm.entity.AuditLog.UserType;
 import com.senior.spm.exception.NotFoundException;
@@ -63,11 +64,11 @@ public class AuthService {
 
             log.trace("[EVENT] userId={} action={} entityId={} detail={}",
                     staffUser.get().getId(), "STAFF_LOGIN", staffUser.get().getId(), "staff-password-auth");
-            auditLogService.record(staffUser.get().getId(), UserType.STAFF, "STAFF_LOGIN", Outcome.SUCCESS, null);
+            auditLogService.record(staffUser.get().getId(), UserType.STAFF, "STAFF_LOGIN", Category.AUTH, Outcome.SUCCESS, null);
             return new LoginResponse(token, userInfo);
         }
 
-        auditLogService.record(null, UserType.STAFF, "STAFF_LOGIN", Outcome.FAILURE, null);
+        auditLogService.record(null, UserType.STAFF, "STAFF_LOGIN", Category.AUTH, Outcome.FAILURE, null);
         return null;
     }
 
@@ -89,7 +90,7 @@ public class AuthService {
         try {
             staffUserRepository.save(staffUser);
             passwordResetTokenRepository.delete(resetToken.get());
-            auditLogService.record(staffUser.getId(), UserType.STAFF, "PASSWORD_RESET", Outcome.SUCCESS, null);
+            auditLogService.record(staffUser.getId(), UserType.STAFF, "PASSWORD_RESET", Category.AUTH, Outcome.SUCCESS, null);
         } catch (IllegalArgumentException | OptimisticEntityLockException e) {
             throw new RepositoryException("Server error while resetting password: " + e.getMessage(), e);
         }
@@ -134,7 +135,7 @@ public class AuthService {
 
         log.trace("[EVENT] userId={} action={} entityId={} detail={}",
                 studentOpt.get().getId(), "STUDENT_LOGIN", studentOpt.get().getId(), "github-oauth");
-        auditLogService.record(studentOpt.get().getId(), UserType.STUDENT, "STUDENT_LOGIN", Outcome.SUCCESS, null);
+        auditLogService.record(studentOpt.get().getId(), UserType.STUDENT, "STUDENT_LOGIN", Category.AUTH, Outcome.SUCCESS, null);
         return new GithubLoginResponse(token, userInfo);
     }
 }
