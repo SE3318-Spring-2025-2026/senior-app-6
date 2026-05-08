@@ -32,7 +32,19 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ScrumGrade {
 
-    public enum ScrumGradeValue { A, B, C, D, F }
+    public enum ScrumGradeValue {
+        A, B, C, D, F;
+
+        public int toNumeric() {
+            return switch (this) {
+                case A -> 100;
+                case B -> 80;
+                case C -> 60;
+                case D -> 50;
+                case F -> 0;
+            };
+        }
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

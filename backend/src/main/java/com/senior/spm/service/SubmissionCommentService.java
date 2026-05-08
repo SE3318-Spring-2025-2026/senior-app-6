@@ -35,7 +35,8 @@ public class SubmissionCommentService {
     public SubmissionCommentResponse createComment(
             UUID submissionId,
             UUID reviewerId,
-            String commentText) {
+            String commentText,
+            String sectionReference) {
 
         DeliverableSubmission submission = deliverableSubmissionRepository.findById(submissionId)
                 .orElseThrow(() -> new NotFoundException("Submission not found"));
@@ -60,6 +61,7 @@ public class SubmissionCommentService {
         comment.setSubmission(submission);
         comment.setCommenter(reviewer);
         comment.setCommentText(commentText);
+        comment.setSectionReference(sectionReference);
         comment.setCreatedAt(LocalDateTime.now(ZoneId.of("UTC")));
 
         SubmissionComment saved = submissionCommentRepository.save(comment);
@@ -70,6 +72,7 @@ public class SubmissionCommentService {
                 reviewer.getId(),
                 reviewer.getMail(),
                 saved.getCommentText(),
+                saved.getSectionReference(),
                 saved.getCreatedAt()
         );
     }
@@ -101,6 +104,7 @@ public class SubmissionCommentService {
                         comment.getCommenter().getId(),
                         comment.getCommenter().getMail(),
                         comment.getCommentText(),
+                        comment.getSectionReference(),
                         comment.getCreatedAt()
                 ))
                 .collect(Collectors.toList());

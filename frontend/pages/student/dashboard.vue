@@ -1,80 +1,73 @@
 <script setup lang="ts">
-	import { LogOut, GitBranch, FileCheck, Users, Send, Clock, CheckCircle2, AlertCircle } from "lucide-vue-next";
+	import { LogOut, GitBranch, FileCheck, Users, Send, Clock, CheckCircle2, AlertCircle, Calculator } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
-  import { useAuthStore } from "~/stores/auth";                                                                                                                                           
-  import type { StudentDeliverable } from "~/types/submission";
-  import type { ActiveSprintResponse } from "~/types/sprint";                                                                                                                             
+	import type { ActiveSprintResponse } from "~/types/sprint";
+	import type { StudentDeliverable } from "~/types/submission";
 
-  definePageMeta({
-      middleware: "auth",
-      roles: ["Student"],
-  });
+	definePageMeta({
+		middleware: "auth",
+		roles: ["Student"],
+	});
 
-  const router = useRouter();
-  const authStore = useAuthStore();
-  const { getAuthToken, fetchStudentDeliverables, fetchActiveSprint } = useApiClient();
+	const router = useRouter();
+	const authStore = useAuthStore();
+	const { getAuthToken, fetchActiveSprint, fetchStudentDeliverables } = useApiClient();
 
-  // Deliverables
-  const deliverables = ref<StudentDeliverable[]>([]);
-  const loadingDeliverables = ref(true);
-  const deliverablesError = ref<string | null>(null);
+	type SprintState = "loading" | "loaded" | "no-sprint" | "error";
 
-  async function loadDeliverables() {
-      loadingDeliverables.value = true;
-      deliverablesError.value = null;
-      try {
-          const token = getAuthToken();
-          if (token) {
-              deliverables.value = await fetchStudentDeliverables(token);
-          }
-      } catch {
-          deliverablesError.value = "Failed to load deliverables.";
-      } finally {
-          loadingDeliverables.value = false;
-      }
-  }
+	const sprintState = ref<SprintState>("loading");
+	const sprint = ref<ActiveSprintResponse | null>(null);
 
-  function formatDate(dateStr: string) {
-      try {
-          return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium" }).format(new Date(dateStr));
-      } catch {
-          return dateStr;
-      }
-  }
+	const sprintDateRange = computed(() => {
+		if (!sprint.value) return "";
+		const fmt = (d: string) =>
+			new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(d));
+		return `${fmt(sprint.value.startDate)} – ${fmt(sprint.value.endDate)}`;
+	});
 
-  // Active sprint
-  type SprintState = "loading" | "loaded" | "no-sprint" | "error";
-  const sprintState = ref<SprintState>("loading");
-  const sprint = ref<ActiveSprintResponse | null>(null);
+	onMounted(async () => {
+		const token = getAuthToken();
+		if (!token) return;
+		try {
+			sprint.value = await fetchActiveSprint(token);
+			sprintState.value = "loaded";
+		} catch (err: unknown) {
+			const apiError = err as { status?: number };
+			sprintState.value = apiError.status === 404 ? "no-sprint" : "error";
+		}
+	});
 
-  const sprintDateRange = computed(() => {
-      if (!sprint.value) return "";
-      const fmt = (d: string) =>
-          new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date(d));
-      return `${fmt(sprint.value.startDate)} – ${fmt(sprint.value.endDate)}`;
-  });
+	const deliverables = ref<StudentDeliverable[]>([]);
+	const loadingDeliverables = ref(true);
+	const deliverablesError = ref<string | null>(null);
 
-  async function loadActiveSprint() {
-      const token = getAuthToken();
-      if (!token) return;
-      try {
-          sprint.value = await fetchActiveSprint(token);
-          sprintState.value = "loaded";
-      } catch (err: unknown) {
-          const apiError = err as { status?: number };
-          sprintState.value = apiError.status === 404 ? "no-sprint" : "error";
-      }
-  }
+	async function loadDeliverables() {
+		loadingDeliverables.value = true;
+		deliverablesError.value = null;
+		try {
+			const token = getAuthToken();
+			if (token) {
+				deliverables.value = await fetchStudentDeliverables(token);
+			}
+		} catch {
+			deliverablesError.value = "Failed to load deliverables.";
+		} finally {
+			loadingDeliverables.value = false;
+		}
+	}
 
-  onMounted(() => {
-      void loadDeliverables();
-      void loadActiveSprint();
-  });
+	function formatDate(dateStr: string) {
+		try {
+			return new Intl.DateTimeFormat("tr-TR", { dateStyle: "medium" }).format(new Date(dateStr));
+		} catch {
+			return dateStr;
+		}
+	}
 
-  function handleLogout() {
-      authStore.logout();
-      router.push("/auth/login");
-  }
+	function handleLogout() {
+		authStore.logout();
+		router.push("/auth/login");
+	}
 
 	onMounted(loadDeliverables);
 </script>
@@ -151,7 +144,7 @@
         </NuxtLink>
 
         <NuxtLink
-          to="/student/group/deliverables"
+          to="/student/deliverables"
           class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600"
         >
           <FileCheck class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
@@ -169,6 +162,17 @@
           <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Group Hub</h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             Open your group page to create a team, review members, and check your current group state.
+          </p>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/student/group/grade"
+          class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-fuchsia-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-fuchsia-600"
+        >
+          <Calculator class="h-8 w-8 text-fuchsia-600 dark:text-fuchsia-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Final Grade</h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            View your final grade and deliverable breakdown.
           </p>
         </NuxtLink>
       </div>
@@ -227,6 +231,12 @@
                   }"
                 >
                   {{ d.submissionStatus === 'SUBMITTED' ? 'Submitted' : 'Not Submitted' }}
+                </span>
+                <span
+                  v-if="d.weight != null"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+                >
+                  {{ d.weight }}%
                 </span>
               </div>
             </div>

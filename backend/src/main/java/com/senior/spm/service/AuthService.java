@@ -9,26 +9,28 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.senior.spm.controller.response.GithubLoginResponse;
 import com.senior.spm.controller.response.LoginResponse;
+import com.senior.spm.entity.AuditLog.Category;
+import com.senior.spm.entity.AuditLog.Outcome;
+import com.senior.spm.entity.AuditLog.UserType;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.exception.RepositoryException;
 import com.senior.spm.repository.PasswordResetTokenRepository;
 import com.senior.spm.repository.StaffUserRepository;
 import com.senior.spm.repository.StudentRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class AuthService {
 
     private final PasswordEncoder passwordEncoder;
-
     private final StaffUserRepository staffUserRepository;
-
     private final JWTService jwtService;
-
     private final PasswordResetTokenRepository passwordResetTokenRepository;
-
     private final StudentRepository studentRepository;
-
     private final GithubService githubService;
+    private final AuditLogService auditLogService;
 
     public AuthService(
             PasswordEncoder passwordEncoder,
@@ -36,13 +38,15 @@ public class AuthService {
             JWTService jwtService,
             PasswordResetTokenRepository passwordResetTokenRepository,
             StudentRepository studentRepository,
-            GithubService githubService) {
+            GithubService githubService,
+            AuditLogService auditLogService) {
         this.passwordEncoder = passwordEncoder;
         this.staffUserRepository = staffUserRepository;
         this.jwtService = jwtService;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.studentRepository = studentRepository;
         this.githubService = githubService;
+        this.auditLogService = auditLogService;
     }
 
     public LoginResponse login(String mail, String password) {
@@ -58,9 +62,13 @@ public class AuthService {
                     staffUser.get().getRole(),
                     staffUser.get().isFirstLogin());
 
+            log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                    staffUser.get().getId(), "STAFF_LOGIN", staffUser.get().getId(), "staff-password-auth");
+            auditLogService.record(staffUser.get().getId(), UserType.STAFF, "STAFF_LOGIN", Category.AUTH, Outcome.SUCCESS, null);
             return new LoginResponse(token, userInfo);
         }
 
+        auditLogService.record(null, UserType.STAFF, "STAFF_LOGIN", Category.AUTH, Outcome.FAILURE, null);
         return null;
     }
 
@@ -82,6 +90,7 @@ public class AuthService {
         try {
             staffUserRepository.save(staffUser);
             passwordResetTokenRepository.delete(resetToken.get());
+            auditLogService.record(staffUser.getId(), UserType.STAFF, "PASSWORD_RESET", Category.AUTH, Outcome.SUCCESS, null);
         } catch (IllegalArgumentException | OptimisticEntityLockException e) {
             throw new RepositoryException("Server error while resetting password: " + e.getMessage(), e);
         }
@@ -124,6 +133,9 @@ public class AuthService {
                 studentOpt.get().getGithubUsername(),
                 "STUDENT");
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                studentOpt.get().getId(), "STUDENT_LOGIN", studentOpt.get().getId(), "github-oauth");
+        auditLogService.record(studentOpt.get().getId(), UserType.STUDENT, "STUDENT_LOGIN", Category.AUTH, Outcome.SUCCESS, null);
         return new GithubLoginResponse(token, userInfo);
     }
 }

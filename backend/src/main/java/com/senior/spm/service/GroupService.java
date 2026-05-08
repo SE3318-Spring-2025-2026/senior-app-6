@@ -34,8 +34,15 @@ import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.ScheduleWindowRepository;
 import com.senior.spm.repository.StudentRepository;
 
-import lombok.RequiredArgsConstructor;
+import com.senior.spm.entity.AuditLog.Category;
+import com.senior.spm.entity.AuditLog.Outcome;
+import com.senior.spm.entity.AuditLog.UserType;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GroupService {
@@ -47,6 +54,7 @@ public class GroupService {
     private final GroupInvitationRepository groupInvitationRepository;
     private final AdvisorRequestRepository advisorRequestRepository;
     private final TermConfigService termConfigService;
+    private final AuditLogService auditLogService;
     private final JiraValidationService jiraValidationService;
     private final GitHubValidationService gitHubValidationService;
     private final EncryptionService encryptionService;
@@ -107,8 +115,12 @@ public class GroupService {
 
         groupMembershipRepository.save(membership);
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                studentUUID, "GROUP_CREATED", savedGroup.getId(), groupName);
         // 8. Return GroupDetailResponse
-        return toGroupDetailResponse(savedGroup, studentUUID);
+        GroupDetailResponse result = toGroupDetailResponse(savedGroup, studentUUID);
+        auditLogService.record(studentUUID, UserType.STUDENT, "GROUP_CREATED", Category.GROUP, Outcome.SUCCESS, null);
+        return result;
     }
 
     @Transactional(readOnly = true)
@@ -124,6 +136,15 @@ public class GroupService {
             .orElseThrow(() -> new RuntimeException("Group not found"));
 
         return toGroupDetailResponse(group, studentUUID);
+    }
+
+    @Transactional(readOnly = true)
+    public UUID getAdvisorIdForStudent(UUID studentUUID) {
+        return groupMembershipRepository.findByStudentId(studentUUID)
+            .map(GroupMembership::getGroup)
+            .map(ProjectGroup::getAdvisor)
+            .map(com.senior.spm.entity.StaffUser::getId)
+            .orElse(null);
     }
 
     /**
@@ -179,7 +200,12 @@ public class GroupService {
         }
 
         // 3. Live validation — nothing is stored until this call returns without throwing
-        jiraValidationService.validate(jiraSpaceUrl, jiraEmail, jiraProjectKey, jiraApiToken);
+        try {
+            jiraValidationService.validate(jiraSpaceUrl, jiraEmail, jiraProjectKey, jiraApiToken);
+        } catch (RuntimeException e) {
+            auditLogService.record(requesterUUID, UserType.STUDENT, "JIRA_BOUND", Category.GROUP, Outcome.FAILURE, null);
+            throw e;
+        }
 
         // 4. Encrypt token before persistence (NFR-7: AES-256 at rest)
         String encryptedJiraToken = encryptionService.encrypt(jiraApiToken);
@@ -205,6 +231,7 @@ public class GroupService {
         group.setJiraTokenExpiresAt(jiraTokenExpiresAt);
         group.setStatus(newStatus);
         ProjectGroup savedGroup = projectGroupRepository.save(group);
+        auditLogService.record(requesterUUID, UserType.STUDENT, "JIRA_BOUND", Category.GROUP, Outcome.SUCCESS, null);
 
         // 7. Build response — encrypted token is never included
         BindToolResponse response = new BindToolResponse();
@@ -269,7 +296,13 @@ public class GroupService {
 
         // 3. Live validation — three sequential calls (org check + repo scope check + repo existence check)
         //    Nothing is stored if any call throws.
-        GitHubValidationService.GitHubValidationResult validationResult = gitHubValidationService.validate(githubOrgName, githubPat, githubRepoName);
+        GitHubValidationService.GitHubValidationResult validationResult;
+        try {
+            validationResult = gitHubValidationService.validate(githubOrgName, githubPat, githubRepoName);
+        } catch (RuntimeException e) {
+            auditLogService.record(requesterUUID, UserType.STUDENT, "GITHUB_BOUND", Category.GROUP, Outcome.FAILURE, null);
+            throw e;
+        }
 
         // 4. Encrypt PAT before persistence (NFR-7: AES-256 at rest)
         String encryptedGithubPat = encryptionService.encrypt(githubPat);
@@ -293,6 +326,7 @@ public class GroupService {
         group.setGithubPatExpiresAt(validationResult.tokenExpiresAt());
         group.setStatus(newStatus);
         ProjectGroup savedGroup = projectGroupRepository.save(group);
+        auditLogService.record(requesterUUID, UserType.STUDENT, "GITHUB_BOUND", Category.GROUP, Outcome.SUCCESS, null);
 
         // 7. Build response — encrypted PAT is never included
         BindToolResponse response = new BindToolResponse();
@@ -472,6 +506,7 @@ public class GroupService {
         // 6. Auto-deny all PENDING invitations for this student
         groupInvitationRepository.autoDenyAllPendingByInviteeId(student.getId());
 
+        auditLogService.record(currentUserId(), UserType.STAFF, "MEMBER_ADDED", Category.GROUP, Outcome.SUCCESS, null);
         return toGroupDetailResponse(group, null);
     }
 
@@ -521,6 +556,7 @@ public class GroupService {
         // 5. Delete membership
         groupMembershipRepository.delete(membership);
 
+        auditLogService.record(currentUserId(), UserType.STAFF, "MEMBER_REMOVED", Category.GROUP, Outcome.SUCCESS, null);
         return toGroupDetailResponse(group, null);
     }
 
@@ -579,6 +615,12 @@ public class GroupService {
             groupId
         );
 
+        auditLogService.record(currentUserId(), UserType.STAFF, "GROUP_DISBANDED", Category.GROUP, Outcome.SUCCESS, null);
         return toGroupDetailResponse(group, null);
+    }
+
+    private UUID currentUserId() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return UUID.fromString((String) principal);
     }
 }

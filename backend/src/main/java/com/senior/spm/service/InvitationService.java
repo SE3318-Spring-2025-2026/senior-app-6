@@ -29,7 +29,12 @@ import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.StudentRepository;
 
+import com.senior.spm.entity.AuditLog.Category;
+import com.senior.spm.entity.AuditLog.Outcome;
+import com.senior.spm.entity.AuditLog.UserType;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Coordinates the group invitation lifecycle for Process 2.
@@ -39,6 +44,7 @@ import lombok.RequiredArgsConstructor;
  * lock enforcement on accept, and the transactional accept flow that creates
  * group membership while auto-denying competing pending invitations.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InvitationService {
@@ -49,6 +55,7 @@ public class InvitationService {
     private final StudentRepository studentRepository;
     private final TermConfigService termConfigService;
     private final GroupService groupService;
+    private final AuditLogService auditLogService;
 
     /**
      * Create a new pending invitation from a team leader's group to a target student.
@@ -104,7 +111,11 @@ public class InvitationService {
         invitation.setStatus(InvitationStatus.PENDING);
         invitation.setSentAt(nowUtc());
 
-        return toSendInvitationResponse(groupInvitationRepository.save(invitation));
+        GroupInvitation saved = groupInvitationRepository.save(invitation);
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                requesterUUID, "INVITATION_SENT", saved.getId(), targetStudentId);
+        auditLogService.record(requesterUUID, UserType.STUDENT, "INVITATION_SENT", Category.GROUP, Outcome.SUCCESS, null);
+        return toSendInvitationResponse(saved);
     }
 
     /**
@@ -200,7 +211,11 @@ public class InvitationService {
         if (!accept) {
             invitation.setStatus(InvitationStatus.DECLINED);
             invitation.setRespondedAt(nowUtc());
-            return toStatusOnlyResponse(groupInvitationRepository.save(invitation));
+            InvitationActionResponse response = toStatusOnlyResponse(groupInvitationRepository.save(invitation));
+            log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                    studentUUID, "INVITATION_RESPONDED", invitationId, "DECLINED");
+            auditLogService.record(studentUUID, UserType.STUDENT, "INVITATION_RESPONDED", Category.GROUP, Outcome.SUCCESS, null);
+            return response;
         }
 
         ProjectGroup group = projectGroupRepository.findById(invitation.getGroup().getId())
@@ -239,6 +254,9 @@ public class InvitationService {
         // Bulk update excludes the accepted invitation id so the final state is deterministic.
         groupInvitationRepository.autoDenyOtherPendingInvitationsExcept(studentUUID, invitationId);
 
+        log.trace("[EVENT] userId={} action={} entityId={} detail={}",
+                studentUUID, "INVITATION_RESPONDED", invitationId, "ACCEPTED");
+        auditLogService.record(studentUUID, UserType.STUDENT, "INVITATION_RESPONDED", Category.GROUP, Outcome.SUCCESS, null);
         return groupService.getGroupDetail(group.getId());
     }
 

@@ -28,8 +28,8 @@ import lombok.Setter;
 @Entity
 @Table(name = "deliverable_submission",
     uniqueConstraints = @UniqueConstraint(
-        name = "uk_ds_group_deliverable",
-        columnNames = {"group_id", "deliverable_id"}))
+        name = "uk_ds_group_deliverable_revision",
+        columnNames = {"group_id", "deliverable_id", "revisionNumber"}))
 @Getter
 @Setter
 @NoArgsConstructor

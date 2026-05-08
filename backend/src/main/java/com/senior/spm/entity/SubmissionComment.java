@@ -46,6 +46,9 @@ public class SubmissionComment {
     @Column(nullable = false)
     private String commentText;
 
+    @Column(nullable = true, length = 255)
+    private String sectionReference;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 }

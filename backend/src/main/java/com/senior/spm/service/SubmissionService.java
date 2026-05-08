@@ -74,8 +74,6 @@ public class SubmissionService {
             mapping.setSectionKey(request.getSectionKey());
             mapping.setRubricCriterion(criteriaById.get(request.getCriterionId()));
             mapping.setMappedAt(LocalDateTime.now(ZoneId.of("UTC")));
-            mapping.setSectionStart(request.getSectionStart());
-            mapping.setSectionEnd(request.getSectionEnd());
             return mapping;
         }).collect(Collectors.toList());
 

@@ -1,0 +1,310 @@
+package com.senior.spm.service;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.senior.spm.controller.response.DeliverableBreakdown;
+import com.senior.spm.controller.response.FinalGradeResponse;
+import com.senior.spm.entity.Deliverable;
+import com.senior.spm.entity.DeliverableSubmission;
+import com.senior.spm.entity.FinalGrade;
+import com.senior.spm.entity.GroupMembership;
+import com.senior.spm.entity.ProjectGroup;
+import com.senior.spm.entity.RubricCriterion;
+import com.senior.spm.entity.RubricGrade;
+import com.senior.spm.entity.ScrumGrade;
+import com.senior.spm.entity.Sprint;
+import com.senior.spm.entity.SprintDeliverableMapping;
+import com.senior.spm.entity.SprintTrackingLog;
+import com.senior.spm.entity.Student;
+import com.senior.spm.exception.NotFoundException;
+import com.senior.spm.repository.DeliverableRepository;
+import com.senior.spm.repository.DeliverableSubmissionRepository;
+import com.senior.spm.repository.FinalGradeRepository;
+import com.senior.spm.repository.GroupMembershipRepository;
+import com.senior.spm.repository.RubricCriterionRepository;
+import com.senior.spm.repository.RubricGradeRepository;
+import com.senior.spm.repository.ScrumGradeRepository;
+import com.senior.spm.repository.SprintDeliverableMappingRepository;
+import com.senior.spm.repository.SprintRepository;
+import com.senior.spm.repository.SprintTrackingLogRepository;
+import com.senior.spm.repository.StudentRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/**
+ * Service implementing Process 7.2 — Scalar &amp; Final Grade Calculation.
+ *
+ * <p>Algorithm (per docs/process7/endpoints_p7.md and docs/phase1_2.md Steps 3–11):
+ * <ol>
+ *   <li>Resolve Student by 11-digit studentId.</li>
+ *   <li>Resolve GroupMembership → ProjectGroup.</li>
+ *   <li>For each Deliverable: compute ScrumScalar, ReviewScalar, DS, B (stub 0.0), ScaledGrade, WeightedTotal.</li>
+ *   <li>Compute C_i from SprintTrackingLog (assigneeGithubUsername + prMerged).</li>
+ *   <li>Compute G_i = WeightedTotal × C_i.</li>
+ *   <li>Upsert to FinalGrade table.</li>
+ * </ol>
+ */
+@Service
+@RequiredArgsConstructor
+public class FinalGradeCalculationService {
+
+    private static final int SCALE = 6;
+    private static final RoundingMode RM = RoundingMode.HALF_UP;
+
+    private final StudentRepository studentRepository;
+    private final GroupMembershipRepository groupMembershipRepository;
+    private final DeliverableRepository deliverableRepository;
+    private final SprintRepository sprintRepository;
+    private final SprintDeliverableMappingRepository sprintDeliverableMappingRepository;
+    private final ScrumGradeRepository scrumGradeRepository;
+    private final SprintTrackingLogRepository sprintTrackingLogRepository;
+    private final FinalGradeRepository finalGradeRepository;
+    private final TermConfigService termConfigService;
+    private final DeliverableSubmissionRepository deliverableSubmissionRepository;
+    private final RubricGradeRepository rubricGradeRepository;
+    private final RubricCriterionRepository rubricCriterionRepository;
+
+    /**
+     * Calculates and upserts the final grade for the student identified by their
+     * 11-digit student number, then returns the full result with a per-deliverable breakdown.
+     *
+     * @param studentId11Digit 11-digit student number (pattern ^[0-9]{11}$)
+     * @return FinalGradeResponse with breakdown and upserted grade values
+     * @throws NotFoundException if student not found or student has no group membership
+     */
+    @Transactional
+    public FinalGradeResponse calculateFinalGrade(String studentId11Digit) {
+
+        // Step 1 — Resolve student
+        Student student = studentRepository.findByStudentId(studentId11Digit)
+                .orElseThrow(() -> new NotFoundException("Student not found"));
+
+        // Step 2 — Resolve group membership
+        GroupMembership membership = groupMembershipRepository.findByStudentId(student.getId())
+                .orElseThrow(() -> new NotFoundException("Student has no group membership"));
+
+        var group = membership.getGroup();
+        String termId = termConfigService.getActiveTermId();
+
+        // Step 3 — Fetch all deliverables and all sprints for the term
+        List<Deliverable> deliverables = deliverableRepository.findAll();
+        List<Sprint> allSprints = sprintRepository.findAll();
+
+        List<DeliverableBreakdown> breakdowns = new ArrayList<>();
+        BigDecimal weightedTotal = BigDecimal.ZERO;
+
+        for (Deliverable deliverable : deliverables) {
+
+            // a. Contributing sprints for this deliverable
+            List<SprintDeliverableMapping> mappings =
+                    sprintDeliverableMappingRepository.findAllByDeliverableId(deliverable.getId());
+
+            // b & c. Collect pointA and pointB numeric values across contributing sprints.
+            // Skip sprints with no ScrumGrade for this group (edge case D4).
+            List<Integer> pointAValues = new ArrayList<>();
+            List<Integer> pointBValues = new ArrayList<>();
+
+            for (SprintDeliverableMapping mapping : mappings) {
+                Sprint sprint = mapping.getSprint();
+                Optional<ScrumGrade> gradeOpt =
+                        scrumGradeRepository.findByGroupIdAndSprintId(group.getId(), sprint.getId());
+
+                gradeOpt.ifPresent(grade -> {
+                    pointAValues.add(grade.getPointAGrade().toNumeric());
+                    pointBValues.add(grade.getPointBGrade().toNumeric());
+                });
+            }
+
+            // ScrumScalar = AVG(pointAValues) / 100  (plain average — see D1 in endpoints_p7.md)
+            // TODO: consider weighted average using contributionPercentage if product owner requires it
+            BigDecimal scrumScalar = computeAverage(pointAValues)
+                    .divide(BigDecimal.valueOf(100), SCALE, RM);
+
+            // ReviewScalar = AVG(pointBValues) / 100
+            BigDecimal reviewScalar = computeAverage(pointBValues)
+                    .divide(BigDecimal.valueOf(100), SCALE, RM);
+
+            // DS = (ScrumScalar + ReviewScalar) / 2
+            BigDecimal ds = scrumScalar.add(reviewScalar)
+                    .divide(BigDecimal.valueOf(2), SCALE, RM);
+
+            // B — base deliverable grade from rubric grades (Issue #249)
+            BigDecimal b = computeBaseDeliverableGrade(group, deliverable);
+
+            // ScaledGrade = B × DS
+            BigDecimal scaledGrade = b.multiply(ds).setScale(SCALE, RM);
+
+            // weightedContribution = ScaledGrade × (deliverable.weight / 100)
+            BigDecimal weight = deliverable.getWeight() != null
+                    ? deliverable.getWeight()
+                    : BigDecimal.ZERO;
+            BigDecimal weightedContribution = scaledGrade
+                    .multiply(weight)
+                    .divide(BigDecimal.valueOf(100), SCALE, RM);
+
+            weightedTotal = weightedTotal.add(weightedContribution);
+
+            breakdowns.add(DeliverableBreakdown.builder()
+                    .deliverableId(deliverable.getId())
+                    .deliverableName(deliverable.getName())
+                    .baseGrade(b)
+                    .scrumScalar(scrumScalar)
+                    .reviewScalar(reviewScalar)
+                    .deliverableScalar(ds)
+                    .scaledGrade(scaledGrade)
+                    .weight(weight)
+                    .weightedContribution(weightedContribution)
+                    .build());
+        }
+
+        // Step 4 — C_i: Individual Completion Ratio
+        // Filter group's SprintTrackingLog: assigneeGithubUsername == student.githubUsername AND prMerged == true
+        String studentGithubUsername = student.getGithubUsername();
+        List<SprintTrackingLog> studentCompletedLogs = new ArrayList<>();
+        
+        if (studentGithubUsername != null) {
+            studentCompletedLogs = sprintTrackingLogRepository
+                    .findByGroupIdAndAssigneeGithubUsernameAndPrMergedTrue(group.getId(), studentGithubUsername);
+        }
+
+        int completedStoryPoints = studentCompletedLogs.stream()
+                .mapToInt(log -> log.getStoryPoints() != null ? log.getStoryPoints() : 0)
+                .sum();
+
+        int targetStoryPoints = allSprints.stream()
+                .mapToInt(sprint -> sprint.getStoryPointTarget() != null ? sprint.getStoryPointTarget() : 0)
+                .sum();
+
+        // C_i = completedStoryPoints / targetStoryPoints (not capped at 1.0 — see D2)
+        BigDecimal completionRatio;
+        if (targetStoryPoints == 0) {
+            completionRatio = BigDecimal.ZERO; // avoid division by zero (edge case D4)
+        } else {
+            completionRatio = BigDecimal.valueOf(completedStoryPoints)
+                    .divide(BigDecimal.valueOf(targetStoryPoints), SCALE, RM);
+        }
+
+        // Step 5 — G_i = WeightedTotal × C_i
+        BigDecimal finalGrade = weightedTotal.multiply(completionRatio).setScale(SCALE, RM);
+
+        LocalDateTime calculatedAt = LocalDateTime.now();
+
+        // Step 6 — Upsert to FinalGrade table
+        FinalGrade entity = finalGradeRepository
+                .findByStudent_StudentIdAndTermId(studentId11Digit, termId)
+                .orElseGet(FinalGrade::new);
+
+        entity.setStudent(student);
+        entity.setGroup(group);
+        entity.setTermId(termId);
+        entity.setWeightedTotal(weightedTotal.setScale(4, RM));
+        entity.setCompletionRatio(completionRatio.setScale(4, RM));
+        entity.setFinalGrade(finalGrade.setScale(4, RM));
+        entity.setCalculatedAt(calculatedAt);
+        finalGradeRepository.save(entity);
+
+        return FinalGradeResponse.builder()
+                .studentId(studentId11Digit)
+                .groupId(group.getId())
+                .deliverableBreakdown(breakdowns)
+                .weightedTotal(weightedTotal.setScale(4, RM))
+                .completionRatio(completionRatio.setScale(4, RM))
+                .finalGrade(finalGrade.setScale(4, RM))
+                .calculatedAt(calculatedAt)
+                .build();
+    }
+
+    /**
+     * Computes B = AVG_reviewers( SUM_criteria(numericGrade × weight) / SUM(weight) )
+     * using the latest submission for the given group+deliverable.
+     * Returns BigDecimal.ZERO if no submission exists or no grades have been recorded.
+     */
+    private BigDecimal computeBaseDeliverableGrade(ProjectGroup group, Deliverable deliverable) {
+        DeliverableSubmission submission = deliverableSubmissionRepository
+                .findFirstByGroupAndDeliverableOrderBySubmittedAtDesc(group, deliverable);
+        if (submission == null) {
+            return BigDecimal.ZERO;
+        }
+
+        List<RubricGrade> allGrades = rubricGradeRepository.findBySubmissionId(submission.getId());
+        if (allGrades.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        List<RubricCriterion> criteria = rubricCriterionRepository.findAllByDeliverableId(deliverable.getId());
+        Map<java.util.UUID, RubricCriterion> criteriaById = criteria.stream()
+                .collect(Collectors.toMap(RubricCriterion::getId, c -> c));
+
+        Map<java.util.UUID, List<RubricGrade>> byReviewer = allGrades.stream()
+                .collect(Collectors.groupingBy(g -> g.getReviewer().getId()));
+
+        BigDecimal reviewerSum = BigDecimal.ZERO;
+        for (List<RubricGrade> reviewerGrades : byReviewer.values()) {
+            BigDecimal numerator = BigDecimal.ZERO;
+            BigDecimal denominator = BigDecimal.ZERO;
+            for (RubricGrade g : reviewerGrades) {
+                RubricCriterion c = criteriaById.get(g.getCriterion().getId());
+                if (c == null) continue;
+                int numeric = com.senior.spm.util.GradeValueMapper.toNumeric(
+                        c.getGradingType(), g.getSelectedGrade());
+                numerator = numerator.add(BigDecimal.valueOf(numeric).multiply(c.getWeight()));
+                denominator = denominator.add(c.getWeight());
+            }
+            if (denominator.compareTo(BigDecimal.ZERO) == 0) continue;
+            reviewerSum = reviewerSum.add(numerator.divide(denominator, SCALE, RM));
+        }
+
+        return reviewerSum.divide(BigDecimal.valueOf(byReviewer.size()), SCALE, RM);
+    }
+
+    /**
+     * Returns the previously stored final grade for the student identified by their
+     * 11-digit student number. Does NOT trigger recalculation.
+     *
+     * @param studentId11Digit 11-digit student number (pattern ^[0-9]{11}$)
+     * @return FinalGradeResponse with empty deliverableBreakdown (breakdowns are not persisted, see endpoints_p7.md D3)
+     * @throws NotFoundException if no stored grade exists for this student in the active term
+     */
+    @Transactional(readOnly = true)
+    public FinalGradeResponse getStoredFinalGrade(String studentId11Digit) {
+        String termId = termConfigService.getActiveTermId();
+        FinalGrade entity = finalGradeRepository
+                .findByStudent_StudentIdAndTermId(studentId11Digit, termId)
+                .orElseThrow(() -> new NotFoundException(
+                        "No stored final grade found for student " + studentId11Digit));
+
+        return FinalGradeResponse.builder()
+                .studentId(studentId11Digit)
+                .groupId(entity.getGroup().getId())
+                .deliverableBreakdown(Collections.emptyList())
+                .weightedTotal(entity.getWeightedTotal())
+                .completionRatio(entity.getCompletionRatio())
+                .finalGrade(entity.getFinalGrade())
+                .calculatedAt(entity.getCalculatedAt())
+                .build();
+    }
+
+    /**
+     * Returns the plain average of the given integer list as a BigDecimal.
+     * Returns BigDecimal.ZERO if the list is empty (handles the no-ScrumGrade edge case).
+     */
+    private BigDecimal computeAverage(List<Integer> values) {
+        if (values.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+        int sum = values.stream().mapToInt(Integer::intValue).sum();
+        return BigDecimal.valueOf(sum)
+                .divide(BigDecimal.valueOf(values.size()), SCALE, RM);
+    }
+}

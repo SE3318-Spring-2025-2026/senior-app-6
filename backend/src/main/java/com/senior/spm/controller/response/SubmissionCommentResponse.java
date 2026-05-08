@@ -18,5 +18,6 @@ public class SubmissionCommentResponse {
     private UUID reviewerId;
     private String reviewerEmail;
     private String commentText;
+    private String sectionReference;
     private LocalDateTime createdAt;
 }

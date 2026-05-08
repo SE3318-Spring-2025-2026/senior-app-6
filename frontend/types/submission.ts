@@ -68,6 +68,7 @@ export interface SubmissionComment {
   reviewerId: string;
   reviewerEmail: string;
   commentText: string;
+  sectionReference: string | null;
   createdAt: string;
 }
 

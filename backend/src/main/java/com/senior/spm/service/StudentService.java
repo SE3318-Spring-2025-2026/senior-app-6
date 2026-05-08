@@ -9,6 +9,7 @@ import com.senior.spm.controller.request.StudentUploadRequest;
 import com.senior.spm.controller.response.StudentSearchResponse;
 import com.senior.spm.entity.Student;
 import com.senior.spm.exception.AlreadyExistsException;
+import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.repository.StudentRepository;
 
 @Service
@@ -43,6 +44,12 @@ public class StudentService {
         }
 
         studentRepository.saveAll(students);
+    }
+
+    @Transactional(readOnly = true)
+    public Student getStudentByStudentId(String studentId) {
+        return studentRepository.findByStudentId(studentId)
+                .orElseThrow(() -> new NotFoundException("Student not found"));
     }
 
     @Transactional(readOnly = true)

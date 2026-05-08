@@ -5,7 +5,7 @@ package com.senior.spm.exception;
  *
  * Maps to HTTP 404 Not Found via GlobalExceptionHandler.
  */
-public class GroupNotFoundException extends RuntimeException {
+public class GroupNotFoundException extends NotFoundException {
 
     public GroupNotFoundException(String message) {
         super(message);

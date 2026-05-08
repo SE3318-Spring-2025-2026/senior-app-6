@@ -10,7 +10,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
@@ -21,14 +20,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Represents a link between a section of a deliverable submission and a
- * specific rubric criterion. Enables the committee to associate evaluation
- * criteria with specific sections of the submitted markdown document.
+ * Represents a link between a section of a deliverable submission
+ * and a specific rubric criterion.
+ * Enables the committee to associate evaluation criteria with
+ * specific sections of the submitted markdown document.
  */
 @Entity
 @Table(name = "rubric_mapping", uniqueConstraints = {
-    @UniqueConstraint(name = "uq_rubric_mapping_submission_criterion_range",
-        columnNames = {"submission_id", "rubric_criterion_id", "section_start", "section_end"})
+    @UniqueConstraint(name = "uq_rubric_mapping_submission_section", columnNames = {"submission_id", "section_key"})
 })
 @Getter
 @Setter
@@ -53,8 +52,7 @@ public class RubricMapping {
     @Column(nullable = false)
     private int sectionEnd;
 
-    @Lob
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(length = 255)
     private String sectionKey;
 
     @Column(nullable = false)
@@ -75,10 +73,10 @@ public class RubricMapping {
         }
         if (!submissionDeliverableId.equals(criterionDeliverableId)) {
             throw new IllegalStateException(
-                    "RubricMapping criterion deliverable ("
-                    + criterionDeliverableId
-                    + ") does not match submission deliverable ("
-                    + submissionDeliverableId + ")");
+                "RubricMapping criterion deliverable ("
+                + criterionDeliverableId
+                + ") does not match submission deliverable ("
+                + submissionDeliverableId + ")");
         }
     }
 }

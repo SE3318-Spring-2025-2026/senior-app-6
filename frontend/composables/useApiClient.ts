@@ -35,8 +35,13 @@ import type {
   CreateDeliverableRequest,
   UpdateDeliverableRequest,
 } from '~/types/deliverable';
-import type { Sprint, CreateSprintRequest } from '~/types/sprint';
-import type { GradingCriterion, RubricCriterionResponse } from '~/types/rubric';
+import type {
+  Sprint,
+  CreateSprintRequest,
+  SprintRefreshResult,
+  SprintOverviewResult,
+} from '~/types/sprint';
+import type { GradingCriterion, RubricCriterionResponse, SubmitGradeEntry, RubricGradeSubmitResponse } from '~/types/rubric';
 import type {
   GroupInvitation,
   SentGroupInvitation,
@@ -45,6 +50,7 @@ import type {
 import type { StudentSearchResult } from '~/types/student';
 import type { BindJiraRequest, BindGithubRequest, BindToolResponse } from '~/types/tools';
 import type { SanitizationReport } from '~/types/sanitization';
+import type { ScheduleWindowItem, ScheduleWindowPayload } from '~/types/scheduleWindow';
 import type {
   StudentDeliverable,
   SubmissionCreateResponse,
@@ -54,6 +60,8 @@ import type {
   SubmissionComment,
   CreateSubmissionCommentRequest,
 } from '~/types/submission';
+import type { FinalGradeResponse } from '~/types/grade';
+import type { AuditLogQuery, PagedAuditLogResponse } from '~/types/audit-log';
 
 async function apiCall<T>(
   endpoint: string,
@@ -192,6 +200,13 @@ export function useApiClient() {
     return apiCall<void>("/coordinator/students/upload", "POST", { studentIds }, token);
   }
 
+  async function updateSystemConfig(
+    config: { activeTermId?: string; maxTeamSize?: number },
+    token?: string
+  ): Promise<void> {
+    return apiCall<void>("/coordinator/system-config", "PATCH", config, token);
+  }
+
   async function validateResetToken(token: string): Promise<void> {
     return apiCall<void>(`/auth/reset-password?token=${encodeURIComponent(token)}`, "GET");
   }
@@ -206,6 +221,32 @@ export function useApiClient() {
 
   async function fetchSprints(token?: string): Promise<Sprint[]> {
     return apiCall<Sprint[]>("/coordinator/sprints", "GET", undefined, token);
+  }
+
+  async function triggerSprintRefresh(
+    sprintId: string,
+    force = true,
+    token?: string
+  ): Promise<SprintRefreshResult> {
+    const query = `?force=${force ? "true" : "false"}`;
+    return apiCall<SprintRefreshResult>(
+      `/coordinator/sprints/${encodeURIComponent(sprintId)}/refresh${query}`,
+      "POST",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchSprintOverview(
+    sprintId: string,
+    token?: string
+  ): Promise<SprintOverviewResult> {
+    return apiCall<SprintOverviewResult>(
+      `/coordinator/sprints/${encodeURIComponent(sprintId)}/overview`,
+      "GET",
+      undefined,
+      token
+    );
   }
 
   async function fetchActiveSprint(token?: string): Promise<ActiveSprintResponse> {
@@ -256,8 +297,10 @@ export function useApiClient() {
     return apiCall<void>("/coordinator/publish", "POST", undefined, token);
   }
 
-  async function registerProfessor(mail: string, token?: string): Promise<{ resetToken: string }> {
-    return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", { mail }, token);
+  async function registerProfessor(mail: string, token?: string, capacity?: number): Promise<{ resetToken: string }> {
+    const body: { mail: string; capacity?: number } = { mail };
+    if (capacity !== undefined) body.capacity = capacity;
+    return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", body, token);
   }
 
   async function fetchLlmConfig(token?: string): Promise<LlmConfigResponse> {
@@ -339,6 +382,19 @@ export function useApiClient() {
 
   async function fetchCoordinatorAdvisors(token?: string): Promise<AdvisorCapacityResponse[]> {
     return apiCall<AdvisorCapacityResponse[]>("/coordinator/advisors", "GET", undefined, token);
+  }
+
+  async function updateAdvisorCapacity(
+    advisorId: string,
+    capacity: number,
+    token?: string
+  ): Promise<AdvisorCapacityResponse> {
+    return apiCall<AdvisorCapacityResponse>(
+      `/coordinator/advisors/${encodeURIComponent(advisorId)}/capacity`,
+      "PATCH",
+      { capacity },
+      token
+    );
   }
 
   async function assignCoordinatorAdvisor(
@@ -520,6 +576,30 @@ export function useApiClient() {
     return apiCall<StudentSearchResult[]>(`/students/search?q=${encodeURIComponent(q)}`, "GET", undefined, token);
   }
 
+  async function calculateStudentGrade(
+    studentId11Digit: string,
+    token?: string
+  ): Promise<FinalGradeResponse> {
+    return apiCall<FinalGradeResponse>(
+      `/students/${encodeURIComponent(studentId11Digit)}/grade/calculate`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchStudentGrade(
+    studentId11Digit: string,
+    token?: string
+  ): Promise<FinalGradeResponse | null> {
+    return apiCall<FinalGradeResponse | null>(
+      `/students/${encodeURIComponent(studentId11Digit)}/grade`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   async function sendGroupInvitation(
     groupId: string,
     targetStudentId: string,
@@ -691,27 +771,66 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
   );
 }
 
-async function fetchSubmissionComments(submissionId: string, token?: string): Promise<SubmissionComment[]> {
-  return apiCall<SubmissionComment[]>(
-    `/submissions/${encodeURIComponent(submissionId)}/comments`,
-    "GET",
-    undefined,
-    token
-  );
-}
+  async function fetchScheduleWindows(token?: string): Promise<ScheduleWindowItem[]> {
+    return apiCall<ScheduleWindowItem[]>("/coordinator/schedule-windows", "GET", undefined, token);
+  }
 
-async function createSubmissionComment(
-  submissionId: string,
-  payload: CreateSubmissionCommentRequest,
-  token?: string
-): Promise<SubmissionComment> {
-  return apiCall<SubmissionComment>(
-    `/submissions/${encodeURIComponent(submissionId)}/comments`,
-    "POST",
-    payload,
-    token
-  );
-}
+  async function upsertScheduleWindow(payload: ScheduleWindowPayload, token?: string): Promise<void> {
+    return apiCall<void>("/coordinator/schedule-windows", "POST", payload, token);
+  }
+
+  async function deleteScheduleWindow(id: string, token?: string): Promise<void> {
+    return apiCall<void>(`/coordinator/schedule-windows/${encodeURIComponent(id)}`, "DELETE", undefined, token);
+  }
+
+  async function fetchSubmissionComments(submissionId: string, token?: string): Promise<SubmissionComment[]> {
+    return apiCall<SubmissionComment[]>(
+      `/submissions/${encodeURIComponent(submissionId)}/comments`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function createSubmissionComment(
+    submissionId: string,
+    payload: CreateSubmissionCommentRequest,
+    token?: string
+  ): Promise<SubmissionComment> {
+    return apiCall<SubmissionComment>(
+      `/submissions/${encodeURIComponent(submissionId)}/comments`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
+  async function fetchAuditLogs(query: AuditLogQuery = {}, token?: string): Promise<PagedAuditLogResponse> {
+    const qs = new URLSearchParams();
+    if (query.category) qs.set('category', query.category);
+    if (query.outcome) qs.set('outcome', query.outcome);
+    if (query.userType) qs.set('userType', query.userType);
+    if (query.userId) qs.set('userId', query.userId);
+    if (query.from) qs.set('from', query.from);
+    if (query.to) qs.set('to', query.to);
+    if (query.page !== undefined) qs.set('page', String(query.page));
+    if (query.size !== undefined) qs.set('size', String(query.size));
+    const q = qs.toString();
+    return apiCall<PagedAuditLogResponse>(`/admin/audit-logs${q ? '?' + q : ''}`, 'GET', undefined, token);
+  }
+
+  async function submitRubricGrade(
+    submissionId: string,
+    grades: SubmitGradeEntry[],
+    token?: string
+  ): Promise<RubricGradeSubmitResponse> {
+    return apiCall<RubricGradeSubmitResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}/grade`,
+      "POST",
+      { grades },
+      token
+    );
+  }
 
   return {
     getAuthToken,
@@ -724,10 +843,13 @@ async function createSubmissionComment(
     createSprint,
     updateSprintTarget,
     uploadStudents,
+    updateSystemConfig,
     validateResetToken,
     resetPassword,
     fetchDeliverables,
     fetchSprints,
+    triggerSprintRefresh,
+    fetchSprintOverview,
     fetchRubric,
     updateRubric,
     createSprintDeliverableMapping,
@@ -750,6 +872,7 @@ async function createSubmissionComment(
     fetchCoordinatorGroups,
     fetchCoordinatorGroupDetail,
     fetchCoordinatorAdvisors,
+    updateAdvisorCapacity,
     assignCoordinatorAdvisor,
     removeCoordinatorAdvisor,
     runCoordinatorSanitization,
@@ -770,6 +893,8 @@ async function createSubmissionComment(
     fetchAdvisorRequestDetail,
     respondToAdvisorRequest,
     searchStudents,
+    calculateStudentGrade,
+    fetchStudentGrade,
     sendGroupInvitation,
     fetchGroupInvitations,
     cancelGroupInvitation,
@@ -780,9 +905,14 @@ async function createSubmissionComment(
     fetchStudentRubric,
     fetchSubmission,
     fetchRubricMappings,
+    fetchScheduleWindows,
+    upsertScheduleWindow,
+    deleteScheduleWindow,
     fetchSubmissionComments,
     createSubmissionComment,
+    submitRubricGrade,
     fetchLlmConfig,
     updateLlmKey,
+    fetchAuditLogs,
   };
 }

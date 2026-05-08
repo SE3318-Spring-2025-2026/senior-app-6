@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,10 +16,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -27,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.senior.spm.controller.response.BindToolResponse;
 import com.senior.spm.controller.response.GroupDetailResponse;
 import com.senior.spm.entity.AdvisorRequest.RequestStatus;
+import com.senior.spm.entity.AuditLog;
 import com.senior.spm.entity.GroupInvitation.InvitationStatus;
 import com.senior.spm.entity.GroupMembership;
 import com.senior.spm.entity.GroupMembership.MemberRole;
@@ -65,6 +70,7 @@ class GroupServiceTest {
     @Mock private JiraValidationService jiraValidationService;
     @Mock private GitHubValidationService gitHubValidationService;
     @Mock private EncryptionService encryptionService;
+    @Mock private AuditLogService auditLogService;
 
     @InjectMocks
     private GroupService groupService;
@@ -80,6 +86,9 @@ class GroupServiceTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(UUID.randomUUID().toString(), null, List.of()));
+
         openWindow = new ScheduleWindow();
         openWindow.setId(UUID.randomUUID());
         openWindow.setType(WindowType.GROUP_CREATION);
@@ -96,6 +105,11 @@ class GroupServiceTest {
         savedGroup.setTermId(TERM_ID);
         savedGroup.setStatus(GroupStatus.FORMING);
         savedGroup.setCreatedAt(LocalDateTime.now(ZoneId.of("UTC")));
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     // ── createGroup ────────────────────────────────────────────────────────────
@@ -508,6 +522,32 @@ class GroupServiceTest {
 
             verify(groupMembershipRepository).save(any(GroupMembership.class));
         }
+
+        @Test
+        void writesAuditLog_withCoordinatorUserIdFromSecurityContext() {
+            UUID coordinatorId = UUID.randomUUID();
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(coordinatorId.toString(), null, List.of()));
+
+            when(projectGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
+            when(studentRepository.findByStudentId(STUDENT_ID_STR)).thenReturn(Optional.of(targetStudent));
+            when(groupMembershipRepository.existsByStudentId(studentUUID)).thenReturn(false);
+            when(groupMembershipRepository.countByGroupId(groupId)).thenReturn(1L);
+            when(groupInvitationRepository.countByGroupIdAndStatus(groupId, InvitationStatus.PENDING)).thenReturn(0L);
+            when(termConfigService.getMaxTeamSize()).thenReturn(5);
+            when(groupMembershipRepository.save(any())).thenReturn(new GroupMembership());
+            when(groupMembershipRepository.findByGroupId(groupId)).thenReturn(List.of());
+
+            groupService.coordinatorAddStudent(groupId, STUDENT_ID_STR);
+
+            verify(auditLogService).record(
+                    eq(coordinatorId),
+                    eq(AuditLog.UserType.STAFF),
+                    eq("MEMBER_ADDED"),
+                    eq(AuditLog.Category.GROUP),
+                    eq(AuditLog.Outcome.SUCCESS),
+                    isNull());
+        }
     }
 
     // ── coordinatorRemoveStudent ───────────────────────────────────────────────
@@ -609,6 +649,34 @@ class GroupServiceTest {
 
             verify(groupMembershipRepository, never()).delete(any());
         }
+
+        @Test
+        void writesAuditLog_withCoordinatorUserIdFromSecurityContext() {
+            UUID coordinatorId = UUID.randomUUID();
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(coordinatorId.toString(), null, List.of()));
+
+            GroupMembership membership = new GroupMembership();
+            membership.setStudent(targetStudent);
+            membership.setGroup(group);
+            membership.setRole(MemberRole.MEMBER);
+
+            when(projectGroupRepository.findById(groupId)).thenReturn(Optional.of(group));
+            when(studentRepository.findByStudentId(STUDENT_ID_STR)).thenReturn(Optional.of(targetStudent));
+            when(groupMembershipRepository.findByGroupIdAndStudentId(groupId, studentUUID))
+                    .thenReturn(Optional.of(membership));
+            when(groupMembershipRepository.findByGroupId(groupId)).thenReturn(List.of());
+
+            groupService.coordinatorRemoveStudent(groupId, STUDENT_ID_STR);
+
+            verify(auditLogService).record(
+                    eq(coordinatorId),
+                    eq(AuditLog.UserType.STAFF),
+                    eq("MEMBER_REMOVED"),
+                    eq(AuditLog.Category.GROUP),
+                    eq(AuditLog.Outcome.SUCCESS),
+                    isNull());
+        }
     }
 
     // ── disbandGroup ───────────────────────────────────────────────────────────
@@ -705,6 +773,27 @@ class GroupServiceTest {
             ArgumentCaptor<ProjectGroup> captor = ArgumentCaptor.forClass(ProjectGroup.class);
             verify(projectGroupRepository).save(captor.capture());
             assertThat(captor.getValue().getStatus()).isEqualTo(GroupStatus.DISBANDED);
+        }
+
+        @Test
+        void writesAuditLog_withCoordinatorUserIdFromSecurityContext() {
+            UUID coordinatorId = UUID.randomUUID();
+            SecurityContextHolder.getContext().setAuthentication(
+                    new UsernamePasswordAuthenticationToken(coordinatorId.toString(), null, List.of()));
+
+            when(projectGroupRepository.findById(groupId)).thenReturn(Optional.of(activeGroup));
+            when(projectGroupRepository.save(any())).thenReturn(activeGroup);
+            when(groupMembershipRepository.findByGroupId(groupId)).thenReturn(List.of());
+
+            groupService.disbandGroup(groupId);
+
+            verify(auditLogService).record(
+                    eq(coordinatorId),
+                    eq(AuditLog.UserType.STAFF),
+                    eq("GROUP_DISBANDED"),
+                    eq(AuditLog.Category.GROUP),
+                    eq(AuditLog.Outcome.SUCCESS),
+                    isNull());
         }
     }
 

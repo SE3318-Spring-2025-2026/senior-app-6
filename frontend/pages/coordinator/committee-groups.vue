@@ -62,13 +62,16 @@ import type { GroupSummaryResponse } from "~/types/group";
 		selectedGroupIds.value = next;
 	}
 
-  async function loadUnassignedGroups(token: string): Promise<GroupSummaryResponse[]> {
-    const [allGroups, committees] = await Promise.all([
+  async function loadUnassignedGroups(token: string, targetDeliverableId: string): Promise<GroupSummaryResponse[]> {
+    const [allGroups, allCommittees] = await Promise.all([
       fetchCoordinatorGroups(token),
       fetchCommittees(undefined, token),
     ])
+    const sameDeliverableCommittees = allCommittees.filter(
+      (c) => c.deliverableId === targetDeliverableId
+    )
     const details = await Promise.all(
-      committees.map((c) => fetchCommittee(c.id, token).catch(() => null))
+      sameDeliverableCommittees.map((c) => fetchCommittee(c.id, token).catch(() => null))
     )
     const assigned = new Set(
       details.flatMap((d) => d?.groups.map((g) => g.groupId) ?? [])
@@ -92,13 +95,7 @@ import type { GroupSummaryResponse } from "~/types/group";
 		try {
 			const token = getAuthToken();
 			if (!token) throw new Error("Authentication required");
-
-			const [committeeList, groupList] = await Promise.all([
-				fetchCommittees(undefined, token),
-				loadUnassignedGroups(token),
-			]);
-			committees.value = committeeList;
-			unassignedGroups.value = groupList;
+			committees.value = await fetchCommittees(undefined, token);
 		} catch (err: unknown) {
 			const msg =
 				err && typeof err === "object" && "message" in err
@@ -124,11 +121,15 @@ import type { GroupSummaryResponse } from "~/types/group";
 		}
 	}
 
-	watch(selectedCommitteeId, (newId) => {
+	watch(selectedCommitteeId, async (newId) => {
 		selectedGroupIds.value = new Set();
 		successMessage.value = "";
 		errorMessage.value = "";
-		loadCommitteeDetail(newId);
+		await loadCommitteeDetail(newId);
+		const token = getAuthToken();
+		if (token && selectedCommittee.value?.deliverableId) {
+			unassignedGroups.value = await loadUnassignedGroups(token, selectedCommittee.value.deliverableId);
+		}
 	});
 
 	async function handleAssign() {
@@ -152,13 +153,11 @@ import type { GroupSummaryResponse } from "~/types/group";
 			selectedGroupIds.value = new Set();
 
 			// Refresh data
-			const [committeeList, groupList] = await Promise.all([
-				fetchCommittees(undefined, token),
-				loadUnassignedGroups(token),
-			]);
-			committees.value = committeeList;
-			unassignedGroups.value = groupList;
+			committees.value = await fetchCommittees(undefined, token);
 			await loadCommitteeDetail(selectedCommitteeId.value);
+			if (selectedCommittee.value?.deliverableId) {
+				unassignedGroups.value = await loadUnassignedGroups(token, selectedCommittee.value.deliverableId);
+			}
 		} catch (err: unknown) {
 			const msg =
 				err && typeof err === "object" && "message" in err
@@ -178,29 +177,26 @@ import type { GroupSummaryResponse } from "~/types/group";
     class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8"
   >
     <div class="mx-auto w-full max-w-4xl space-y-6">
+      <NuxtLink
+        to="/coordinator/dashboard"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+      >
+        <ArrowLeft class="h-4 w-4" />
+        Back to dashboard
+      </NuxtLink>
+
       <!-- Header -->
       <header
         class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90 dark:shadow-lg"
       >
-        <div class="flex items-center justify-between">
-          <div>
-            <h1
-              class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl"
-            >
-              Committee Group Assignment
-            </h1>
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Select a committee and assign student groups that have completed advisor association.
-            </p>
-          </div>
-          <NuxtLink
-            to="/coordinator/dashboard"
-            class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
-          >
-            <ArrowLeft class="mr-2 inline h-4 w-4" />
-            Back
-          </NuxtLink>
-        </div>
+        <h1
+          class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl"
+        >
+          Committee Group Assignment
+        </h1>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          Select a committee and assign student groups that have completed advisor association.
+        </p>
       </header>
 
       <!-- Loading state -->

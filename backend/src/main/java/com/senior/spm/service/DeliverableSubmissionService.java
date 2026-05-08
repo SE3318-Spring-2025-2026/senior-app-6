@@ -2,10 +2,12 @@ package com.senior.spm.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -30,7 +32,6 @@ import com.senior.spm.repository.CommitteeRepository;
 import com.senior.spm.repository.DeliverableRepository;
 import com.senior.spm.repository.DeliverableSubmissionRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
-import com.senior.spm.repository.SubmissionCommentRepository;
 import com.senior.spm.service.event.DeliverableSubmissionCreatedEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -50,7 +51,6 @@ public class DeliverableSubmissionService {
     private final DeliverableRepository deliverableRepository;
     private final GroupMembershipRepository groupMembershipRepository;
     private final CommitteeRepository committeeRepository;
-    private final SubmissionCommentRepository submissionCommentRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     /**
@@ -97,23 +97,19 @@ public class DeliverableSubmissionService {
             throw new BusinessRuleException("Submission deadline has passed");
         }
 
-        DeliverableSubmission existing =
+        DeliverableSubmission previousLatest =
                 submissionRepository.findFirstByGroupAndDeliverableOrderBySubmittedAtDesc(group, deliverable);
 
-        DeliverableSubmission submission;
-        if (existing == null) {
-            submission = new DeliverableSubmission();
-            submission.setGroup(group);
-            submission.setDeliverable(deliverable);
-            submission.setMarkdownContent(markdownContent);
-            submission.setSubmittedAt(now);
+        DeliverableSubmission submission = new DeliverableSubmission();
+        submission.setGroup(group);
+        submission.setDeliverable(deliverable);
+        submission.setMarkdownContent(markdownContent);
+        submission.setSubmittedAt(now);
+        if (previousLatest == null) {
             submission.setRevisionNumber(0);
             submission.setRevision(false);
         } else {
-            submission = existing;
-            submission.setMarkdownContent(markdownContent);
-            submission.setUpdatedAt(now);
-            submission.setRevisionNumber(existing.getRevisionNumber() + 1);
+            submission.setRevisionNumber(previousLatest.getRevisionNumber() + 1);
             submission.setRevision(true);
         }
 
@@ -227,14 +223,14 @@ public class DeliverableSubmissionService {
         GroupMembership membership = groupMembershipRepository.findByStudentId(requesterUUID)
                 .orElse(null);
 
-        java.util.Map<UUID, UUID> submissionIdByDeliverable = membership == null
+        Map<UUID, UUID> submissionIdByDeliverable = membership == null
                 ? java.util.Collections.emptyMap()
                 : submissionRepository.findByGroup(membership.getGroup()).stream()
-                        .sorted(java.util.Comparator.comparing(
+                        .sorted(Comparator.comparing(
                                 DeliverableSubmission::getSubmittedAt,
-                                java.util.Comparator.nullsFirst(java.util.Comparator.naturalOrder()))
+                                Comparator.nullsFirst(Comparator.naturalOrder()))
                                 .reversed())
-                        .collect(java.util.stream.Collectors.toMap(
+                        .collect(Collectors.toMap(
                                 s -> s.getDeliverable().getId(),
                                 DeliverableSubmission::getId,
                                 (latest, older) -> latest));
@@ -279,12 +275,10 @@ public class DeliverableSubmissionService {
                     dto.setGroupId(s.getGroup().getId());
                     dto.setGroupName(s.getGroup().getGroupName());
                     dto.setDeliverableId(s.getDeliverable().getId());
-                    dto.setDeliverableName(s.getDeliverable().getName());
                     dto.setSubmittedAt(s.getSubmittedAt());
                     dto.setUpdatedAt(s.getUpdatedAt());
                     dto.setRevisionNumber(s.getRevisionNumber());
                     dto.setRevision(s.isRevision());
-                    dto.setCommentCount(submissionCommentRepository.countBySubmission(s));
                     return dto;
                 })
                 .toList();
