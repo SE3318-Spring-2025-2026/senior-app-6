@@ -65,6 +65,7 @@ public class SecurityConfig {
                                 .requestMatchers("/api/submissions/**").hasAnyRole("STUDENT", "PROFESSOR")
                                 .requestMatchers("/api/auth/**").permitAll()
                                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/admin/audit-logs").hasAnyRole("COORDINATOR", "ADMIN")
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                                 .anyRequest().authenticated())
                 .exceptionHandling(
