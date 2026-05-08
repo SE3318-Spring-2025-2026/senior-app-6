@@ -295,8 +295,10 @@ export function useApiClient() {
     return apiCall<void>("/coordinator/publish", "POST", undefined, token);
   }
 
-  async function registerProfessor(mail: string, token?: string): Promise<{ resetToken: string }> {
-    return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", { mail }, token);
+  async function registerProfessor(mail: string, token?: string, capacity?: number): Promise<{ resetToken: string }> {
+    const body: { mail: string; capacity?: number } = { mail };
+    if (capacity !== undefined) body.capacity = capacity;
+    return apiCall<{ resetToken: string }>("/admin/register-professor", "POST", body, token);
   }
 
   async function fetchLlmConfig(token?: string): Promise<LlmConfigResponse> {
@@ -378,6 +380,19 @@ export function useApiClient() {
 
   async function fetchCoordinatorAdvisors(token?: string): Promise<AdvisorCapacityResponse[]> {
     return apiCall<AdvisorCapacityResponse[]>("/coordinator/advisors", "GET", undefined, token);
+  }
+
+  async function updateAdvisorCapacity(
+    advisorId: string,
+    capacity: number,
+    token?: string
+  ): Promise<AdvisorCapacityResponse> {
+    return apiCall<AdvisorCapacityResponse>(
+      `/coordinator/advisors/${encodeURIComponent(advisorId)}/capacity`,
+      "PATCH",
+      { capacity },
+      token
+    );
   }
 
   async function assignCoordinatorAdvisor(
@@ -816,6 +831,7 @@ async function createSubmissionComment(
     fetchCoordinatorGroups,
     fetchCoordinatorGroupDetail,
     fetchCoordinatorAdvisors,
+    updateAdvisorCapacity,
     assignCoordinatorAdvisor,
     removeCoordinatorAdvisor,
     runCoordinatorSanitization,
