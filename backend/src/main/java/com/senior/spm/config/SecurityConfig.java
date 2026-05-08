@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         auth -> auth
                                 .requestMatchers(HttpMethod.GET, "/api/sprints/active").hasRole("STUDENT")
+                                .requestMatchers(HttpMethod.GET, "/api/sprints/*/deliverable-mapping").hasRole("STUDENT")
                                 .requestMatchers(HttpMethod.GET, "/api/coordinator/deliverables/*/rubric").hasAnyRole("STUDENT", "PROFESSOR")
                                 .requestMatchers(HttpMethod.GET, "/api/submissions/*/rubric-mappings").hasAnyRole("STUDENT", "PROFESSOR")
                                 .requestMatchers("/api/deliverables/*/submissions").hasRole("STUDENT")
