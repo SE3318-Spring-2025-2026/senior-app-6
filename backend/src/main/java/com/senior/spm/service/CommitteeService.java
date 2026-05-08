@@ -28,6 +28,7 @@ import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.repository.CommitteeProfessorRepository;
 import com.senior.spm.repository.CommitteeRepository;
 import com.senior.spm.repository.DeliverableRepository;
+import com.senior.spm.repository.DeliverableSubmissionRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.RubricCriterionRepository;
 import com.senior.spm.repository.StaffUserRepository;
@@ -47,6 +48,7 @@ public class CommitteeService {
     private final ProjectGroupRepository projectGroupRepository;
     private final DeliverableRepository deliverableRepository;
     private final RubricCriterionRepository rubricCriterionRepository;
+    private final DeliverableSubmissionRepository deliverableSubmissionRepository;
     private final CommitteeValidationService committeeValidationService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -222,11 +224,15 @@ public class CommitteeService {
                     var deliverable = committee.getDeliverable();
 
                     var groups = committee.getGroups().stream()
-                            .map(group -> new ProfessorCommitteeDashboardResponse.GroupItem(
-                            group.getId(),
-                            group.getGroupName(),
-                            group.getStatus().name()
-                    ))
+                            .map(group -> {
+                                var sub = deliverableSubmissionRepository
+                                        .findFirstByGroupAndDeliverableOrderBySubmittedAtDesc(group, deliverable);
+                                return new ProfessorCommitteeDashboardResponse.GroupItem(
+                                        group.getId(),
+                                        group.getGroupName(),
+                                        group.getStatus().name(),
+                                        sub != null ? sub.getId() : null);
+                            })
                             .sorted((left, right) -> left.getGroupName().compareToIgnoreCase(right.getGroupName()))
                             .toList();
 

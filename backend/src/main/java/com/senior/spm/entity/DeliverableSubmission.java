@@ -48,7 +48,7 @@ public class DeliverableSubmission {
     private Deliverable deliverable;
 
     @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
     private String markdownContent;
 
     @Column(nullable = false)

@@ -6,7 +6,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,8 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.senior.spm.controller.response.DeliverableBreakdown;
 import com.senior.spm.controller.response.FinalGradeResponse;
 import com.senior.spm.entity.Deliverable;
+import com.senior.spm.entity.DeliverableSubmission;
 import com.senior.spm.entity.FinalGrade;
 import com.senior.spm.entity.GroupMembership;
+import com.senior.spm.entity.ProjectGroup;
+import com.senior.spm.entity.RubricCriterion;
+import com.senior.spm.entity.RubricGrade;
 import com.senior.spm.entity.ScrumGrade;
 import com.senior.spm.entity.Sprint;
 import com.senior.spm.entity.SprintDeliverableMapping;
@@ -23,8 +29,11 @@ import com.senior.spm.entity.SprintTrackingLog;
 import com.senior.spm.entity.Student;
 import com.senior.spm.exception.NotFoundException;
 import com.senior.spm.repository.DeliverableRepository;
+import com.senior.spm.repository.DeliverableSubmissionRepository;
 import com.senior.spm.repository.FinalGradeRepository;
 import com.senior.spm.repository.GroupMembershipRepository;
+import com.senior.spm.repository.RubricCriterionRepository;
+import com.senior.spm.repository.RubricGradeRepository;
 import com.senior.spm.repository.ScrumGradeRepository;
 import com.senior.spm.repository.SprintDeliverableMappingRepository;
 import com.senior.spm.repository.SprintRepository;
@@ -62,6 +71,9 @@ public class FinalGradeCalculationService {
     private final SprintTrackingLogRepository sprintTrackingLogRepository;
     private final FinalGradeRepository finalGradeRepository;
     private final TermConfigService termConfigService;
+    private final DeliverableSubmissionRepository deliverableSubmissionRepository;
+    private final RubricGradeRepository rubricGradeRepository;
+    private final RubricCriterionRepository rubricCriterionRepository;
 
     /**
      * Calculates and upserts the final grade for the student identified by their
@@ -127,8 +139,8 @@ public class FinalGradeCalculationService {
             BigDecimal ds = scrumScalar.add(reviewScalar)
                     .divide(BigDecimal.valueOf(2), SCALE, RM);
 
-            // B = 0.0 — stub until Issue #249 (RubricGrade) ships
-            BigDecimal b = BigDecimal.ZERO;
+            // B — base deliverable grade from rubric grades (Issue #249)
+            BigDecimal b = computeBaseDeliverableGrade(group, deliverable);
 
             // ScaledGrade = B × DS
             BigDecimal scaledGrade = b.multiply(ds).setScale(SCALE, RM);
@@ -211,6 +223,49 @@ public class FinalGradeCalculationService {
                 .finalGrade(finalGrade.setScale(4, RM))
                 .calculatedAt(calculatedAt)
                 .build();
+    }
+
+    /**
+     * Computes B = AVG_reviewers( SUM_criteria(numericGrade × weight) / SUM(weight) )
+     * using the latest submission for the given group+deliverable.
+     * Returns BigDecimal.ZERO if no submission exists or no grades have been recorded.
+     */
+    private BigDecimal computeBaseDeliverableGrade(ProjectGroup group, Deliverable deliverable) {
+        DeliverableSubmission submission = deliverableSubmissionRepository
+                .findFirstByGroupAndDeliverableOrderBySubmittedAtDesc(group, deliverable);
+        if (submission == null) {
+            return BigDecimal.ZERO;
+        }
+
+        List<RubricGrade> allGrades = rubricGradeRepository.findBySubmissionId(submission.getId());
+        if (allGrades.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        List<RubricCriterion> criteria = rubricCriterionRepository.findAllByDeliverableId(deliverable.getId());
+        Map<java.util.UUID, RubricCriterion> criteriaById = criteria.stream()
+                .collect(Collectors.toMap(RubricCriterion::getId, c -> c));
+
+        Map<java.util.UUID, List<RubricGrade>> byReviewer = allGrades.stream()
+                .collect(Collectors.groupingBy(g -> g.getReviewer().getId()));
+
+        BigDecimal reviewerSum = BigDecimal.ZERO;
+        for (List<RubricGrade> reviewerGrades : byReviewer.values()) {
+            BigDecimal numerator = BigDecimal.ZERO;
+            BigDecimal denominator = BigDecimal.ZERO;
+            for (RubricGrade g : reviewerGrades) {
+                RubricCriterion c = criteriaById.get(g.getCriterion().getId());
+                if (c == null) continue;
+                int numeric = com.senior.spm.util.GradeValueMapper.toNumeric(
+                        c.getGradingType(), g.getSelectedGrade());
+                numerator = numerator.add(BigDecimal.valueOf(numeric).multiply(c.getWeight()));
+                denominator = denominator.add(c.getWeight());
+            }
+            if (denominator.compareTo(BigDecimal.ZERO) == 0) continue;
+            reviewerSum = reviewerSum.add(numerator.divide(denominator, SCALE, RM));
+        }
+
+        return reviewerSum.divide(BigDecimal.valueOf(byReviewer.size()), SCALE, RM);
     }
 
     /**
