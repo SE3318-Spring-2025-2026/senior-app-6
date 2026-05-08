@@ -14,6 +14,7 @@ export interface CreateDeliverableRequest {
   type: DeliverableType;
   submissionDeadline: string;
   reviewDeadline: string;
+  weight?: number;
 }
 
 export interface UpdateDeliverableRequest {

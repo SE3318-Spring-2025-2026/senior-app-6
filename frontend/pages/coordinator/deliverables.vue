@@ -13,6 +13,10 @@ import type { Deliverable } from "~/types/deliverable";
 			type: z.enum(deliverableTypes, { message: "Please select a valid deliverable type." }),
 			submissionDeadline: z.string().min(1, "Submission deadline is required."),
 			reviewDeadline: z.string().min(1, "Review deadline is required."),
+			weight: z
+				.number({ required_error: "Weight is required.", invalid_type_error: "Weight must be a number." })
+				.min(0, "Weight must be at least 0.")
+				.max(100, "Weight cannot exceed 100."),
 		})
 		.refine(
 			(v) => new Date(v.reviewDeadline).getTime() > new Date(v.submissionDeadline).getTime(),
@@ -48,6 +52,7 @@ import type { Deliverable } from "~/types/deliverable";
 	const createType = ref<(typeof deliverableTypes)[number]>("Proposal");
 	const createSubmissionDeadline = ref("");
 	const createReviewDeadline = ref("");
+	const createWeight = ref<number | null>(null);
 	const createSubmitting = ref(false);
 	const createErrors = ref<Record<string, string>>({});
 
@@ -65,9 +70,13 @@ import type { Deliverable } from "~/types/deliverable";
 	}
 
 	function formatWeight(value: number | null | undefined): string {
-		if (value === null || value === undefined || Number.isNaN(value)) return "0%";
+		if (value === null || value === undefined || Number.isNaN(value)) return "—";
 		return `${value}%`;
 	}
+
+	const totalWeight = computed(() =>
+		deliverables.value.reduce((sum, d) => sum + (d.weight ?? 0), 0)
+	);
 
 	onMounted(async () => {
 		isLoading.value = true;
@@ -94,6 +103,7 @@ import type { Deliverable } from "~/types/deliverable";
 			type: createType.value,
 			submissionDeadline: createSubmissionDeadline.value,
 			reviewDeadline: createReviewDeadline.value,
+			weight: createWeight.value,
 		});
 
 		if (!result.success) {
@@ -103,6 +113,7 @@ import type { Deliverable } from "~/types/deliverable";
 				type: fe.type?.[0] || "",
 				submissionDeadline: fe.submissionDeadline?.[0] || "",
 				reviewDeadline: fe.reviewDeadline?.[0] || "",
+				weight: fe.weight?.[0] || "",
 			};
 			return;
 		}
@@ -119,6 +130,7 @@ import type { Deliverable } from "~/types/deliverable";
 			createType.value = "Proposal";
 			createSubmissionDeadline.value = "";
 			createReviewDeadline.value = "";
+			createWeight.value = null;
 			createMessage.value = "✓ Deliverable created successfully";
 			setTimeout(() => (createMessage.value = ""), 3000);
 		} catch (err) {
@@ -291,6 +303,20 @@ import type { Deliverable } from "~/types/deliverable";
               <p v-if="createErrors.reviewDeadline" class="text-xs text-red-600 dark:text-red-400">{{ createErrors.reviewDeadline }}</p>
             </label>
 
+            <label class="block space-y-1.5">
+              <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Weight (%)</span>
+              <input
+                v-model.number="createWeight"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                placeholder="0–100"
+                class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-slate-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:focus:border-slate-400"
+              />
+              <p v-if="createErrors.weight" class="text-xs text-red-600 dark:text-red-400">{{ createErrors.weight }}</p>
+            </label>
+
             <div
               v-if="createError"
               class="flex items-start gap-2 rounded-lg border border-red-300 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950/50"
@@ -319,10 +345,28 @@ import type { Deliverable } from "~/types/deliverable";
 
         <!-- Deliverables List -->
         <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-800 dark:shadow-lg">
-          <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
-            <CalendarDays class="h-5 w-5 text-slate-700 dark:text-slate-300" />
-            Deliverables ({{ deliverables.length }})
-          </h2>
+          <div class="flex items-center justify-between">
+            <h2 class="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+              <CalendarDays class="h-5 w-5 text-slate-700 dark:text-slate-300" />
+              Deliverables ({{ deliverables.length }})
+            </h2>
+            <span
+              class="text-sm font-medium"
+              :class="totalWeight === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'"
+            >
+              Total weight: {{ totalWeight }}%
+            </span>
+          </div>
+
+          <div
+            v-if="deliverables.length > 0 && totalWeight !== 100"
+            class="mt-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950/40"
+          >
+            <AlertCircle class="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <p class="text-xs text-amber-700 dark:text-amber-300">
+              Deliverable weights sum to <strong>{{ totalWeight }}%</strong> — must equal 100% for final grades to calculate correctly.
+            </p>
+          </div>
 
           <p v-if="deliverables.length === 0" class="mt-4 text-sm text-slate-600 dark:text-slate-400">
             No deliverables yet. Create one using the form on the left.

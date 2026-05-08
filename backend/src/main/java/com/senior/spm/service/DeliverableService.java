@@ -50,6 +50,7 @@ public class DeliverableService {
         deliverable.setType(request.getType());
         deliverable.setSubmissionDeadline(request.getSubmissionDeadline());
         deliverable.setReviewDeadline(request.getReviewDeadline());
+        deliverable.setWeight(request.getWeight());
 
         return deliverableRepository.save(deliverable);
     }

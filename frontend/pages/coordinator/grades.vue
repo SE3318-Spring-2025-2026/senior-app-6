@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { AlertCircle, ArrowLeft, Loader2 } from "lucide-vue-next";
+import { AlertCircle, ArrowLeft, Loader2, RefreshCw } from "lucide-vue-next";
 import type { FinalGradeResponse } from "~/types/grade";
 import type { GroupDetailResponse, GroupSummaryResponse } from "~/types/group";
 
@@ -262,11 +262,12 @@ onMounted(loadPageData);
           <div class="flex w-28 justify-center">
             <button
               type="button"
-              class="inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
-              :class="isBulkLoading ? 'opacity-80' : ''"
+              class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-700 dark:hover:bg-blue-600"
+              :disabled="isBulkLoading"
               @click="handleCalculateAll"
             >
-              Calculate All
+              <Loader2 v-if="isBulkLoading" class="h-3 w-3 animate-spin" />
+              {{ isBulkLoading ? 'Calculating...' : 'Calculate All' }}
             </button>
           </div>
         </div>
@@ -315,10 +316,12 @@ onMounted(loadPageData);
                   <td class="px-2 py-2 text-center">
                     <button
                       type="button"
-                      class="inline-flex min-w-20 items-center justify-center rounded-lg bg-blue-600 px-2 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
-                      :class="row.loading ? 'opacity-80' : ''"
+                      class="inline-flex w-24 items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-2 py-1.5 text-xs font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-700 dark:hover:bg-blue-600"
+                      :disabled="row.loading"
                       @click="handleCalculate(row)"
                     >
+                      <Loader2 v-if="row.loading" class="h-3 w-3 animate-spin" />
+                      <RefreshCw v-else class="h-3 w-3" />
                       Calculate
                     </button>
                   </td>

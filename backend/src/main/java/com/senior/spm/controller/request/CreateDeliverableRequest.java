@@ -1,11 +1,14 @@
 package com.senior.spm.controller.request;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.senior.spm.entity.Deliverable.DeliverableType;
 
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -29,5 +32,9 @@ public class CreateDeliverableRequest {
 
     @NotNull(message = "Review deadline is required")
     private LocalDateTime reviewDeadline;
+
+    @DecimalMin(value = "0.0", message = "Weight must be at least 0")
+    @DecimalMax(value = "100.0", message = "Weight cannot exceed 100")
+    private BigDecimal weight;
 
 }

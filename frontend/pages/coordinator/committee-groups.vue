@@ -62,20 +62,22 @@ import type { GroupSummaryResponse } from "~/types/group";
 		selectedGroupIds.value = next;
 	}
 
-  async function loadUnassignedGroups(token: string): Promise<GroupSummaryResponse[]> {
-    const [allGroups, committees] = await Promise.all([
+  async function loadUnassignedGroups(token: string, targetDeliverableId: string): Promise<GroupSummaryResponse[]> {
+    const [allGroups, allCommittees] = await Promise.all([
       fetchCoordinatorGroups(token),
       fetchCommittees(undefined, token),
     ])
-    const details = await Promise.all(
-      committees.map((c) => fetchCommittee(c.id, token).catch(() => null))
+    const sameDeliverableCommittees = allCommittees.filter(
+      (c) => c.deliverableId === targetDeliverableId
     )
-
+    const details = await Promise.all(
+      sameDeliverableCommittees.map((c) => fetchCommittee(c.id, token).catch(() => null))
+    )
     const assigned = new Set(
       details.flatMap((d) => d?.groups.map((g) => g.groupId) ?? [])
     )
     return allGroups.filter(
-      (g) => true // g.status === "ADVISOR_ASSIGNED" && !assigned.has(g.id)
+      (g) => g.status === "ADVISOR_ASSIGNED" && !assigned.has(g.id)
     )
   }
 
@@ -93,13 +95,7 @@ import type { GroupSummaryResponse } from "~/types/group";
 		try {
 			const token = getAuthToken();
 			if (!token) throw new Error("Authentication required");
-
-			const [committeeList, groupList] = await Promise.all([
-				fetchCommittees(undefined, token),
-				loadUnassignedGroups(token),
-			]);
-			committees.value = committeeList;
-			unassignedGroups.value = groupList;
+			committees.value = await fetchCommittees(undefined, token);
 		} catch (err: unknown) {
 			const msg =
 				err && typeof err === "object" && "message" in err
@@ -125,11 +121,15 @@ import type { GroupSummaryResponse } from "~/types/group";
 		}
 	}
 
-	watch(selectedCommitteeId, (newId) => {
+	watch(selectedCommitteeId, async (newId) => {
 		selectedGroupIds.value = new Set();
 		successMessage.value = "";
 		errorMessage.value = "";
-		loadCommitteeDetail(newId);
+		await loadCommitteeDetail(newId);
+		const token = getAuthToken();
+		if (token && selectedCommittee.value?.deliverableId) {
+			unassignedGroups.value = await loadUnassignedGroups(token, selectedCommittee.value.deliverableId);
+		}
 	});
 
 	async function handleAssign() {
@@ -153,13 +153,11 @@ import type { GroupSummaryResponse } from "~/types/group";
 			selectedGroupIds.value = new Set();
 
 			// Refresh data
-			const [committeeList, groupList] = await Promise.all([
-				fetchCommittees(undefined, token),
-				loadUnassignedGroups(token),
-			]);
-			committees.value = committeeList;
-			unassignedGroups.value = groupList;
+			committees.value = await fetchCommittees(undefined, token);
 			await loadCommitteeDetail(selectedCommitteeId.value);
+			if (selectedCommittee.value?.deliverableId) {
+				unassignedGroups.value = await loadUnassignedGroups(token, selectedCommittee.value.deliverableId);
+			}
 		} catch (err: unknown) {
 			const msg =
 				err && typeof err === "object" && "message" in err
