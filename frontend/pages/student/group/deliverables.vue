@@ -21,7 +21,6 @@
     roles: ["Student"],
   });
 
-  const router = useRouter();
   const authStore = useAuthStore();
   const { getAuthToken, fetchStudentDeliverables, fetchMyGroup } = useApiClient();
 
