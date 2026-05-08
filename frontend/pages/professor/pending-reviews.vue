@@ -10,6 +10,7 @@ import {
   RefreshCw,
   CheckCircle2,
   InboxIcon,
+  ClipboardList,
 } from "lucide-vue-next";
 import type { ProfessorCommittee } from "~/types/committee";
 import type { CommitteeSubmission } from "~/types/committee";
@@ -337,13 +338,22 @@ onMounted(load);
 
                 <!-- Action -->
                 <td class="px-5 py-4 text-right">
-                  <NuxtLink
-                    :to="`/professor/submission-review/${row.submissionId}`"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-blue-600 bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:border-blue-700"
-                  >
-                    <Eye class="h-3.5 w-3.5" />
-                    Review
-                  </NuxtLink>
+                  <div class="inline-flex items-center gap-2">
+                    <NuxtLink
+                      :to="`/professor/submission-review/${row.submissionId}`"
+                      class="inline-flex items-center gap-1.5 rounded-lg border border-blue-600 bg-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-blue-700 hover:border-blue-700"
+                    >
+                      <Eye class="h-3.5 w-3.5" />
+                      Review
+                    </NuxtLink>
+                    <NuxtLink
+                      :to="`/committee/submissions/${row.submissionId}/grade`"
+                      class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-emerald-700 hover:border-emerald-700"
+                    >
+                      <ClipboardList class="h-3.5 w-3.5" />
+                      Grade
+                    </NuxtLink>
+                  </div>
                 </td>
               </tr>
             </tbody>
