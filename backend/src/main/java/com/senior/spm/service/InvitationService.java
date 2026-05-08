@@ -29,6 +29,7 @@ import com.senior.spm.repository.GroupMembershipRepository;
 import com.senior.spm.repository.ProjectGroupRepository;
 import com.senior.spm.repository.StudentRepository;
 
+import com.senior.spm.entity.AuditLog.Category;
 import com.senior.spm.entity.AuditLog.Outcome;
 import com.senior.spm.entity.AuditLog.UserType;
 
@@ -113,7 +114,7 @@ public class InvitationService {
         GroupInvitation saved = groupInvitationRepository.save(invitation);
         log.trace("[EVENT] userId={} action={} entityId={} detail={}",
                 requesterUUID, "INVITATION_SENT", saved.getId(), targetStudentId);
-        auditLogService.record(requesterUUID, UserType.STUDENT, "INVITATION_SENT", Outcome.SUCCESS, null);
+        auditLogService.record(requesterUUID, UserType.STUDENT, "INVITATION_SENT", Category.GROUP, Outcome.SUCCESS, null);
         return toSendInvitationResponse(saved);
     }
 
@@ -213,7 +214,7 @@ public class InvitationService {
             InvitationActionResponse response = toStatusOnlyResponse(groupInvitationRepository.save(invitation));
             log.trace("[EVENT] userId={} action={} entityId={} detail={}",
                     studentUUID, "INVITATION_RESPONDED", invitationId, "DECLINED");
-            auditLogService.record(studentUUID, UserType.STUDENT, "INVITATION_RESPONDED", Outcome.SUCCESS, null);
+            auditLogService.record(studentUUID, UserType.STUDENT, "INVITATION_RESPONDED", Category.GROUP, Outcome.SUCCESS, null);
             return response;
         }
 
@@ -255,7 +256,7 @@ public class InvitationService {
 
         log.trace("[EVENT] userId={} action={} entityId={} detail={}",
                 studentUUID, "INVITATION_RESPONDED", invitationId, "ACCEPTED");
-        auditLogService.record(studentUUID, UserType.STUDENT, "INVITATION_RESPONDED", Outcome.SUCCESS, null);
+        auditLogService.record(studentUUID, UserType.STUDENT, "INVITATION_RESPONDED", Category.GROUP, Outcome.SUCCESS, null);
         return groupService.getGroupDetail(group.getId());
     }
 

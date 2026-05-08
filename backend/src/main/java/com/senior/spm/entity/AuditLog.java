@@ -22,12 +22,14 @@ import lombok.Setter;
     name = "audit_log",
     indexes = {
         @Index(name = "idx_al_user_id",     columnList = "userId"),
+        @Index(name = "idx_al_category",    columnList = "category"),
         @Index(name = "idx_al_outcome",     columnList = "outcome"),
         @Index(name = "idx_al_occurred_at", columnList = "occurredAt")
     }
 )
 public class AuditLog {
 
+    public enum Category { AUTH, GROUP, ADVISOR, GRADING }
     public enum UserType { STAFF, STUDENT }
     public enum Outcome  { SUCCESS, FAILURE }
 
@@ -44,6 +46,10 @@ public class AuditLog {
 
     @Column(length = 100, nullable = false)
     private String action;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    private Category category;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)

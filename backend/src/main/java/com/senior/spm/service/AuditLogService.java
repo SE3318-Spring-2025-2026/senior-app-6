@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.senior.spm.entity.AuditLog;
+import com.senior.spm.entity.AuditLog.Category;
 import com.senior.spm.entity.AuditLog.Outcome;
 import com.senior.spm.entity.AuditLog.UserType;
 import com.senior.spm.repository.AuditLogRepository;
@@ -29,12 +30,13 @@ public class AuditLogService {
      * the calling business operation.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void record(UUID userId, UserType userType, String action, Outcome outcome, String ipAddress) {
+    public void record(UUID userId, UserType userType, String action, Category category, Outcome outcome, String ipAddress) {
         try {
             AuditLog entry = new AuditLog();
             entry.setUserId(userId);
             entry.setUserType(userType);
             entry.setAction(action);
+            entry.setCategory(category);
             entry.setOutcome(outcome);
             entry.setIpAddress(ipAddress);
             entry.setOccurredAt(LocalDateTime.now());

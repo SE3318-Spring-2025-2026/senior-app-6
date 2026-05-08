@@ -24,6 +24,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.senior.spm.entity.AuditLog;
+import com.senior.spm.entity.AuditLog.Category;
 import com.senior.spm.entity.AuditLog.Outcome;
 import com.senior.spm.entity.AuditLog.UserType;
 import com.senior.spm.repository.AuditLogRepository;
@@ -50,12 +51,13 @@ class AuditLogServiceTest {
             ArgumentCaptor<AuditLog> captor = forClass(AuditLog.class);
             when(auditLogRepository.save(captor.capture())).thenAnswer(i -> i.getArgument(0));
 
-            auditLogService.record(userId, UserType.STAFF, "STAFF_LOGIN", Outcome.SUCCESS, "10.0.0.1");
+            auditLogService.record(userId, UserType.STAFF, "STAFF_LOGIN", Category.AUTH, Outcome.SUCCESS, "10.0.0.1");
 
             AuditLog saved = captor.getValue();
             assertThat(saved.getUserId()).isEqualTo(userId);
             assertThat(saved.getUserType()).isEqualTo(UserType.STAFF);
             assertThat(saved.getAction()).isEqualTo("STAFF_LOGIN");
+            assertThat(saved.getCategory()).isEqualTo(Category.AUTH);
             assertThat(saved.getOutcome()).isEqualTo(Outcome.SUCCESS);
             assertThat(saved.getIpAddress()).isEqualTo("10.0.0.1");
             assertThat(saved.getOccurredAt()).isNotNull();
@@ -66,7 +68,7 @@ class AuditLogServiceTest {
             ArgumentCaptor<AuditLog> captor = forClass(AuditLog.class);
             when(auditLogRepository.save(captor.capture())).thenAnswer(i -> i.getArgument(0));
 
-            auditLogService.record(null, UserType.STAFF, "STAFF_LOGIN", Outcome.FAILURE, null);
+            auditLogService.record(null, UserType.STAFF, "STAFF_LOGIN", Category.AUTH, Outcome.FAILURE, null);
 
             AuditLog saved = captor.getValue();
             assertThat(saved.getUserId()).isNull();
@@ -80,7 +82,7 @@ class AuditLogServiceTest {
                 .when(auditLogRepository).save(org.mockito.ArgumentMatchers.any());
 
             assertThatCode(() ->
-                auditLogService.record(UUID.randomUUID(), UserType.STAFF, "STAFF_LOGIN", Outcome.SUCCESS, null)
+                auditLogService.record(UUID.randomUUID(), UserType.STAFF, "STAFF_LOGIN", Category.AUTH, Outcome.SUCCESS, null)
             ).doesNotThrowAnyException();
         }
     }
@@ -113,7 +115,7 @@ class AuditLogServiceTest {
             // but the REQUIRES_NEW inner transaction must have already committed the audit row.
             assertThatThrownBy(() ->
                 outerTx.execute(status -> {
-                    auditLogService.record(userId, UserType.STAFF, "STAFF_LOGIN", Outcome.SUCCESS, null);
+                    auditLogService.record(userId, UserType.STAFF, "STAFF_LOGIN", Category.AUTH, Outcome.SUCCESS, null);
                     throw new RuntimeException("simulated business failure");
                 })
             ).isInstanceOf(RuntimeException.class);
@@ -122,6 +124,7 @@ class AuditLogServiceTest {
             AuditLog persisted = auditLogRepository.findAll().get(0);
             assertThat(persisted.getUserId()).isEqualTo(userId);
             assertThat(persisted.getAction()).isEqualTo("STAFF_LOGIN");
+            assertThat(persisted.getCategory()).isEqualTo(Category.AUTH);
             assertThat(persisted.getOutcome()).isEqualTo(Outcome.SUCCESS);
         }
     }

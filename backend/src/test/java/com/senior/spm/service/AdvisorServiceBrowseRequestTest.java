@@ -786,6 +786,7 @@ class AdvisorServiceBrowseRequestTest {
                     eq(coordinatorId),
                     eq(com.senior.spm.entity.AuditLog.UserType.STAFF),
                     eq("ADVISOR_ASSIGNED"),
+                    eq(com.senior.spm.entity.AuditLog.Category.ADVISOR),
                     eq(com.senior.spm.entity.AuditLog.Outcome.SUCCESS),
                     isNull());
         }
@@ -848,6 +849,7 @@ class AdvisorServiceBrowseRequestTest {
                     eq(coordinatorId),
                     eq(com.senior.spm.entity.AuditLog.UserType.STAFF),
                     eq("ADVISOR_REMOVED"),
+                    eq(com.senior.spm.entity.AuditLog.Category.ADVISOR),
                     eq(com.senior.spm.entity.AuditLog.Outcome.SUCCESS),
                     isNull());
         }
