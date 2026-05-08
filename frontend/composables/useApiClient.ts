@@ -50,6 +50,7 @@ import type {
 import type { StudentSearchResult } from '~/types/student';
 import type { BindJiraRequest, BindGithubRequest, BindToolResponse } from '~/types/tools';
 import type { SanitizationReport } from '~/types/sanitization';
+import type { ScheduleWindowItem, ScheduleWindowPayload } from '~/types/scheduleWindow';
 import type {
   StudentDeliverable,
   SubmissionCreateResponse,
@@ -770,54 +771,66 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
   );
 }
 
-async function fetchSubmissionComments(submissionId: string, token?: string): Promise<SubmissionComment[]> {
-  return apiCall<SubmissionComment[]>(
-    `/submissions/${encodeURIComponent(submissionId)}/comments`,
-    "GET",
-    undefined,
-    token
-  );
-}
+  async function fetchScheduleWindows(token?: string): Promise<ScheduleWindowItem[]> {
+    return apiCall<ScheduleWindowItem[]>("/coordinator/schedule-windows", "GET", undefined, token);
+  }
 
-async function createSubmissionComment(
-  submissionId: string,
-  payload: CreateSubmissionCommentRequest,
-  token?: string
-): Promise<SubmissionComment> {
-  return apiCall<SubmissionComment>(
-    `/submissions/${encodeURIComponent(submissionId)}/comments`,
-    "POST",
-    payload,
-    token
-  );
-}
+  async function upsertScheduleWindow(payload: ScheduleWindowPayload, token?: string): Promise<void> {
+    return apiCall<void>("/coordinator/schedule-windows", "POST", payload, token);
+  }
 
-async function fetchAuditLogs(query: AuditLogQuery = {}, token?: string): Promise<PagedAuditLogResponse> {
-  const qs = new URLSearchParams();
-  if (query.category) qs.set('category', query.category);
-  if (query.outcome) qs.set('outcome', query.outcome);
-  if (query.userType) qs.set('userType', query.userType);
-  if (query.userId) qs.set('userId', query.userId);
-  if (query.from) qs.set('from', query.from);
-  if (query.to) qs.set('to', query.to);
-  if (query.page !== undefined) qs.set('page', String(query.page));
-  if (query.size !== undefined) qs.set('size', String(query.size));
-  const q = qs.toString();
-  return apiCall<PagedAuditLogResponse>(`/admin/audit-logs${q ? '?' + q : ''}`, 'GET', undefined, token);
-}
+  async function deleteScheduleWindow(id: string, token?: string): Promise<void> {
+    return apiCall<void>(`/coordinator/schedule-windows/${encodeURIComponent(id)}`, "DELETE", undefined, token);
+  }
 
-async function submitRubricGrade(
-  submissionId: string,
-  grades: SubmitGradeEntry[],
-  token?: string
-): Promise<RubricGradeSubmitResponse> {
-  return apiCall<RubricGradeSubmitResponse>(
-    `/submissions/${encodeURIComponent(submissionId)}/grade`,
-    "POST",
-    { grades },
-    token
-  );
-}
+  async function fetchSubmissionComments(submissionId: string, token?: string): Promise<SubmissionComment[]> {
+    return apiCall<SubmissionComment[]>(
+      `/submissions/${encodeURIComponent(submissionId)}/comments`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function createSubmissionComment(
+    submissionId: string,
+    payload: CreateSubmissionCommentRequest,
+    token?: string
+  ): Promise<SubmissionComment> {
+    return apiCall<SubmissionComment>(
+      `/submissions/${encodeURIComponent(submissionId)}/comments`,
+      "POST",
+      payload,
+      token
+    );
+  }
+
+  async function fetchAuditLogs(query: AuditLogQuery = {}, token?: string): Promise<PagedAuditLogResponse> {
+    const qs = new URLSearchParams();
+    if (query.category) qs.set('category', query.category);
+    if (query.outcome) qs.set('outcome', query.outcome);
+    if (query.userType) qs.set('userType', query.userType);
+    if (query.userId) qs.set('userId', query.userId);
+    if (query.from) qs.set('from', query.from);
+    if (query.to) qs.set('to', query.to);
+    if (query.page !== undefined) qs.set('page', String(query.page));
+    if (query.size !== undefined) qs.set('size', String(query.size));
+    const q = qs.toString();
+    return apiCall<PagedAuditLogResponse>(`/admin/audit-logs${q ? '?' + q : ''}`, 'GET', undefined, token);
+  }
+
+  async function submitRubricGrade(
+    submissionId: string,
+    grades: SubmitGradeEntry[],
+    token?: string
+  ): Promise<RubricGradeSubmitResponse> {
+    return apiCall<RubricGradeSubmitResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}/grade`,
+      "POST",
+      { grades },
+      token
+    );
+  }
 
   return {
     getAuthToken,
@@ -892,6 +905,9 @@ async function submitRubricGrade(
     fetchStudentRubric,
     fetchSubmission,
     fetchRubricMappings,
+    fetchScheduleWindows,
+    upsertScheduleWindow,
+    deleteScheduleWindow,
     fetchSubmissionComments,
     createSubmissionComment,
     submitRubricGrade,

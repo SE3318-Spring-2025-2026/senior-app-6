@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { AlertTriangle, LogOut, Play, FileText, ClipboardCheck, Send, ShieldX, Users, X, Building, Activity, Calculator, Settings as SettingsIcon } from "lucide-vue-next";
+	import { AlertTriangle, LogOut, Play, FileText, ClipboardCheck, Send, ShieldX, Users, X, Building, Activity, Calculator, Settings as SettingsIcon, CalendarClock } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
 import type { SanitizationReport } from "~/types/sanitization";
 
@@ -236,6 +236,19 @@ import type { SanitizationReport } from "~/types/sanitization";
           </h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
             System config and student CSV upload.
+          </p>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/coordinator/schedule"
+          class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:border-violet-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-violet-600"
+        >
+          <CalendarClock class="h-8 w-8 text-violet-600 dark:text-violet-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white group-hover:text-violet-600 dark:group-hover:text-violet-400">
+            Schedule Windows
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Set group creation and advisor association windows.
           </p>
         </NuxtLink>
         <button
