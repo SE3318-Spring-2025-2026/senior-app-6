@@ -60,6 +60,7 @@ import type {
   CreateSubmissionCommentRequest,
 } from '~/types/submission';
 import type { FinalGradeResponse } from '~/types/grade';
+import type { AuditLogQuery, PagedAuditLogResponse } from '~/types/audit-log';
 
 async function apiCall<T>(
   endpoint: string,
@@ -791,6 +792,20 @@ async function createSubmissionComment(
   );
 }
 
+async function fetchAuditLogs(query: AuditLogQuery = {}, token?: string): Promise<PagedAuditLogResponse> {
+  const qs = new URLSearchParams();
+  if (query.category) qs.set('category', query.category);
+  if (query.outcome) qs.set('outcome', query.outcome);
+  if (query.userType) qs.set('userType', query.userType);
+  if (query.userId) qs.set('userId', query.userId);
+  if (query.from) qs.set('from', query.from);
+  if (query.to) qs.set('to', query.to);
+  if (query.page !== undefined) qs.set('page', String(query.page));
+  if (query.size !== undefined) qs.set('size', String(query.size));
+  const q = qs.toString();
+  return apiCall<PagedAuditLogResponse>(`/admin/audit-logs${q ? '?' + q : ''}`, 'GET', undefined, token);
+}
+
 async function submitRubricGrade(
   submissionId: string,
   grades: SubmitGradeEntry[],
@@ -882,5 +897,6 @@ async function submitRubricGrade(
     submitRubricGrade,
     fetchLlmConfig,
     updateLlmKey,
+    fetchAuditLogs,
   };
 }
