@@ -13,8 +13,8 @@
 |------|------|
 | Primary keys | UUID |
 | Timestamps | ISO-8601 (`LocalDateTime`) |
-| Student JWT | `sub="Student"`, claim `id` (UUID of Student entity) |
-| Staff JWT | `sub="StaffUser"`, claim `id` (UUID), claim `role` |
+| Student JWT | `sub="Student"`, claim `studentId` |
+| Staff JWT | `sub="StaffUser"`, claim `role` |
 | Error body | `{ "message": "Human-readable message" }` |
 
 ### HTTP Status Codes
@@ -82,18 +82,10 @@ Returns the full `GroupDetailResponse` for the student's current group.
   "status": "FORMING | TOOLS_PENDING | TOOLS_BOUND | ADVISOR_ASSIGNED | DISBANDED",
   "createdAt": "ISO-8601",
   "jiraSpaceUrl": "string | null",
-  "jiraEmail": "string | null",
   "jiraProjectKey": "string | null",
   "jiraBound": false,
-  "jiraTokenValid": "boolean | null",
-  "jiraTokenExpiresAt": "ISO-8601 date | null",
   "githubOrgName": "string | null",
-  "githubRepoName": "string | null",
   "githubBound": false,
-  "githubTokenValid": "boolean | null",
-  "githubPatExpiresAt": "ISO-8601 | null",
-  "advisorId": "uuid | null",
-  "advisorMail": "string | null",
   "members": [
     { "studentId": "string", "role": "TEAM_LEADER | MEMBER", "joinedAt": "ISO-8601" }
   ]
@@ -273,16 +265,14 @@ On `DECLINED`: updates only this invitation's status.
 ### `POST /api/groups/{groupId}/jira` — SP: 5 | Difficulty: Hard
 **Auth:** Student JWT (must be `TEAM_LEADER` of `groupId`) | **Issue:** API-04
 
-Performs a live test call to JIRA API before storing anything. Stores `jiraSpaceUrl`, `jiraEmail`, and `jiraProjectKey` in plaintext; `jiraApiToken` is encrypted (AES-256-GCM) before persisting. Status transitions to `TOOLS_BOUND` if GitHub is already bound. **Re-bind (token rotation):** If JIRA was already bound, credentials are overwritten but group status is preserved — only first-time bind advances state.
+Performs a live test call to JIRA API before storing anything. Stores `jiraSpaceUrl` and `jiraProjectKey` in plaintext; `jiraApiToken` is encrypted (AES-256-GCM) before persisting. Status transitions to `TOOLS_BOUND` if GitHub is already bound.
 
 **Request:**
 ```json
 {
   "jiraSpaceUrl": "string",
-  "jiraEmail": "string",
   "jiraProjectKey": "string",
-  "jiraApiToken": "string",
-  "jiraTokenExpiresAt": "ISO-8601 date | null"
+  "jiraApiToken": "string"
 }
 ```
 
@@ -293,14 +283,12 @@ Performs a live test call to JIRA API before storing anything. Stores `jiraSpace
   "status": "FORMING | TOOLS_PENDING | TOOLS_BOUND",
   "jiraSpaceUrl": "string",
   "jiraProjectKey": "string",
-  "jiraBound": true,
-  "githubBound": false
+  "jiraBound": true
 }
 ```
 
 **Errors:**
 ```
-400  { "message": "This group has been disbanded" }
 403  { "message": "Only the Team Leader can bind tool integrations" }
 422  { "message": "JIRA validation failed: JIRA space URL is unreachable" }
 422  { "message": "JIRA validation failed: Project key '{key}' not found" }
@@ -314,14 +302,13 @@ Performs a live test call to JIRA API before storing anything. Stores `jiraSpace
 ### `POST /api/groups/{groupId}/github` — SP: 5 | Difficulty: Hard
 **Auth:** Student JWT (must be `TEAM_LEADER` of `groupId`) | **Issue:** API-05
 
-Performs sequential test calls: `GET /orgs/{org}` (org existence + PAT validity), `GET /orgs/{org}/repos` (confirms `repo` scope), and repo existence verification. Stores `githubOrgName` and `githubRepoName` in plaintext; PAT is AES-256-GCM encrypted. Token expiration date is extracted from validation response. Status transitions to `TOOLS_BOUND` if JIRA is already bound. **Re-bind (token rotation):** If GitHub was already bound, credentials are overwritten but group status is preserved — only first-time bind advances state.
+Performs two test calls: `GET /orgs/{org}` (org existence + PAT validity) and `GET /orgs/{org}/repos` (confirms `repo` scope). Stores `githubOrgName` in plaintext; PAT is AES-256-GCM encrypted. Status transitions to `TOOLS_BOUND` if JIRA is already bound.
 
 **Request:**
 ```json
 {
   "githubOrgName": "string",
-  "githubPat": "string",
-  "githubRepoName": "string"
+  "githubPat": "string"
 }
 ```
 
@@ -331,14 +318,12 @@ Performs sequential test calls: `GET /orgs/{org}` (org existence + PAT validity)
   "groupId": "uuid",
   "status": "FORMING | TOOLS_PENDING | TOOLS_BOUND",
   "githubOrgName": "string",
-  "githubBound": true,
-  "jiraBound": false
+  "githubBound": true
 }
 ```
 
 **Errors:**
 ```
-400  { "message": "This group has been disbanded" }
 403  { "message": "Only the Team Leader can bind tool integrations" }
 422  { "message": "GitHub validation failed: PAT is invalid or expired" }
 422  { "message": "GitHub validation failed: PAT lacks required 'repo' scope" }
@@ -352,10 +337,9 @@ Performs sequential test calls: `GET /orgs/{org}` (org existence + PAT validity)
 ### `GET /api/coordinator/groups` — SP: 2 | Difficulty: Easy
 **Auth:** Staff JWT (Role = `Coordinator`) | **Issue:** API-06
 
-> `termId` defaults to the active term via `TermConfigService.getActiveTermId()` when omitted.
+> `termId` is resolved server-side via `TermConfigService.getActiveTermId()` — no query param required.
 
-**Query params:**
-- `termId` _(optional)_ — specific term ID to filter by; `"ALL"` returns groups across all terms; omit or blank for active term only
+**Query params:** _(none)_
 
 **Response 200:**
 ```json
@@ -388,18 +372,10 @@ Returns full group detail including members. Encrypted tokens are **never** retu
   "status": "string",
   "createdAt": "ISO-8601",
   "jiraSpaceUrl": "string | null",
-  "jiraEmail": "string | null",
   "jiraProjectKey": "string | null",
   "jiraBound": true,
-  "jiraTokenValid": "boolean | null",
-  "jiraTokenExpiresAt": "ISO-8601 date | null",
   "githubOrgName": "string | null",
-  "githubRepoName": "string | null",
   "githubBound": true,
-  "githubTokenValid": "boolean | null",
-  "githubPatExpiresAt": "ISO-8601 | null",
-  "advisorId": "uuid | null",
-  "advisorMail": "string | null",
   "members": [
     { "studentId": "string", "role": "TEAM_LEADER | MEMBER", "joinedAt": "ISO-8601" }
   ]
@@ -681,8 +657,6 @@ FORMING ──(first tool bound)──► TOOLS_PENDING
 FORMING ──(both tools bound simultaneously)──► TOOLS_BOUND
 TOOLS_PENDING ──(second tool bound)──► TOOLS_BOUND
 Any state ──(coordinator disbands)──► DISBANDED
-
-Re-bind (token rotation): status is NOT changed — only first-time bind advances state.
 ```
 
 ## Security Notes
@@ -692,21 +666,6 @@ Re-bind (token rotation): status is NOT changed — only first-time bind advance
 | `jiraApiToken` | AES-256-GCM → `encryptedJiraToken` column (length 1024) |
 | `githubPat` | AES-256-GCM → `encryptedGithubPat` column (length 1024) |
 | `jiraSpaceUrl` | Plaintext (required for P5 sprint queries) |
-| `jiraEmail` | Plaintext (required for JIRA Basic Auth) |
 | `jiraProjectKey` | Plaintext (required for P5 sprint queries) |
 | `githubOrgName` | Plaintext (required for P5 sprint queries) |
-| `githubRepoName` | Plaintext (required for P5 sprint queries) |
 | Any token | **Never returned** in any API response |
-
-## Token Health Tracking
-
-| Field | Type | Purpose |
-|-------|------|---------|
-| `jiraTokenValid` | Boolean | Set to `true` on bind; may be set to `false` by P5 on auth failure |
-| `jiraTokenExpiresAt` | LocalDate | Supplied by client during JIRA bind |
-| `githubTokenValid` | Boolean | Set to `true` on bind; may be set to `false` by P5 on auth failure |
-| `githubPatExpiresAt` | LocalDateTime | Extracted from GitHub API validation response |
-
-## Audit Logging
-
-All mutating P2 operations emit audit log entries via `AuditLogService.record()` with `Category.GROUP`. Actions logged: `GROUP_CREATED`, `INVITATION_SENT`, `INVITATION_RESPONDED`, `JIRA_BOUND`, `GITHUB_BOUND`, `MEMBER_ADDED`, `MEMBER_REMOVED`, `GROUP_DISBANDED`.

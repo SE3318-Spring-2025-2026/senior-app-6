@@ -14,8 +14,8 @@
 |------|------|
 | Primary keys | UUID |
 | Timestamps | ISO-8601 (`LocalDateTime`) |
-| Student JWT | `sub="Student"`, claim `id` (UUID of Student entity) |
-| Staff JWT | `sub="StaffUser"`, claim `id` (UUID), claim `role` |
+| Student JWT | `sub="Student"`, claim `studentId` |
+| Staff JWT | `sub="StaffUser"`, claim `role` |
 | Error body | `{ "message": "Human-readable message" }` |
 
 ### HTTP Status Codes

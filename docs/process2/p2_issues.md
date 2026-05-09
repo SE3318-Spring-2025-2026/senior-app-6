@@ -32,7 +32,7 @@
 **Deliverables:**
 1. Create all Request DTOs with Bean Validation and Response DTOs using Lombok `@Data`.
 2. Implement the base `GroupController` for student endpoints.
-3. Extend existing `GlobalExceptionHandler` mapping domain exceptions to standard HTTP statuses within a `{ "error": "message" }` JSON envelope.
+3. Extend existing `GlobalExceptionHandler` mapping domain exceptions to standard HTTP statuses within a `{ "message": "message" }` JSON envelope.
 
 **References:** Process 2 API Definitions; HTTP Status Code Conventions.
 **Acceptance Criteria:**
