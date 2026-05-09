@@ -39,6 +39,7 @@ import com.senior.spm.controller.request.UpdateSprintTargetRequest;
 import com.senior.spm.controller.response.AdvisorCapacityResponse;
 import com.senior.spm.controller.response.AdvisorOverrideResponse;
 import com.senior.spm.controller.response.ErrorMessage;
+import com.senior.spm.controller.response.SprintDeliverableMappingResponse;
 import com.senior.spm.controller.response.GroupDetailResponse;
 import com.senior.spm.controller.response.GroupSummaryResponse;
 import com.senior.spm.controller.response.SanitizationReport;
@@ -181,6 +182,11 @@ public class CoordinatorController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorMessage(e.getMessage()));
         }
+    }
+
+    @GetMapping("/sprints/{id}/deliverable-mapping")
+    public ResponseEntity<List<SprintDeliverableMappingResponse>> getDeliverableMappings(@PathVariable UUID id) {
+        return ResponseEntity.ok(deliverableService.getMappingsBySprint(id));
     }
 
     @PostMapping("/sprints/{id}/deliverable-mapping")

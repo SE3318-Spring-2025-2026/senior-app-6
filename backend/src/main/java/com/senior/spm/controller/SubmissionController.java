@@ -22,6 +22,7 @@ import com.senior.spm.controller.request.SubmitGradesRequest;
 import com.senior.spm.controller.request.UpdateDeliverableSubmissionRequest;
 import com.senior.spm.controller.response.DeliverableSubmissionDetailResponse;
 import com.senior.spm.controller.response.DeliverableSubmissionResponse;
+import com.senior.spm.controller.response.ExistingGradesResponse;
 import com.senior.spm.controller.response.RubricGradeSubmitResponse;
 import com.senior.spm.controller.response.RubricMappingResponse;
 import com.senior.spm.service.DeliverableSubmissionService;
@@ -80,6 +81,18 @@ public class SubmissionController {
     ) {
         UUID requesterUUID = extractPrincipalUUID();
         return ResponseEntity.ok(submissionService.getRubricMappings(submissionId, requesterUUID));
+    }
+
+    @GetMapping("/{submissionId}/grade")
+    public ResponseEntity<ExistingGradesResponse> getExistingGrades(
+            @PathVariable UUID submissionId) {
+        UUID reviewerId = extractPrincipalUUID();
+        List<com.senior.spm.entity.RubricGrade> grades =
+                rubricGradingService.fetchGradesForReviewer(submissionId, reviewerId);
+        List<ExistingGradesResponse.GradeEntry> entries = grades.stream()
+                .map(g -> new ExistingGradesResponse.GradeEntry(g.getCriterion().getId(), g.getSelectedGrade()))
+                .toList();
+        return ResponseEntity.ok(new ExistingGradesResponse(entries));
     }
 
     @PostMapping("/{submissionId}/grade")

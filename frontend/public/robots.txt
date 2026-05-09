@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /coordinator/
+Disallow: /professor/
+Disallow: /student/
+Disallow: /auth/
+Allow: /
+
+# Sitemap: /sitemap.xml

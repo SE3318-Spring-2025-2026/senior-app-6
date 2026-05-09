@@ -31,7 +31,7 @@
 
   const myRole = computed<GroupMemberRole | null>(() => {
     if (!group.value || !authStore.userInfo) return null;
-    const me = group.value.members.find((m) => m.studentId === authStore.userInfo!.id);
+    const me = group.value.members.find((m) => m.studentId === authStore.userInfo!.studentId);
     return me?.role ?? null;
   });
 
@@ -83,14 +83,15 @@
     return new Date(dateStr).getTime() < Date.now();
   }
 
-  type ActionKind = "start" | "edit" | "view" | "locked";
+  type ActionKind = "start" | "edit" | "view" | "locked" | "closed";
 
   function actionFor(d: StudentDeliverable): ActionKind {
     const submissionPassed = isPast(d.submissionDeadline);
     const reviewPassed = isPast(d.reviewDeadline);
 
     if (d.submissionStatus === "NOT_SUBMITTED") {
-      if (isTeamLeader.value && !submissionPassed) return "start";
+      if (submissionPassed) return "closed";
+      if (isTeamLeader.value) return "start";
       return "locked";
     }
     if (isTeamLeader.value && !reviewPassed) return "edit";
@@ -120,24 +121,23 @@
 <template>
   <main class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 p-4 transition-colors dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 md:p-8">
     <div class="mx-auto w-full max-w-6xl space-y-6">
+      <NuxtLink
+        to="/student/dashboard"
+        class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+      >
+        <ArrowLeft class="h-4 w-4" />
+        Back to dashboard
+      </NuxtLink>
+
       <header class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur transition-colors dark:border-slate-700 dark:bg-slate-800/90">
         <div class="flex items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <NuxtLink
-              to="/student/dashboard"
-              class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-            >
-              <ArrowLeft class="h-4 w-4" />
-              Back to dashboard
-            </NuxtLink>
-            <div>
-              <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
-                Deliverables
-              </h1>
-              <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                Track upcoming deadlines and your group's submission status.
-              </p>
-            </div>
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white md:text-3xl">
+              Deliverables
+            </h1>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+              Track upcoming deadlines and your group's submission status.
+            </p>
           </div>
           <div v-if="group" class="hidden text-right md:block">
             <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">Group</p>
@@ -255,6 +255,13 @@
               <Eye class="h-4 w-4" />
               View Read-Only
             </button>
+            <span
+              v-else-if="actionFor(d) === 'closed'"
+              class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-500"
+            >
+              <Clock class="h-4 w-4" />
+              Submission Closed
+            </span>
             <span
               v-else
               class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-400 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-500"

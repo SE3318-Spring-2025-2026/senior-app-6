@@ -1,5 +1,5 @@
 <script setup lang="ts">
-	import { LogOut, GitBranch, FileCheck, Users, Send, Clock, CheckCircle2, AlertCircle, Calculator } from "lucide-vue-next";
+	import { LogOut, GitBranch, FileCheck, Users, Send, Clock, CheckCircle2, AlertCircle, Calculator, Link2, Mail } from "lucide-vue-next";
 	import { useAuthStore } from "~/stores/auth";
 	import type { ActiveSprintResponse } from "~/types/sprint";
 	import type { StudentDeliverable } from "~/types/submission";
@@ -98,45 +98,27 @@
 
       <!-- Quick nav cards -->
       <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+
+        <!-- Row 1 -->
         <NuxtLink
           to="/student/group/sprint"
           class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-blue-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-600"
         >
           <GitBranch class="h-8 w-8 text-blue-600 dark:text-blue-400" />
           <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Current Sprint</h3>
-
-          <!-- Loading skeleton -->
           <div v-if="sprintState === 'loading'" class="mt-3 space-y-2 animate-pulse">
             <div class="h-3.5 w-36 rounded bg-slate-200 dark:bg-slate-700"></div>
             <div class="h-3.5 w-24 rounded bg-slate-200 dark:bg-slate-700"></div>
           </div>
-
-          <!-- No active sprint -->
-          <p v-else-if="sprintState === 'no-sprint'" class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            No active sprint found.
-          </p>
-
-          <!-- Error -->
-          <p v-else-if="sprintState === 'error'" class="mt-1 text-sm text-red-500 dark:text-red-400">
-            Couldn't load sprint info.
-          </p>
-
-          <!-- Loaded -->
+          <p v-else-if="sprintState === 'no-sprint'" class="mt-1 text-sm text-slate-500 dark:text-slate-400">No active sprint found.</p>
+          <p v-else-if="sprintState === 'error'" class="mt-1 text-sm text-red-500 dark:text-red-400">Couldn't load sprint info.</p>
           <template v-else-if="sprintState === 'loaded' && sprint">
-            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              {{ sprintDateRange }}
-            </p>
+            <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">{{ sprintDateRange }}</p>
             <div class="mt-3 flex flex-wrap gap-2">
-              <span
-                v-if="sprint.daysRemaining != null"
-                class="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-              >
+              <span v-if="sprint.daysRemaining != null" class="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                 {{ sprint.daysRemaining }}d remaining
               </span>
-              <span
-                v-if="sprint.storyPointTarget != null"
-                class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
-              >
+              <span v-if="sprint.storyPointTarget != null" class="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                 {{ sprint.storyPointTarget }} SP target
               </span>
             </div>
@@ -144,13 +126,13 @@
         </NuxtLink>
 
         <NuxtLink
-          to="/student/deliverables"
-          class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600"
+          to="/student/group/sprint-deliverables"
+          class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-indigo-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-indigo-600"
         >
-          <FileCheck class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Deliverables</h3>
+          <Link2 class="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Sprint &amp; Deliverables</h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            View all deliverables, deadlines, and submission status.
+            View deliverable weights and the active sprint at a glance.
           </p>
         </NuxtLink>
 
@@ -161,7 +143,30 @@
           <Users class="h-8 w-8 text-violet-600 dark:text-violet-400" />
           <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Group Hub</h3>
           <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Open your group page to create a team, review members, and check your current group state.
+            Create a team, review members, and check your current group state.
+          </p>
+        </NuxtLink>
+
+        <!-- Row 2 -->
+        <NuxtLink
+          to="/student/group/invitations"
+          class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-rose-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-rose-600"
+        >
+          <Mail class="h-8 w-8 text-rose-600 dark:text-rose-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Invitations</h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            View and respond to pending group invitations.
+          </p>
+        </NuxtLink>
+
+        <NuxtLink
+          to="/student/group/deliverables"
+          class="block rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-800 dark:hover:border-emerald-600"
+        >
+          <FileCheck class="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+          <h3 class="mt-3 font-semibold text-slate-900 dark:text-white">Submit Deliverables</h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            View deadlines, submit or update your group's deliverables.
           </p>
         </NuxtLink>
 
@@ -175,6 +180,7 @@
             View your final grade and deliverable breakdown.
           </p>
         </NuxtLink>
+
       </div>
 
       <!-- Deliverables section -->
