@@ -43,7 +43,11 @@ This document summarizes the implementation of the database schema and JPA repos
 - `rubric_criterion_id` (UUID, FK) - Foreign key to `rubricCriterion` (NOT NULL)
 - `section_start` (INT) - Start position in the markdown content (NOT NULL)
 - `section_end` (INT) - End position in the markdown content (NOT NULL)
+- `section_key` (VARCHAR 255) - Unique key identifying the mapped section within a submission (nullable)
 - `mapped_at` (DATETIME) - Timestamp when the mapping was created (NOT NULL)
+
+**Validation:**
+- `@PrePersist` / `@PreUpdate`: Verifies that the `RubricCriterion.deliverable` matches the `DeliverableSubmission.deliverable`. Throws `IllegalStateException` on mismatch.
 
 **Relationships:**
 - Many-to-One to `DeliverableSubmission` (submission_id)
@@ -52,6 +56,9 @@ This document summarizes the implementation of the database schema and JPA repos
 **Foreign Key Constraints:**
 - FK: `fk_rm_submission` → `deliverable_submission.id`
 - FK: `fk_rm_rubric_criterion` → `rubricCriterion.id`
+
+**Unique Constraint:**
+- `uq_rubric_mapping_submission_section (submission_id, section_key)`
 
 ---
 
@@ -65,6 +72,7 @@ This document summarizes the implementation of the database schema and JPA repos
 - `submission_id` (UUID, FK) - Foreign key to `deliverable_submission` (NOT NULL)
 - `commenter_id` (UUID, FK) - Foreign key to `staffUser` (NOT NULL)
 - `comment_text` (LONGTEXT) - The comment content (NOT NULL)
+- `section_reference` (VARCHAR 255) - Optional reference to a specific section of the submission (nullable)
 - `created_at` (DATETIME) - Timestamp when the comment was created (NOT NULL)
 
 **Relationships:**
@@ -134,11 +142,14 @@ DeliverableSubmission
 
 RubricMapping
 ├── submission_id (FK) ──→ DeliverableSubmission.id
-└── rubric_criterion_id (FK) ──→ RubricCriterion.id
+├── rubric_criterion_id (FK) ──→ RubricCriterion.id
+├── section_key (VARCHAR 255, nullable)
+└── UQ: uq_rubric_mapping_submission_section (submission_id, section_key)
 
 SubmissionComment
 ├── submission_id (FK) ──→ DeliverableSubmission.id
-└── commenter_id (FK) ──→ StaffUser.id
+├── commenter_id (FK) ──→ StaffUser.id
+└── section_reference (VARCHAR 255, nullable)
 ```
 
 ---

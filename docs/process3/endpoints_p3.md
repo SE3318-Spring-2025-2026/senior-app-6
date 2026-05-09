@@ -14,9 +14,9 @@
 |------|------|
 | Primary keys | UUID |
 | Timestamps | ISO-8601 (`LocalDateTime`) |
-| Student JWT | `sub="Student"`, claim `studentId` |
-| Staff JWT | `sub="StaffUser"`, claim `role` |
-| Error body | `{ "error": "Human-readable message" }` |
+| Student JWT | `sub="Student"`, claim `id` (UUID of Student entity) |
+| Staff JWT | `sub="StaffUser"`, claim `id` (UUID), claim `role` |
+| Error body | `{ "message": "Human-readable message" }` |
 
 ### HTTP Status Codes
 
@@ -82,12 +82,12 @@ Checks schedule window → group status → existing PENDING request → advisor
 
 **Errors:**
 ```
-403  { "error": "Only the Team Leader can send advisor requests" }
-400  { "error": "Advisor association window is not currently active" }
-400  { "error": "Group must be in TOOLS_BOUND status to request an advisor" }
-409  { "error": "Group already has an active pending advisor request" }
-400  { "error": "Advisor has reached maximum group capacity for this term" }
-404  { "error": "Advisor not found" }
+403  { "message": "Only the Team Leader can send advisor requests" }
+400  { "message": "Advisor association window is not currently active" }
+400  { "message": "Group must be in TOOLS_BOUND status to request an advisor" }
+409  { "message": "Group already has an active pending advisor request" }
+400  { "message": "Advisor has reached maximum group capacity for this term" }
+404  { "message": "Advisor not found" }
 ```
 
 ---
@@ -111,8 +111,8 @@ Returns the most recent `AdvisorRequest` for the group (any status).
 
 **Errors:**
 ```
-404  { "error": "No advisor request found for this group" }
-403  { "error": "You are not a member of this group" }
+404  { "message": "No advisor request found for this group" }
+403  { "message": "You are not a member of this group" }
 ```
 
 ---
@@ -132,10 +132,10 @@ Cancels the active `PENDING` advisor request. Sets status to `CANCELLED`.
 
 **Errors:**
 ```
-403  { "error": "Only the Team Leader can cancel advisor requests" }
-400  { "error": "No active pending request to cancel" }
-404  { "error": "Group not found" }
-404  { "error": "No advisor request found for this group" }
+403  { "message": "Only the Team Leader can cancel advisor requests" }
+400  { "message": "No active pending request to cancel" }
+404  { "message": "Group not found" }
+404  { "message": "No advisor request found for this group" }
 ```
 
 ---
@@ -187,8 +187,8 @@ Returns full request detail including group members and group's Proposal submiss
 
 **Errors:**
 ```
-403  { "error": "This request is not addressed to you" }
-404  { "error": "Request not found" }
+403  { "message": "This request is not addressed to you" }
+404  { "message": "Request not found" }
 ```
 
 ---
@@ -236,9 +236,9 @@ On `REJECTED`:
 
 **Errors:**
 ```
-403  { "error": "This request is not addressed to you" }
-400  { "error": "Request is no longer pending" }
-404  { "error": "Request not found" }
+403  { "message": "This request is not addressed to you" }
+400  { "message": "Request is no longer pending" }
+404  { "message": "Request not found" }
 ```
 
 ---
@@ -271,7 +271,7 @@ Omit body or send `{}` for normal trigger (window must be closed). Include `{ "f
 
 **Errors:**
 ```
-400  { "error": "Advisor association window is still active — cannot sanitize early without confirmation" }
+400  { "message": "Advisor association window is still active — cannot sanitize early without confirmation" }
 ```
 
 ---
@@ -331,11 +331,11 @@ Bypasses the request flow and window check entirely.
 
 **Errors:**
 ```
-400  { "error": "advisorId is required for ASSIGN action" }
-400  { "error": "Group already has this advisor assigned" }
-400  { "error": "Group has no advisor to remove" }
-404  { "error": "Group not found" }
-404  { "error": "Advisor not found" }
+400  { "message": "advisorId is required for ASSIGN action" }
+400  { "message": "Group already has this advisor assigned" }
+400  { "message": "Group has no advisor to remove" }
+404  { "message": "Group not found" }
+404  { "message": "Advisor not found" }
 ```
 
 ---

@@ -1,22 +1,23 @@
 # Process 4: Committee Assignment Issues
 
 ## [Backend] Implement POST /api/committees endpoint
-**Problem Summary:** Allow Coordinators to create new committee entities bounded to a specific term.
+**Problem Summary:** Allow Coordinators to create new committee entities bounded to a specific term and deliverable.
 
 **Scope:** Backend API
 
 **Estimate:** 2 Points
 
 **Deliverables:**
-1. Database schema and migration script for the `Committee` table (`committeeName`, `termId`).
+1. Database schema and migration script for the `Committee` table (`committeeName`, `termId`, `deliverable_id` FK).
 2. Protected backend REST endpoint (`POST /api/committees`).
 
 **References:** `README.md` (Process 4, Step 1), NFR-4 (Role-Based Access)
 
 **Acceptance Criteria:**
 - [ ] Endpoint rejects non-COORDINATOR users with a 403 Forbidden error.
-- [ ] Successfully creates a new committee by providing a unique `committeeName` and valid `termId`.
+- [ ] Successfully creates a new committee by providing a unique `committeeName`, valid `termId`, and existing `deliverableId`.
 - [ ] Returns a 201 Created status with the newly created committee ID.
+- [ ] Returns 404 if `deliverableId` does not exist.
 
 **Related Issues:** None
 
@@ -77,14 +78,14 @@
 **Estimate:** 2 Points
 
 **Deliverables:**
-1. Service method to check if a professor is already overbooked for a deliverable cycle.
+1. Service method to check if a professor is already assigned to another committee for the same deliverable.
 2. Service method to ensure a group is not mapped to multiple committees for the same deliverable.
 
 **References:** `README.md` (Process 4, Step 5)
 
 **Acceptance Criteria:**
-- [ ] Service returns an error if a professor has a scheduling conflict for the same deliverable cycle.
-- [ ] Service returns an error if a group is already assigned to another committee.
+- [ ] Service returns an error if a professor is already assigned to another committee for the same deliverable.
+- [ ] Service returns an error if a group is already assigned to another committee for the same deliverable.
 
 **Related Issues:** [Backend] Implement POST /api/committees/{id}/professors endpoint, [Backend] Implement POST /api/committees/{id}/groups endpoint
 

@@ -113,10 +113,16 @@ erDiagram
         enum status "FORMING | TOOLS_PENDING | TOOLS_BOUND | ADVISOR_ASSIGNED | DISBANDED"
         datetime created_at
         varchar jira_space_url
+        varchar jira_email "length=254"
         varchar jira_project_key
         varchar encrypted_jira_token "length=1024"
+        boolean jira_token_valid "NULLABLE — set true on bind"
+        date jira_token_expires_at "NULLABLE — from request body"
         varchar github_org_name
         varchar encrypted_github_pat "length=1024"
+        varchar github_repo_name "length=255"
+        boolean github_token_valid "NULLABLE — set true on bind"
+        datetime github_pat_expires_at "NULLABLE — from GitHub API response"
         uuid advisor_id FK "NULLABLE — set on ADVISOR_ASSIGNED"
         bigint version "Optimistic Lock — @Version"
     }
