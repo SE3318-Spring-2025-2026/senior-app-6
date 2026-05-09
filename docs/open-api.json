@@ -1,0 +1,4392 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Senior Project Management API",
+    "description": "REST API for SPM — group formation, advisor assignment, sprint tracking, deliverable submission, and AI-assisted grading.",
+    "version": "1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Generated server url"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/submissions/{submissionId}": {
+      "get": {
+        "tags": [
+          "submission-controller"
+        ],
+        "operationId": "getSubmission",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliverableSubmissionDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "submission-controller"
+        ],
+        "operationId": "updateSubmission",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeliverableSubmissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliverableSubmissionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/llm-config": {
+      "get": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "getLlmConfig",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmConfigResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "updateLlmConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LlmConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{submissionId}/rubric-mappings": {
+      "get": {
+        "tags": [
+          "submission-controller"
+        ],
+        "operationId": "getRubricMappings",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RubricMappingResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "submission-controller"
+        ],
+        "operationId": "saveRubricMappings",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/RubricMappingRequest"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/submissions/{submissionId}/grade": {
+      "get": {
+        "tags": [
+          "submission-controller"
+        ],
+        "operationId": "getExistingGrades",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExistingGradesResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "submission-controller"
+        ],
+        "operationId": "submitGrades",
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitGradesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RubricGradeSubmitResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/submissions/{id}/comments": {
+      "get": {
+        "tags": [
+          "submission-comment-controller"
+        ],
+        "operationId": "getComments",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubmissionCommentResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "submission-comment-controller"
+        ],
+        "operationId": "createComment",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSubmissionCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionCommentResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups": {
+      "post": {
+        "tags": [
+          "group-controller"
+        ],
+        "operationId": "createGroup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/jira": {
+      "post": {
+        "tags": [
+          "group-controller"
+        ],
+        "operationId": "bindJira",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindJiraRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BindToolResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/invitations": {
+      "get": {
+        "tags": [
+          "group-controller"
+        ],
+        "operationId": "getGroupInvitations",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvitationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "group-controller"
+        ],
+        "operationId": "sendInvitation",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendInvitationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/github": {
+      "post": {
+        "tags": [
+          "group-controller"
+        ],
+        "operationId": "bindGithub",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindGithubRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BindToolResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/advisor-request": {
+      "get": {
+        "tags": [
+          "group-controller"
+        ],
+        "operationId": "getAdvisorRequest",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisorRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "group-controller"
+        ],
+        "operationId": "sendAdvisorRequest",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendAdvisorRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisorRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "group-controller"
+        ],
+        "operationId": "cancelAdvisorRequest",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisorRequestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/deliverables/{deliverableId}/submissions": {
+      "post": {
+        "tags": [
+          "deliverable-controller"
+        ],
+        "operationId": "createSubmission",
+        "parameters": [
+          {
+            "name": "deliverableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeliverableSubmissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliverableSubmissionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/students/upload": {
+      "post": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "uploadStudentData",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudentUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/sprints": {
+      "get": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "getAllSprints",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "createSprints",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SprintRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/sprints/{sprintId}/refresh": {
+      "post": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "refreshSprint",
+        "parameters": [
+          {
+            "name": "sprintId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/sprints/{id}/deliverable-mapping": {
+      "get": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "getDeliverableMappings",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SprintDeliverableMappingResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "mapDeliverablesToSprint",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MapDeliverablesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/schedule-windows": {
+      "get": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "getScheduleWindows",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ScheduleWindowResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "upsertScheduleWindow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleWindowRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/coordinator/sanitize": {
+      "post": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "triggerSanitization",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SanitizationTriggerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SanitizationReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/publish": {
+      "post": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "publishSystem",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/deliverables": {
+      "get": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "getAllDeliverables",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "createDeliverable",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDeliverableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/deliverables/{id}/rubric": {
+      "get": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "getRubricsForDeliverable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "updateRubricsForDeliverable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RubricRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/committees": {
+      "get": {
+        "tags": [
+          "committee-controller"
+        ],
+        "operationId": "getCommittees",
+        "parameters": [
+          {
+            "name": "termId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "committee-controller"
+        ],
+        "operationId": "createCommittee",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCommitteeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/committees/{id}/professors": {
+      "post": {
+        "tags": [
+          "committee-controller"
+        ],
+        "operationId": "addProfessors",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddProfessorsToCommitteeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/committees/{id}/groups": {
+      "post": {
+        "tags": [
+          "committee-controller"
+        ],
+        "operationId": "addGroups",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddGroupsToCommitteeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/reset-password": {
+      "get": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "validateResetToken",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/github": {
+      "post": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "githubLogin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GithubLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advisor/sprints/{sprintId}/groups/{groupId}/grade": {
+      "get": {
+        "tags": [
+          "advisor-controller"
+        ],
+        "operationId": "getGrade",
+        "parameters": [
+          {
+            "name": "sprintId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrumGradeResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "advisor-controller"
+        ],
+        "operationId": "submitGrade",
+        "parameters": [
+          {
+            "name": "sprintId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScrumGradeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScrumGradeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/register-professor": {
+      "post": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "registerProfessor",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterProfessorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invitations/{invitationId}/respond": {
+      "patch": {
+        "tags": [
+          "invitation-controller"
+        ],
+        "operationId": "respondToInvitation",
+        "parameters": [
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondInvitationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/GroupDetailResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/InvitationResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/system-config": {
+      "patch": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "updateSystemConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSystemConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/coordinator/sprints/{id}/target": {
+      "patch": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "updateSprintTarget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSprintTargetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorMessage"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/groups/{groupId}/members": {
+      "patch": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "updateGroupMembers",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CoordinatorMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/groups/{groupId}/disband": {
+      "patch": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "disbandGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/groups/{groupId}/advisor": {
+      "patch": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "overrideAdvisor",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvisorOverrideRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/deliverables/{id}": {
+      "patch": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "updateDeliverable",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeliverableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/deliverables/{id}/weight": {
+      "patch": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "updateDeliverableWeight",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeliverableWeightRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/advisors/{advisorId}/capacity": {
+      "patch": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "updateAdvisorCapacity",
+        "parameters": [
+          {
+            "name": "advisorId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdvisorCapacityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisorCapacityResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advisor/requests/{requestId}/respond": {
+      "patch": {
+        "tags": [
+          "advisor-controller"
+        ],
+        "operationId": "respondToRequest",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvisorRespondRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisorRespondResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/test/hello": {
+      "get": {
+        "tags": [
+          "test-controller"
+        ],
+        "operationId": "hello",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/test/greeting": {
+      "get": {
+        "tags": [
+          "test-controller"
+        ],
+        "operationId": "greeting",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/students/{studentId}/grade": {
+      "get": {
+        "tags": [
+          "student-controller"
+        ],
+        "operationId": "getStoredGrade",
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/students/{studentId}/grade/calculate": {
+      "get": {
+        "tags": [
+          "student-controller"
+        ],
+        "operationId": "calculateGrade",
+        "parameters": [
+          {
+            "name": "studentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/students/search": {
+      "get": {
+        "tags": [
+          "student-controller"
+        ],
+        "operationId": "searchStudents",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StudentSearchResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sprints/{id}/deliverable-mapping": {
+      "get": {
+        "tags": [
+          "sprint-controller"
+        ],
+        "operationId": "getDeliverableMappings_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SprintDeliverableMappingResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sprints/active": {
+      "get": {
+        "tags": [
+          "sprint-controller"
+        ],
+        "operationId": "getActiveSprint",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveSprintResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/professors/me/committees": {
+      "get": {
+        "tags": [
+          "professor-controller"
+        ],
+        "operationId": "getMyCommittees",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProfessorCommitteeDashboardResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invitations/pending": {
+      "get": {
+        "tags": [
+          "invitation-controller"
+        ],
+        "operationId": "getPendingInvitations",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/InvitationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/sprints/{sprintId}/tracking": {
+      "get": {
+        "tags": [
+          "group-controller"
+        ],
+        "operationId": "getStudentGroupTracking",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sprintId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SprintTrackingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups/my": {
+      "get": {
+        "tags": [
+          "group-controller"
+        ],
+        "operationId": "getMyGroup",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/deliverables": {
+      "get": {
+        "tags": [
+          "deliverable-controller"
+        ],
+        "operationId": "listDeliverables",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeliverableWithStatusResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/sprints/{sprintId}/overview": {
+      "get": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "getSprintOverview",
+        "parameters": [
+          {
+            "name": "sprintId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/groups": {
+      "get": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "listGroups",
+        "parameters": [
+          {
+            "name": "termId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GroupSummaryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/groups/{groupId}": {
+      "get": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "getGroupDetail",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/advisors": {
+      "get": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "listAdvisorsWithCapacity",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdvisorCapacityResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/committees/{id}": {
+      "get": {
+        "tags": [
+          "committee-controller"
+        ],
+        "operationId": "getCommitteeDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/committees/{id}/submissions": {
+      "get": {
+        "tags": [
+          "committee-controller"
+        ],
+        "operationId": "getCommitteeSubmissions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommitteeSubmissionSummaryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advisor": {
+      "get": {
+        "tags": [
+          "advisor-controller"
+        ],
+        "operationId": "getAvailableAdvisors",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdvisorCapacityResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advisor/sprints/{sprintId}/groups": {
+      "get": {
+        "tags": [
+          "advisor-controller"
+        ],
+        "operationId": "getAdvisorGroupSummaries",
+        "parameters": [
+          {
+            "name": "sprintId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "includeDisbanded",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdvisorGroupSprintSummaryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advisor/sprints/{sprintId}/groups/{groupId}/tracking": {
+      "get": {
+        "tags": [
+          "advisor-controller"
+        ],
+        "operationId": "getAdvisorGroupTracking",
+        "parameters": [
+          {
+            "name": "sprintId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SprintTrackingResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advisor/sprints/active": {
+      "get": {
+        "tags": [
+          "advisor-controller"
+        ],
+        "operationId": "getAdvisorActiveSprint",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActiveSprintResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advisor/requests": {
+      "get": {
+        "tags": [
+          "advisor-controller"
+        ],
+        "operationId": "getPendingRequests",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdvisorRequestSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/advisor/requests/{requestId}": {
+      "get": {
+        "tags": [
+          "advisor-controller"
+        ],
+        "operationId": "getRequestDetail",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisorRequestDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/audit-logs": {
+      "get": {
+        "tags": [
+          "admin-controller"
+        ],
+        "operationId": "getAuditLogs",
+        "parameters": [
+          {
+            "name": "userType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "STAFF",
+                "STUDENT"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AUTH",
+                "GROUP",
+                "ADVISOR",
+                "GRADING"
+              ]
+            }
+          },
+          {
+            "name": "outcome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "SUCCESS",
+                "FAILURE"
+              ]
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "pageable",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Pageable"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedAuditLogResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invitations/{invitationId}": {
+      "delete": {
+        "tags": [
+          "invitation-controller"
+        ],
+        "operationId": "cancelInvitation",
+        "parameters": [
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/coordinator/schedule-windows/{id}": {
+      "delete": {
+        "tags": [
+          "coordinator-controller"
+        ],
+        "operationId": "deleteScheduleWindow",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UpdateDeliverableSubmissionRequest": {
+        "type": "object",
+        "properties": {
+          "markdownContent": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "DeliverableSubmissionResponse": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deliverableId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revisionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "revision": {
+            "type": "boolean"
+          }
+        }
+      },
+      "LlmConfigRequest": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "RubricMappingRequest": {
+        "type": "object",
+        "properties": {
+          "sectionKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "criterionId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "criterionId"
+        ]
+      },
+      "GradeEntry": {
+        "type": "object",
+        "properties": {
+          "criterionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "selectedGrade": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "criterionId"
+        ]
+      },
+      "SubmitGradesRequest": {
+        "type": "object",
+        "properties": {
+          "grades": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GradeEntry"
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "RubricGradeSubmitResponse": {
+        "type": "object",
+        "properties": {
+          "baseDeliverableGrade": {
+            "type": "number"
+          }
+        }
+      },
+      "CreateSubmissionCommentRequest": {
+        "type": "object",
+        "properties": {
+          "commentText": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sectionReference": {
+            "type": "string"
+          }
+        }
+      },
+      "SubmissionCommentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reviewerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reviewerEmail": {
+            "type": "string"
+          },
+          "commentText": {
+            "type": "string"
+          },
+          "sectionReference": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateGroupRequest": {
+        "type": "object",
+        "properties": {
+          "groupName": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "GroupDetailResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/InvitationActionResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "groupName": {
+                "type": "string"
+              },
+              "termId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "jiraSpaceUrl": {
+                "type": "string"
+              },
+              "jiraEmail": {
+                "type": "string"
+              },
+              "jiraProjectKey": {
+                "type": "string"
+              },
+              "jiraBound": {
+                "type": "boolean"
+              },
+              "githubOrgName": {
+                "type": "string"
+              },
+              "githubBound": {
+                "type": "boolean"
+              },
+              "githubRepoName": {
+                "type": "string"
+              },
+              "githubTokenValid": {
+                "type": "boolean"
+              },
+              "githubPatExpiresAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "jiraTokenValid": {
+                "type": "boolean"
+              },
+              "jiraTokenExpiresAt": {
+                "type": "string",
+                "format": "date"
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/MemberResponse"
+                }
+              },
+              "advisorId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "advisorMail": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "MemberResponse": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BindJiraRequest": {
+        "type": "object",
+        "properties": {
+          "jiraSpaceUrl": {
+            "type": "string",
+            "minLength": 1
+          },
+          "jiraEmail": {
+            "type": "string",
+            "minLength": 1
+          },
+          "jiraProjectKey": {
+            "type": "string",
+            "minLength": 1
+          },
+          "jiraApiToken": {
+            "type": "string",
+            "minLength": 1
+          },
+          "jiraTokenExpiresAt": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "BindToolResponse": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "jiraSpaceUrl": {
+            "type": "string"
+          },
+          "jiraProjectKey": {
+            "type": "string"
+          },
+          "githubOrgName": {
+            "type": "string"
+          },
+          "jiraBound": {
+            "type": "boolean"
+          },
+          "githubBound": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SendInvitationRequest": {
+        "type": "object",
+        "properties": {
+          "targetStudentId": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "InvitationResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/InvitationActionResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "invitationId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "groupId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "targetStudentId": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "sentAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "respondedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "groupName": {
+                "type": "string"
+              },
+              "teamLeaderStudentId": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "BindGithubRequest": {
+        "type": "object",
+        "properties": {
+          "githubOrgName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "githubPat": {
+            "type": "string",
+            "minLength": 1
+          },
+          "githubRepoName": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "SendAdvisorRequestBody": {
+        "type": "object",
+        "properties": {
+          "advisorId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "advisorId"
+        ]
+      },
+      "AdvisorRequestResponse": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "advisorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "advisorName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "REJECTED",
+              "AUTO_REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "respondedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateDeliverableSubmissionRequest": {
+        "type": "object",
+        "properties": {
+          "markdownContent": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "StudentUploadRequest": {
+        "type": "object",
+        "properties": {
+          "studentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9]{11}$"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "studentIds"
+        ]
+      },
+      "ErrorMessage": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "SprintRequest": {
+        "type": "object",
+        "properties": {
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          }
+        },
+        "required": [
+          "endDate",
+          "startDate"
+        ]
+      },
+      "MapDeliverablesRequest": {
+        "type": "object",
+        "properties": {
+          "deliverableId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contributionPercentage": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "contributionPercentage",
+          "deliverableId"
+        ]
+      },
+      "ScheduleWindowRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "GROUP_CREATION",
+              "ADVISOR_ASSOCIATION"
+            ]
+          },
+          "opensAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closesAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "closesAt",
+          "opensAt",
+          "type"
+        ]
+      },
+      "SanitizationTriggerRequest": {
+        "type": "object",
+        "properties": {
+          "force": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SanitizationReport": {
+        "type": "object",
+        "properties": {
+          "disbandedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "autoRejectedRequestCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "triggeredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CreateDeliverableRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "Proposal",
+              "SoW",
+              "Demonstration"
+            ]
+          },
+          "submissionDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "weight": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0
+          }
+        },
+        "required": [
+          "reviewDeadline",
+          "submissionDeadline",
+          "type"
+        ]
+      },
+      "Criterion": {
+        "type": "object",
+        "properties": {
+          "criterionName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "gradingType": {
+            "type": "string",
+            "enum": [
+              "Binary",
+              "Soft"
+            ]
+          },
+          "weight": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "gradingType",
+          "weight"
+        ]
+      },
+      "RubricRequest": {
+        "type": "object",
+        "properties": {
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Criterion"
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "CreateCommitteeRequest": {
+        "type": "object",
+        "properties": {
+          "committeeName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "termId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "deliverableId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "deliverableId"
+        ]
+      },
+      "AddProfessorsToCommitteeRequest": {
+        "type": "object",
+        "properties": {
+          "professors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfessorEntry"
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "ProfessorEntry": {
+        "type": "object",
+        "properties": {
+          "professorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADVISOR",
+              "JURY"
+            ]
+          }
+        },
+        "required": [
+          "professorId",
+          "role"
+        ]
+      },
+      "AddGroupsToCommitteeRequest": {
+        "type": "object",
+        "properties": {
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1
+          },
+          "newPassword": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "mail": {
+            "type": "string",
+            "minLength": 1
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "GithubLoginRequest": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "studentId": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[0-9]{11}$"
+          }
+        }
+      },
+      "ScrumGradeRequest": {
+        "type": "object",
+        "properties": {
+          "pointA_grade": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "F"
+            ]
+          },
+          "pointB_grade": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "F"
+            ]
+          }
+        },
+        "required": [
+          "pointA_grade",
+          "pointB_grade"
+        ]
+      },
+      "ScrumGradeResponse": {
+        "type": "object",
+        "properties": {
+          "gradeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sprintId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "advisorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "gradedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "pointA_grade": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "F"
+            ]
+          },
+          "pointB_grade": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "F"
+            ]
+          }
+        }
+      },
+      "RegisterProfessorRequest": {
+        "type": "object",
+        "properties": {
+          "mail": {
+            "type": "string",
+            "minLength": 1
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 20,
+            "minimum": 1
+          }
+        }
+      },
+      "RespondInvitationRequest": {
+        "type": "object",
+        "properties": {
+          "accept": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accept"
+        ]
+      },
+      "InvitationActionResponse": {
+        "type": "object"
+      },
+      "UpdateSystemConfigRequest": {
+        "type": "object",
+        "properties": {
+          "activeTermId": {
+            "type": "string"
+          },
+          "maxTeamSize": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          }
+        }
+      },
+      "UpdateSprintTargetRequest": {
+        "type": "object",
+        "properties": {
+          "storyPointTarget": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "required": [
+          "storyPointTarget"
+        ]
+      },
+      "CoordinatorMemberRequest": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "AdvisorOverrideRequest": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "ASSIGN|REMOVE"
+          },
+          "advisorId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UpdateDeliverableRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "Proposal",
+              "SoW",
+              "Demonstration"
+            ]
+          },
+          "submissionDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "weight": {
+            "type": "number"
+          }
+        }
+      },
+      "UpdateDeliverableWeightRequest": {
+        "type": "object",
+        "properties": {
+          "weightPercentage": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "weightPercentage"
+        ]
+      },
+      "UpdateAdvisorCapacityRequest": {
+        "type": "object",
+        "properties": {
+          "capacity": {
+            "type": "integer",
+            "format": "int32",
+            "maximum": 20,
+            "minimum": 1
+          }
+        },
+        "required": [
+          "capacity"
+        ]
+      },
+      "AdvisorCapacityResponse": {
+        "type": "object",
+        "properties": {
+          "advisorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "mail": {
+            "type": "string"
+          },
+          "currentGroupCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "atCapacity": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdvisorRespondRequest": {
+        "type": "object",
+        "properties": {
+          "accept": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "accept"
+        ]
+      },
+      "AdvisorRespondResponse": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACCEPTED",
+              "REJECTED",
+              "AUTO_REJECTED",
+              "CANCELLED"
+            ]
+          },
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupStatus": {
+            "type": "string",
+            "enum": [
+              "FORMING",
+              "TOOLS_PENDING",
+              "TOOLS_BOUND",
+              "ADVISOR_ASSIGNED",
+              "DISBANDED"
+            ]
+          }
+        }
+      },
+      "DeliverableSubmissionDetailResponse": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deliverableId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "markdownContent": {
+            "type": "string"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revisionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "revision": {
+            "type": "boolean"
+          }
+        }
+      },
+      "Mapping": {
+        "type": "object",
+        "properties": {
+          "criterionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sectionKey": {
+            "type": "string"
+          },
+          "sectionStart": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sectionEnd": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "RubricMappingResponse": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mappings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Mapping"
+            }
+          }
+        }
+      },
+      "ExistingGradesResponse": {
+        "type": "object",
+        "properties": {
+          "grades": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GradeEntry"
+            }
+          }
+        }
+      },
+      "StudentSearchResponse": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string"
+          },
+          "githubUsername": {
+            "type": "string"
+          }
+        }
+      },
+      "SprintDeliverableMappingResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deliverableId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deliverableName": {
+            "type": "string"
+          },
+          "contributionPercentage": {
+            "type": "number"
+          }
+        }
+      },
+      "ActiveSprintResponse": {
+        "type": "object",
+        "properties": {
+          "sprintId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "storyPointTarget": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "daysRemaining": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "GroupItem": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupName": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "gradedByMe": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ProfessorCommitteeDashboardResponse": {
+        "type": "object",
+        "properties": {
+          "committeeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "committeeName": {
+            "type": "string"
+          },
+          "termId": {
+            "type": "string"
+          },
+          "professorRole": {
+            "type": "string",
+            "enum": [
+              "ADVISOR",
+              "JURY"
+            ]
+          },
+          "deliverableId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "deliverableName": {
+            "type": "string"
+          },
+          "deliverableType": {
+            "type": "string",
+            "enum": [
+              "Proposal",
+              "SoW",
+              "Demonstration"
+            ]
+          },
+          "submissionDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deliverableWeight": {
+            "type": "number"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupItem"
+            }
+          },
+          "rubrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RubricItem"
+            }
+          }
+        }
+      },
+      "RubricItem": {
+        "type": "object",
+        "properties": {
+          "criterionName": {
+            "type": "string"
+          },
+          "gradingType": {
+            "type": "string",
+            "enum": [
+              "Binary",
+              "Soft"
+            ]
+          },
+          "weight": {
+            "type": "number"
+          }
+        }
+      },
+      "PerStudentSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "assigneeGithubUsername": {
+            "type": "string"
+          },
+          "completedPoints": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "aiValidationStatus": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PASS",
+              "WARN",
+              "FAIL",
+              "SKIPPED"
+            ]
+          }
+        }
+      },
+      "SprintTrackingResponse": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sprintId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fetchedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrackingIssueResponse"
+            }
+          },
+          "perStudentSummary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PerStudentSummaryResponse"
+            }
+          }
+        }
+      },
+      "TrackingIssueResponse": {
+        "type": "object",
+        "properties": {
+          "issueKey": {
+            "type": "string"
+          },
+          "assigneeGithubUsername": {
+            "type": "string"
+          },
+          "storyPoints": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "prNumber": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "prMerged": {
+            "type": "boolean"
+          },
+          "aiPrResult": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PASS",
+              "WARN",
+              "FAIL",
+              "SKIPPED"
+            ]
+          },
+          "aiDiffResult": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "PASS",
+              "WARN",
+              "FAIL",
+              "SKIPPED"
+            ]
+          }
+        }
+      },
+      "DeliverableWithStatusResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "Proposal",
+              "SoW",
+              "Demonstration"
+            ]
+          },
+          "submissionDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "reviewDeadline": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "weight": {
+            "type": "number"
+          },
+          "submissionStatus": {
+            "type": "string",
+            "enum": [
+              "NOT_SUBMITTED",
+              "SUBMITTED"
+            ]
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ScheduleWindowResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "GROUP_CREATION",
+              "ADVISOR_ASSOCIATION"
+            ]
+          },
+          "termId": {
+            "type": "string"
+          },
+          "opensAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closesAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GroupSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupName": {
+            "type": "string"
+          },
+          "termId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "memberCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "jiraBound": {
+            "type": "boolean"
+          },
+          "githubBound": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CommitteeSubmissionSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupName": {
+            "type": "string"
+          },
+          "deliverableId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revisionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "revision": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AdvisorGroupSprintSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupName": {
+            "type": "string"
+          },
+          "totalIssues": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mergedPRs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "aiPassCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "aiWarnCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "aiFailCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "aiPendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "aiSkippedCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "gradeSubmitted": {
+            "type": "boolean"
+          },
+          "perStudentSummary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PerStudentSummaryResponse"
+            }
+          },
+          "pointA_grade": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "F"
+            ]
+          },
+          "pointB_grade": {
+            "type": "string",
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D",
+              "F"
+            ]
+          }
+        }
+      },
+      "AdvisorRequestSummary": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupName": {
+            "type": "string"
+          },
+          "termId": {
+            "type": "string"
+          },
+          "memberCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AdvisorRequestDetail": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "group": {
+            "$ref": "#/components/schemas/RequestGroupDetail"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GroupMemberDetail": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RequestGroupDetail": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "groupName": {
+            "type": "string"
+          },
+          "termId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "FORMING",
+              "TOOLS_PENDING",
+              "TOOLS_BOUND",
+              "ADVISOR_ASSIGNED",
+              "DISBANDED"
+            ]
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupMemberDetail"
+            }
+          }
+        }
+      },
+      "LlmConfigResponse": {
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "maskedKey": {
+            "type": "string"
+          }
+        }
+      },
+      "Pageable": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "AuditLogResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userType": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string"
+          },
+          "ipAddress": {
+            "type": "string"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PagedAuditLogResponse": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLogResponse"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "description": "Paste your JWT token (without 'Bearer ' prefix). Obtain it from POST /api/auth/login.",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

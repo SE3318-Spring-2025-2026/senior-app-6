@@ -26,3 +26,12 @@ export interface SubmitGradeEntry {
 export interface RubricGradeSubmitResponse {
   baseDeliverableGrade: number;
 }
+
+export interface ExistingGradeEntry {
+  criterionId: string;
+  selectedGrade: string;
+}
+
+export interface ExistingGradesResponse {
+  grades: ExistingGradeEntry[];
+}

@@ -10,7 +10,7 @@
 		TrendingUp,
 		Link2,
 	} from "lucide-vue-next";
-import type { Sprint } from "~/types/sprint";
+import type { Sprint, SprintDeliverableMappingItem } from "~/types/sprint";
 import type { Deliverable } from "~/types/deliverable";
 
 	const {
@@ -20,6 +20,7 @@ import type { Deliverable } from "~/types/deliverable";
 		fetchSprints,
 		fetchDeliverables,
 		createSprintDeliverableMapping,
+		fetchSprintDeliverableMappings,
 	} = useApiClient();
 
 	const sprintCreateSchema = z
@@ -66,6 +67,9 @@ import type { Deliverable } from "~/types/deliverable";
 	const targetMessage = ref("");
 	const targetErrors = ref<Record<string, string>>({});
 
+	// Sprint deliverable mappings (sprintId → list)
+	const sprintMappings = ref<Record<string, SprintDeliverableMappingItem[]>>({});
+
 	// Mapping
 	const mappingSprintId = ref<string | null>(null);
 	const mappingDeliverableId = ref("");
@@ -85,6 +89,14 @@ import type { Deliverable } from "~/types/deliverable";
 		});
 	}
 
+	async function loadMappingsForSprint(sprintId: string, token: string) {
+		try {
+			sprintMappings.value[sprintId] = await fetchSprintDeliverableMappings(sprintId, token);
+		} catch {
+			sprintMappings.value[sprintId] = [];
+		}
+	}
+
 	onMounted(async () => {
 		isLoading.value = true;
 		fetchError.value = null;
@@ -97,6 +109,7 @@ import type { Deliverable } from "~/types/deliverable";
 			]);
 			sprints.value = sprintData;
 			deliverables.value = deliverableData;
+			await Promise.all(sprintData.map((s: Sprint) => loadMappingsForSprint(s.id, token)));
 		} catch (err) {
 			const errorMsg = err && typeof err === "object" && "message" in err ? String(err.message) : "Failed to load data";
 			fetchError.value = errorMsg;
@@ -231,12 +244,14 @@ import type { Deliverable } from "~/types/deliverable";
 			const token = getAuthToken();
 			if (!token) throw new Error("Authentication required");
 
+			const savedSprintId = mappingSprintId.value;
 			await createSprintDeliverableMapping(
-				mappingSprintId.value,
+				savedSprintId,
 				mappingDeliverableId.value,
 				mappingContribution.value,
 				token
 			);
+			await loadMappingsForSprint(savedSprintId, token);
 			mappingMessage.value = "✓ Mapping created successfully";
 			mappingDeliverableId.value = "";
 			mappingContribution.value = 0;
@@ -473,6 +488,24 @@ import type { Deliverable } from "~/types/deliverable";
                     Map Deliverable
                   </button>
                 </div>
+
+                <!-- Existing mappings -->
+                <ul
+                  v-if="(sprintMappings[sprint.id] ?? []).length > 0"
+                  class="mt-2 space-y-1"
+                >
+                  <li
+                    v-for="m in sprintMappings[sprint.id]"
+                    :key="m.id"
+                    class="flex items-center justify-between rounded-md bg-purple-50 px-3 py-1.5 dark:bg-purple-900/20"
+                  >
+                    <span class="text-xs text-slate-700 dark:text-slate-300">{{ m.deliverableName }}</span>
+                    <span class="text-xs font-semibold text-purple-700 dark:text-purple-300">{{ m.contributionPercentage }}%</span>
+                  </li>
+                </ul>
+                <p v-else-if="mappingSprintId !== sprint.id" class="mt-2 text-xs text-slate-400 dark:text-slate-500">
+                  No deliverables mapped yet.
+                </p>
 
                 <!-- Mapping Form -->
                 <form

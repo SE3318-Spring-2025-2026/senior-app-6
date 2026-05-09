@@ -59,6 +59,7 @@ export interface ProfessorCommitteeGroup {
   groupName: string;
   status: GroupStatus;
   submissionId?: string | null;
+  gradedByMe?: boolean;
 }
 
 export interface ProfessorCommitteeRubricCriterion {

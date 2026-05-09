@@ -9,7 +9,7 @@ definePageMeta({
 });
 
 const authStore = useAuthStore();
-const { getAuthToken, fetchStudentGrade, calculateStudentGrade } = useApiClient();
+const { getAuthToken, calculateStudentGrade } = useApiClient();
 
 const grade = ref<FinalGradeResponse | null>(null);
 const isLoading = ref(true);
@@ -42,7 +42,7 @@ async function loadGrade() {
     if (!token) throw new Error("Authentication required");
     if (!studentId.value) throw new Error("Student ID is missing.");
 
-    grade.value = await fetchStudentGrade(studentId.value, token);
+    grade.value = await calculateStudentGrade(studentId.value, token);
   } catch (err: unknown) {
     if (err && typeof err === "object" && "status" in err && Number(err.status) === 404) {
       grade.value = null;
@@ -52,26 +52,6 @@ async function loadGrade() {
       err && typeof err === "object" && "message" in err
         ? String(err.message)
         : "Failed to load final grade.";
-  } finally {
-    isLoading.value = false;
-  }
-}
-
-async function handleCalculate() {
-  isLoading.value = true;
-  error.value = null;
-
-  try {
-    const token = getAuthToken();
-    if (!token) throw new Error("Authentication required");
-    if (!studentId.value) throw new Error("Student ID is missing.");
-
-    grade.value = await calculateStudentGrade(studentId.value, token);
-  } catch (err: unknown) {
-    error.value =
-      err && typeof err === "object" && "message" in err
-        ? String(err.message)
-        : "Failed to calculate final grade.";
   } finally {
     isLoading.value = false;
   }
@@ -102,13 +82,6 @@ onMounted(loadGrade);
         <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
           Review your final grade, completion ratio, and deliverable breakdown.
         </p>
-        <button
-          type="button"
-          class="mt-4 inline-flex items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600"
-          @click="handleCalculate"
-        >
-          Calculate
-        </button>
       </header>
 
       <section
@@ -191,7 +164,7 @@ onMounted(loadGrade);
         class="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center dark:border-slate-600 dark:bg-slate-800"
       >
         <p class="text-sm text-slate-600 dark:text-slate-400">
-          Final grade is not calculated yet. Use the Calculate button to generate it.
+          Final grade has not been calculated yet.
         </p>
       </section>
     </div>

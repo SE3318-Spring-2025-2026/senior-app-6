@@ -41,7 +41,7 @@ import type {
   SprintRefreshResult,
   SprintOverviewResult,
 } from '~/types/sprint';
-import type { GradingCriterion, RubricCriterionResponse, SubmitGradeEntry, RubricGradeSubmitResponse } from '~/types/rubric';
+import type { GradingCriterion, RubricCriterionResponse, SubmitGradeEntry, RubricGradeSubmitResponse, ExistingGradesResponse } from '~/types/rubric';
 import type {
   GroupInvitation,
   SentGroupInvitation,
@@ -289,6 +289,24 @@ export function useApiClient() {
       `/coordinator/sprints/${encodeURIComponent(sprintId)}/deliverable-mapping`,
       "POST",
       { deliverableId, contributionPercentage },
+      token
+    );
+  }
+
+  async function fetchSprintDeliverableMappings(sprintId: string, token?: string) {
+    return apiCall<import("~/types/sprint").SprintDeliverableMappingItem[]>(
+      `/coordinator/sprints/${encodeURIComponent(sprintId)}/deliverable-mapping`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
+  async function fetchSprintDeliverableMappingsStudent(sprintId: string, token?: string) {
+    return apiCall<import("~/types/sprint").SprintDeliverableMappingItem[]>(
+      `/sprints/${encodeURIComponent(sprintId)}/deliverable-mapping`,
+      "GET",
+      undefined,
       token
     );
   }
@@ -819,6 +837,18 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     return apiCall<PagedAuditLogResponse>(`/admin/audit-logs${q ? '?' + q : ''}`, 'GET', undefined, token);
   }
 
+  async function fetchSubmissionGrades(
+    submissionId: string,
+    token?: string
+  ): Promise<ExistingGradesResponse> {
+    return apiCall<ExistingGradesResponse>(
+      `/submissions/${encodeURIComponent(submissionId)}/grade`,
+      "GET",
+      undefined,
+      token
+    );
+  }
+
   async function submitRubricGrade(
     submissionId: string,
     grades: SubmitGradeEntry[],
@@ -853,6 +883,8 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     fetchRubric,
     updateRubric,
     createSprintDeliverableMapping,
+    fetchSprintDeliverableMappings,
+    fetchSprintDeliverableMappingsStudent,
     publishConfig,
     registerProfessor,
     createCommittee,
@@ -910,6 +942,7 @@ async function fetchRubricMappings(submissionId: string, token?: string): Promis
     deleteScheduleWindow,
     fetchSubmissionComments,
     createSubmissionComment,
+    fetchSubmissionGrades,
     submitRubricGrade,
     fetchLlmConfig,
     updateLlmKey,

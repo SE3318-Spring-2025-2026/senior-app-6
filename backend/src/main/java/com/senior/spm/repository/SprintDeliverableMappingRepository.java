@@ -16,4 +16,6 @@ public interface SprintDeliverableMappingRepository extends JpaRepository<Sprint
 
     List<SprintDeliverableMapping> findAllByDeliverableId(UUID deliverableId);
 
+    List<SprintDeliverableMapping> findBySprintId(UUID sprintId);
+
 }

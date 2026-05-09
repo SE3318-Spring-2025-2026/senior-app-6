@@ -167,5 +167,11 @@ public class RubricGradingService {
         return reviewerSum.divide(BigDecimal.valueOf(byReviewer.size()), SCALE, RM);
     }
 
+    public List<RubricGrade> fetchGradesForReviewer(UUID submissionId, UUID reviewerStaffUserId) {
+        return rubricGradeRepository.findBySubmissionId(submissionId).stream()
+                .filter(g -> g.getReviewer().getId().equals(reviewerStaffUserId))
+                .toList();
+    }
+
     public record RubricGradingResult(BigDecimal baseDeliverableGrade, boolean isFirstGrade) {}
 }
