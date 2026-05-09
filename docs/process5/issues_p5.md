@@ -329,8 +329,8 @@ Field names use spec-mandated `pointA_grade`/`pointB_grade` serialization.
 3. `ScrumGradingService.getActiveSprint()` — resolves active sprint for both advisor and student `GET /api/sprints/active` and `GET /api/advisor/sprints/active` endpoints.
 4. **`AdvisorController`** (extend existing, `@RequestMapping("/api/advisor")`) — add all 5 advisor sprint/grading endpoints. Prefix matches — do NOT create a new `AdvisorSprintController`.
 5. **`GroupController`** (extend existing, `@RequestMapping("/api/groups")`) — add `GET /{groupId}/sprints/{sprintId}/tracking`. Prefix matches.
-6. **`StudentSprintController`** (new class, `@RequestMapping("/api/sprints")`) — add only `GET /api/sprints/active`. No existing controller owns the `/api/sprints` prefix.
-7. **`CoordinatorSprintController`** handles coordinator endpoints — handled by #P5-07, do not add here.
+6. **`SprintController`** (new class, `@RequestMapping("/api/sprints")`) — add only `GET /api/sprints/active`. No existing controller owns the `/api/sprints` prefix.
+7. **`CoordinatorController`** handles coordinator endpoints — handled by #P5-07, do not add here.
 8. Request DTO: `ScrumGradeRequest { @NotNull ScrumGradeValue pointAGrade; @NotNull ScrumGradeValue pointBGrade; }` — Jackson serializes as `pointA_grade`/`pointB_grade` via `@JsonProperty`.
    - Invalid enum deserialization → `HttpMessageNotReadableException` → `GlobalExceptionHandler` → 400. No custom exception needed.
 9. Response DTOs: Lombok `@Data`, `@JsonProperty("pointA_grade")` / `@JsonProperty("pointB_grade")` on both entity fields and response DTOs.
@@ -365,7 +365,7 @@ Field names use spec-mandated `pointA_grade`/`pointB_grade` serialization.
 
 **Problem Summary:** Two coordinator-facing sprint management endpoints: manual pipeline trigger and
 sprint overview. Follows the exact `SanitizationController` + `SanitizationTriggerRequest` pattern.
-**Scope:** Backend — Controller Layer (new `CoordinatorSprintController` at `@RequestMapping("/api/coordinator")` — do NOT extend `CoordinatorController`).
+**Scope:** Backend — Controller Layer (new `CoordinatorController` at `@RequestMapping("/api/coordinator")` — do NOT extend `CoordinatorController`).
 
 **Deliverables:**
 1. `POST /api/coordinator/sprints/{sprintId}/refresh`:

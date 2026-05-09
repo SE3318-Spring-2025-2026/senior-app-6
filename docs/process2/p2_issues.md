@@ -32,7 +32,7 @@
 **Deliverables:**
 1. Create all Request DTOs with Bean Validation and Response DTOs using Lombok `@Data`.
 2. Implement the base `GroupController` for student endpoints.
-3. Extend existing `GlobalExceptionHandler` mapping domain exceptions to standard HTTP statuses within a `{ "error": "message" }` JSON envelope.
+3. Extend existing `GlobalExceptionHandler` mapping domain exceptions to standard HTTP statuses within a `{ "message": "message" }` JSON envelope.
 
 **References:** Process 2 API Definitions; HTTP Status Code Conventions.
 **Acceptance Criteria:**
@@ -127,24 +127,28 @@
 ## #45 — [Backend] Invitation Lifecycle Services & Controller
 **Estimate:** 2 Points
 
-**Problem Summary:** Implement logic for sending, canceling, accepting, and declining invitations, including bulk auto-denial.
+**Problem Summary:** Implement logic for sending, canceling, accepting, and declining invitations, including bulk auto-denial. Invitation logic is extracted into a dedicated `InvitationService` (separate from `GroupService`) for single-responsibility.
 **Scope:** Backend API (Service & Controller Layers).
 
 **Deliverables:**
-1. Implement `GroupService` methods for the invite lifecycle.
+1. Implement `InvitationService` with methods for the invite lifecycle (extracted from `GroupService`).
 2. Build the `@Transactional` response logic: On accept, create the `GroupMembership` row and bulk update competing `PENDING` invites to `AUTO_DENIED`.
 3. Implement `InvitationController`.
 4. Enforce DISBANDED freeze: throw 400 if `group.status == DISBANDED` before sending an invitation.
 5. Enforce max team size on send and accept: count = current members + pending outbound invitations; read limit via `TermConfigService.getMaxTeamSize()`.
-6. Enforce roster lock on accept: throw 400 if `group.status` is `TOOLS_BOUND` or higher when student calls `PATCH /invitations/{id}/respond`.
+6. Enforce roster lock on accept via `GroupStatus.locksRoster()`: throw 400 if `group.status` is `TOOLS_BOUND` or higher when student calls `PATCH /invitations/{id}/respond`.
+7. Guard against race conditions on accept: verify `existsByStudentId` before creating membership (student may have joined another group since invitation was sent).
+8. Emit audit log entries via `AuditLogService.record()` for `INVITATION_SENT` and `INVITATION_RESPONDED`.
 
 **References:** Process 2 (DFD 2.2, 2.3).
 **Acceptance Criteria:**
-- [ ] Only the `TEAM_LEADER` can send/cancel invitations.
+- [ ] Only the `TEAM_LEADER` can send/cancel invitations (verified via `requireTeamLeader()` helper).
 - [ ] Accepting an invitation atomically updates all competing invites.
 - [ ] Sending an invitation to/from a DISBANDED group returns 400.
 - [ ] Invitation rejected when (members + pending invitations) >= max team size.
-- [ ] Student accept blocked with 400 when group status is `TOOLS_BOUND` or higher.
+- [ ] Student accept blocked with 400 when group status `locksRoster()` returns true.
+- [ ] Student accept blocked with 400 when student already belongs to another group.
+- [ ] Audit log entries recorded for send and respond actions.
 
 **Related Issues:** Consolidates the business service layer logic for invitations with the REST controller endpoints. Depends on **[Backend] Core Domain Entities & Repositories**.
 
@@ -204,13 +208,17 @@
 **Scope:** Backend API (External Integrations).
 
 **Deliverables:**
-1. Implement `JiraValidationService` and `GitHubValidationService`.
+1. Implement `JiraValidationService` with Basic Auth (email + API token) and `GitHubValidationService`.
 2. Map external HTTP failures to specific 422 domain exceptions.
+3. GitHub validation includes three sequential calls: org existence, repo scope check, and repo existence verification.
+4. GitHub validation returns `GitHubValidationResult` record containing `tokenExpiresAt` extracted from response.
 
 **References:** Process 2 (DFD 2.4, 2.5).
 **Acceptance Criteria:**
 - [ ] Services strictly enforce a 5-second timeout.
-- [ ] GitHub service halts if the first call fails, skipping the second.
+- [ ] GitHub service halts if the first call fails, skipping subsequent calls.
+- [ ] JIRA validation uses Basic Auth with `jiraEmail:jiraApiToken`.
+- [ ] GitHub validation returns token expiration date from API response.
 
 **Related Issues:** Consolidates the external API REST clients for both JIRA and GitHub into a single implementation effort.
 
@@ -224,8 +232,13 @@
 
 **Deliverables:**
 1. Implement `EncryptionService` using AES-256-GCM.
-2. Implement `GroupService.bindJira()` and `bindGitHub()`.
-3. Enforce DISBANDED freeze in both `bindJira()` and `bindGitHub()`: throw 400 if `group.status == DISBANDED`.
+2. Implement `GroupService.bindJira()` and `bindGitHub()` with extended fields:
+   - JIRA: `jiraSpaceUrl`, `jiraEmail`, `jiraProjectKey`, `jiraApiToken`, `jiraTokenExpiresAt`
+   - GitHub: `githubOrgName`, `githubPat`, `githubRepoName`
+3. Enforce DISBANDED freeze in both methods: throw 400 if `group.status == DISBANDED`.
+4. Implement re-bind (token rotation) support: if tool was already bound, overwrite credentials but preserve current group status.
+5. Track token health: set `jiraTokenValid`/`githubTokenValid` to `true` on bind, store expiration dates.
+6. Emit audit log entries via `AuditLogService.record()` for `JIRA_BOUND` and `GITHUB_BOUND` (both SUCCESS and FAILURE outcomes).
 
 **References:** Process 2 (DFD 2.4, 2.5).
 **Acceptance Criteria:**
@@ -233,6 +246,10 @@
 - [ ] No DB changes occur if external validation fails.
 - [ ] Tokens are never saved as plaintext.
 - [ ] Binding attempt on a DISBANDED group returns 400 without touching the DB.
+- [ ] Re-bind does not change group status (only first-time bind advances state).
+- [ ] `jiraTokenValid`/`githubTokenValid` set to `true` on successful bind.
+- [ ] `githubPatExpiresAt` populated from validation response; `jiraTokenExpiresAt` from request body.
+- [ ] Audit log entries recorded for both success and failure outcomes.
 
 **Related Issues:** Consolidates the creation of the AES encryption service, configuration setup, and the tool-binding service logic. Depends on **[Backend] External Tool Validation Services**.
 
@@ -287,16 +304,20 @@
 
 **Deliverables:**
 1. Implement `GroupService` bypass methods and `CoordinatorGroupController`.
-2. Ensure disbanding cascades correctly.
+2. Ensure disbanding cascades correctly: status update + membership hard-delete + invitation auto-deny + AdvisorRequest auto-reject (P3 cascade).
 3. On coordinator force-add: bulk `AUTO_DENY` all other `PENDING` invitations for that student in the same `@Transactional` block.
 4. Enforce max team size on coordinator force-add: count = current members + pending outbound invitations; read limit via `TermConfigService.getMaxTeamSize()`.
+5. Support optional `termId` query param on `GET /coordinator/groups`: null/blank → active term, `"ALL"` → all terms.
+6. Emit audit log entries via `AuditLogService.record()` for `MEMBER_ADDED`, `MEMBER_REMOVED`, and `GROUP_DISBANDED`.
 
 **References:** Process 2 (DFD 2.6).
 **Acceptance Criteria:**
 - [ ] Blocks the removal of a `TEAM_LEADER`.
-- [ ] Disbanding nullifies group associations cleanly.
+- [ ] Disbanding nullifies group associations cleanly including P3 AdvisorRequest auto-reject.
 - [ ] Force-add atomically sets all competing PENDING invitations for that student to AUTO_DENIED.
 - [ ] Force-add rejected with 400 when (members + pending) >= max team size.
+- [ ] `GET /coordinator/groups` supports `termId` query param with `"ALL"` option.
+- [ ] Audit log entries recorded for all coordinator override actions.
 
 **Related Issues:** Consolidates the coordinator-specific bypass logic with its corresponding secure controller endpoints. Depends on **[Backend] Core Domain Entities & Repositories**.
 

@@ -10,8 +10,8 @@
 |------|------|
 | Primary keys | UUID |
 | Timestamps | ISO-8601 (`LocalDateTime`) |
-| Student JWT | `sub="Student"`, claim `studentId` |
-| Staff JWT | `sub="StaffUser"`, claim `role` |
+| Student JWT | `sub="Student"`, claim `id` (UUID of Student entity) |
+| Staff JWT | `sub="StaffUser"`, claim `id` (UUID), claim `role` |
 | Error body | `{ "message": "Human-readable message" }` |
 | Grade values | Soft grading only: `A`, `B`, `C`, `D`, `F` |
 | AI result values | `PENDING`, `PASS`, `WARN`, `FAIL`, `SKIPPED` |
@@ -38,12 +38,11 @@ Rule: **endpoint prefix determines the controller** — no new class if a matchi
 |---|---|---|---|
 | `AdvisorController` | `/api/advisor` | **Extend existing** | All 5 advisor sprint/grading endpoints |
 | `GroupController` | `/api/groups` | **Extend existing** | `GET /api/groups/{groupId}/sprints/{sprintId}/tracking` |
-| `CoordinatorSprintController` | `/api/coordinator` | **New class** (same pattern as `SanitizationController`) | `POST .../refresh`, `GET .../overview` — CoordinatorController is already large |
-| `StudentSprintController` | `/api/sprints` | **New class** (new prefix, no existing controller) | `GET /api/sprints/active` only |
+| `CoordinatorController` | `/api/coordinator` | **Extend existing** | `POST .../refresh`, `GET .../overview` |
+| `SprintController` | `/api/sprints` | **New class** (new prefix, no existing controller) | `GET /api/sprints/active` only |
 
-> **Principal extraction:** `AdvisorController`, `GroupController`, and new `StudentSprintController` all need `extractPrincipalUUID()`.
-> This helper is already **duplicated** in `AdvisorController` and `GroupController`.
-> Extract once into `com.senior.spm.util.SecurityUtils.extractPrincipalUUID()` and have all controllers call it.
+> **Principal extraction:** `AdvisorController`, `GroupController`, and `SprintController` all use `SecurityUtils.extractPrincipalUUID()`.
+> This helper lives in `com.senior.spm.util.SecurityUtils` and is shared across all controllers.
 
 ---
 

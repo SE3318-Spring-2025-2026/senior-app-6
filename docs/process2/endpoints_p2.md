@@ -15,7 +15,7 @@
 | Timestamps | ISO-8601 (`LocalDateTime`) |
 | Student JWT | `sub="Student"`, claim `studentId` |
 | Staff JWT | `sub="StaffUser"`, claim `role` |
-| Error body | `{ "error": "Human-readable message" }` |
+| Error body | `{ "message": "Human-readable message" }` |
 
 ### HTTP Status Codes
 
@@ -61,9 +61,9 @@ Checks `D1: Term Config` for an active `GROUP_CREATION` schedule window before c
 
 **Errors:**
 ```
-400  { "error": "Group creation window is not currently active" }
-400  { "error": "You are already a member of a group" }
-409  { "error": "A group named '{name}' already exists for this term" }
+400  { "message": "Group creation window is not currently active" }
+400  { "message": "You are already a member of a group" }
+409  { "message": "A group named '{name}' already exists for this term" }
 ```
 
 ---
@@ -94,7 +94,7 @@ Returns the full `GroupDetailResponse` for the student's current group.
 
 **Errors:**
 ```
-404  { "error": "You are not a member of any group" }
+404  { "message": "You are not a member of any group" }
 ```
 
 ---
@@ -122,7 +122,7 @@ Searches `D2: Users` for students who are **not** currently in any group. Minimu
 
 **Errors:**
 ```
-400  { "error": "Query must be at least 3 characters" }
+400  { "message": "Query must be at least 3 characters" }
 ```
 
 ---
@@ -152,12 +152,12 @@ Looks up target student in `D2: Users`, checks they are not already in a group, 
 
 **Errors:**
 ```
-403  { "error": "Only the Team Leader can send invitations" }
-400  { "error": "Cannot send invitation from a disbanded group" }
-400  { "error": "Student '{id}' is not registered in the system" }
-400  { "error": "Student '{id}' is already a member of a group" }
-400  { "error": "Group has reached maximum team size" }
-409  { "error": "A pending invitation already exists for this student" }
+403  { "message": "Only the Team Leader can send invitations" }
+400  { "message": "Cannot send invitation from a disbanded group" }
+400  { "message": "Student '{id}' is not registered in the system" }
+400  { "message": "Student '{id}' is already a member of a group" }
+400  { "message": "Group has reached maximum team size" }
+409  { "message": "A pending invitation already exists for this student" }
 ```
 
 ---
@@ -181,8 +181,8 @@ Returns all invitations sent by this group (all statuses).
 
 **Errors:**
 ```
-403  { "error": "Only the Team Leader can view group invitations" }
-404  { "error": "Group not found" }
+403  { "message": "Only the Team Leader can view group invitations" }
+404  { "message": "Group not found" }
 ```
 
 ---
@@ -199,9 +199,9 @@ Cancels a `PENDING` invitation before the invitee responds.
 
 **Errors:**
 ```
-403  { "error": "Only the Team Leader can cancel invitations" }
-400  { "error": "Invitation is no longer pending" }
-404  { "error": "Invitation not found" }
+403  { "message": "Only the Team Leader can cancel invitations" }
+400  { "message": "Invitation is no longer pending" }
+404  { "message": "Invitation not found" }
 ```
 
 ---
@@ -253,9 +253,9 @@ On `DECLINED`: updates only this invitation's status.
 
 **Errors:**
 ```
-403  { "error": "This invitation does not belong to you" }
-400  { "error": "Invitation is no longer pending" }
-404  { "error": "Invitation not found" }
+403  { "message": "This invitation does not belong to you" }
+400  { "message": "Invitation is no longer pending" }
+404  { "message": "Invitation not found" }
 ```
 
 ---
@@ -289,10 +289,10 @@ Performs a live test call to JIRA API before storing anything. Stores `jiraSpace
 
 **Errors:**
 ```
-403  { "error": "Only the Team Leader can bind tool integrations" }
-422  { "error": "JIRA validation failed: JIRA space URL is unreachable" }
-422  { "error": "JIRA validation failed: Project key '{key}' not found" }
-422  { "error": "JIRA validation failed: API token is invalid or expired" }
+403  { "message": "Only the Team Leader can bind tool integrations" }
+422  { "message": "JIRA validation failed: JIRA space URL is unreachable" }
+422  { "message": "JIRA validation failed: Project key '{key}' not found" }
+422  { "message": "JIRA validation failed: API token is invalid or expired" }
 ```
 
 ---
@@ -324,10 +324,10 @@ Performs two test calls: `GET /orgs/{org}` (org existence + PAT validity) and `G
 
 **Errors:**
 ```
-403  { "error": "Only the Team Leader can bind tool integrations" }
-422  { "error": "GitHub validation failed: PAT is invalid or expired" }
-422  { "error": "GitHub validation failed: PAT lacks required 'repo' scope" }
-422  { "error": "GitHub validation failed: Organization '{name}' not found" }
+403  { "message": "Only the Team Leader can bind tool integrations" }
+422  { "message": "GitHub validation failed: PAT is invalid or expired" }
+422  { "message": "GitHub validation failed: PAT lacks required 'repo' scope" }
+422  { "message": "GitHub validation failed: Organization '{name}' not found" }
 ```
 
 ---
@@ -384,7 +384,7 @@ Returns full group detail including members. Encrypted tokens are **never** retu
 
 **Errors:**
 ```
-404  { "error": "Group not found" }
+404  { "message": "Group not found" }
 ```
 
 ---
@@ -406,12 +406,12 @@ Overrides the normal invitation flow. Removing the `TEAM_LEADER` is blocked.
 
 **Errors:**
 ```
-400  { "error": "Cannot add a student to a disbanded group" }
-400  { "error": "Cannot remove Team Leader; transfer leadership first" }
-400  { "error": "Student '{id}' is already a member of a group" }
-400  { "error": "Group has reached maximum team size" }
-404  { "error": "Group not found" }
-404  { "error": "Student '{id}' not found" }
+400  { "message": "Cannot add a student to a disbanded group" }
+400  { "message": "Cannot remove Team Leader; transfer leadership first" }
+400  { "message": "Student '{id}' is already a member of a group" }
+400  { "message": "Group has reached maximum team size" }
+404  { "message": "Group not found" }
+404  { "message": "Student '{id}' not found" }
 ```
 
 ---
@@ -443,8 +443,8 @@ Sets group `status` to `DISBANDED`. All `GroupMembership` rows for the group are
 
 **Errors:**
 ```
-400  { "error": "Group is already disbanded" }
-404  { "error": "Group not found" }
+400  { "message": "Group is already disbanded" }
+404  { "message": "Group not found" }
 ```
 
 ---

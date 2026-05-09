@@ -37,16 +37,18 @@
 | `id` | UUID PK | `@GeneratedValue(strategy = GenerationType.UUID)` |
 | `student` | `@ManyToOne Student` | NOT NULL |
 | `group` | `@ManyToOne ProjectGroup` | NOT NULL (term/group scope) |
+| `termId` | String | NOT NULL — active term at calculation time |
 | `weightedTotal` | BigDecimal | Sum(ScaledGrade × DeliverableWeight) |
 | `completionRatio` | BigDecimal | C_i = completedStoryPoints / targetStoryPoints |
 | `finalGrade` | BigDecimal | G_i = WeightedTotal × C_i |
 | `calculatedAt` | LocalDateTime | NOT NULL |
 
-Unique constraint: `uq_fg_student (student_id)` — one row per student.
+Unique constraint: `uq_fg_student_term (student_id, term_id)` — one row per student per term.
 
 > **Correction vs ver1:** `deliverableId` field removed. It was nullable "if representing total"
 > — this was misleading. Per-deliverable breakdowns are computed on-the-fly and returned in the
 > response but NOT persisted. Only `weightedTotal`, `completionRatio`, `finalGrade` are stored.
+> `termId` was added for multi-term support — upsert uses `findByStudent_StudentIdAndTermId()`.
 
 ---
 
